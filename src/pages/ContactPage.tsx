@@ -1,4 +1,4 @@
-import { Phone, MapPin, Mail, Clock, User, MessageCircle, HelpCircle, Navigation } from 'lucide-react';
+import { MapPin, User, MessageCircle, HelpCircle, Navigation, Phone } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { WhatsAppButton } from '../components/WhatsAppButton';
 
@@ -58,56 +58,6 @@ export function ContactPage() {
               <Navigation size={17} />
               FİNN FREM (YOL TARİFİ)
             </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Info Cards */}
-      <section className="px-4 mt-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Phone */}
-          <div className="bg-white rounded-xl p-5 shadow-md border-2 border-[#C5A880]/25">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#C5A880]/15 flex items-center justify-center shrink-0">
-                <Phone size={18} className="text-[#C5A880]" />
-              </div>
-              <div>
-                <h3 className="font-serif text-sm text-[#2D2A26] mb-1">Telefon</h3>
-                <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="text-xs text-[#2D2A26]/60 hover:text-[#C5A880] transition-colors">
-                  {settings.phone}
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Email */}
-          <div className="bg-white rounded-xl p-5 shadow-md border-2 border-[#C5A880]/25">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#C5A880]/15 flex items-center justify-center shrink-0">
-                <Mail size={18} className="text-[#C5A880]" />
-              </div>
-              <div>
-                <h3 className="font-serif text-sm text-[#2D2A26] mb-1">E-posta</h3>
-                <a href={`mailto:${settings.email}`} className="text-xs text-[#2D2A26]/60 hover:text-[#C5A880] transition-colors break-all">
-                  {settings.email}
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Hours */}
-          <div className="bg-white rounded-xl p-5 shadow-md border-2 border-[#C5A880]/25 sm:col-span-2">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#C5A880]/15 flex items-center justify-center shrink-0">
-                <Clock size={18} className="text-[#C5A880]" />
-              </div>
-              <div>
-                <h3 className="font-serif text-sm text-[#2D2A26] mb-1">Açılış Saatleri</h3>
-                <p className="text-xs text-[#2D2A26]/60 leading-relaxed">
-                  {settings.openingHours}<br />{settings.fridayPrayer}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
