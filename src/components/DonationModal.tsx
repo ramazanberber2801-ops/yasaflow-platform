@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Heart, X, Copy, Check, Sparkles, ExternalLink } from 'lucide-react';
-import { useApp } from '../context/AppContext';
 
 interface DonationModalProps {
   open: boolean;
@@ -8,19 +7,19 @@ interface DonationModalProps {
 }
 
 export function DonationModal({ open, onClose }: DonationModalProps) {
-  const { settings } = useApp();
   const [copied, setCopied] = useState(false);
+  const vippsNumber = "29816";
 
   if (!open) return null;
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(settings.vippsNumber.replace(/\s/g, ''));
+    navigator.clipboard.writeText(vippsNumber);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Yenilenen Vipps Linki — Doğrudan ödeme ekranını açar
-  const vippsDeepLink = `vipps://pay?number=${settings.vippsNumber.replace(/\s/g, '')}`;
+  // Doğrudan Vipps ödeme ekranını açan kesin çözüm linki
+  const vippsDeepLink = `vipps://pay?number=${vippsNumber}`;
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
@@ -54,7 +53,7 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
               </div>
               <span className="text-sm font-semibold text-[#2D2A26]">Vipps</span>
             </div>
-            <p className="font-serif text-3xl text-[#2D2A26] tabular-nums mb-4">{settings.vippsNumber}</p>
+            <p className="font-serif text-3xl text-[#2D2A26] tabular-nums mb-4">{vippsNumber}</p>
             <button
               onClick={copyToClipboard}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#C5A880]/10 hover:bg-[#C5A880]/20 text-[#C5A880] text-xs font-medium transition-colors"
