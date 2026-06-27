@@ -18,8 +18,8 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Vipps'in resmi evrensel internet köprüsü (Hata vermeyen kesin çözüm)
-  const vippsDeepLink = `https://qr.vipps.no/28/2/01/000/29816`;
+  // Vipps'in resmi internet yönlendirme sayfası (Asla QR hatası vermeyen kesin çözüm)
+  const vippsDeepLink = `https://www.vipps.no/i-vipps/vipps-nummer/?number=29816`;
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
@@ -75,11 +75,10 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
 
           <div className="flex items-start gap-2 text-xs text-[#2D2A26]/50 bg-[#C5A880]/5 rounded-lg p-3 mt-4">
             <Sparkles size={14} className="text-[#C5A880] shrink-0 mt-0.5" />
-            <span>Tüm bağışlar derneğimizin faaliyetleri, etkinlikleri og sosyal yardım çalışmalarında kullanılır. Allah kabul etsin.</span>
+            <span>Tüm bağışlar derneğimizin faaliyetleri, etkinlikleri ve sosyal yardım çalışmalarında kullanılır. Allah kabul etsin.</span>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
