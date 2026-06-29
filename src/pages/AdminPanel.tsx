@@ -1,11 +1,6 @@
-import { useState, useRef, type FormEvent } from 'react';
-import {
-  X, Newspaper, UserPlus, Users, LogOut, Trash2, Edit3, Plus,
-  Upload, Save, ArrowLeft, ShieldCheck, Mic, Settings as SettingsIcon, UserCog, Check, BookOpen, Eye, EyeOff,
-} from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { X, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { fileToOptimizedBase64 } from '../lib/imageUtils';
-import type { NewsItem, StaffMember, SohbetItem, MosqueSettings, DailyInspiration } from '../types';
 
 interface AdminPanelProps {
   open: boolean;
@@ -16,12 +11,11 @@ type AdminTab = 'news' | 'sohbet' | 'staff' | 'settings' | 'admins';
 
 export function AdminPanel({ open, onClose }: AdminPanelProps) {
   const {
-    news, staff, sohbet, settings, inspiration, admins, currentAdmin, logout,
+    news, staff, sohbet, settings, inspiration, admins, currentAdmin,
     addNews, updateNews, deleteNews,
-    addStaff, updateStaff, deleteStaff,
-    addSohbet, updateSohbet, deleteSohbet,
-    updateSettings, updateInspiration, addAdmin, deleteAdmin, updateAdminPassword,
+    updateSettings, updateInspiration, updateAdminPassword
   } = useApp();
+
   const [tab, setTab] = useState<AdminTab>('news');
 
   if (!open) return null;
@@ -35,14 +29,26 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
 
       <div className="flex border-b-2 border-[#C5A880]/20 bg-white shrink-0 overflow-x-auto">
         {(['news', 'sohbet', 'staff', 'settings', 'admins'] as AdminTab[]).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-3 text-xs font-medium ${tab === t ? 'text-[#C5A880] border-b-2 border-[#C5A880]' : 'text-[#2D2A26]/40'}`}>
-            {t.toUpperCase()}
+          <button 
+            key={t} 
+            onClick={() => setTab(t)} 
+            className={`flex-1 py-3 text-xs font-medium uppercase tracking-wider ${tab === t ? 'text-[#C5A880] border-b-2 border-[#C5A880]' : 'text-[#2D2A26]/40'}`}
+          >
+            {t}
           </button>
         ))}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {tab === 'news' && <NewsManager news={news} onAdd={addNews} onUpdate={updateNews} onDelete={deleteNews} />}
+        {tab === 'news' && (
+          <NewsManager 
+            news={news || []} 
+            onAdd={addNews} 
+            onUpdate={updateNews} 
+            onDelete={deleteNews} 
+          />
+        )}
+        
         {tab === 'settings' && (
           <SettingsManager 
             settings={settings} 
@@ -53,48 +59,58 @@ export function AdminPanel({ open, onClose }: AdminPanelProps) {
             onUpdatePassword={updateAdminPassword} 
           />
         )}
-        {/* Diğer tablar buraya eklenebilir */}
       </div>
     </div>
   );
 }
 
-// Ayarlar Yönetimi
-function SettingsManager({ settings, onUpdate, inspiration, onUpdateInspiration, currentAdmin, onUpdatePassword }: any) {
-  const [form, setForm] = useState(settings);
-  const [inspForm, setInspForm] = useState(inspiration);
+// Haber Yönetimi Bölümü
+function NewsManager({ news, onUpdate, onDelete }: any) {
+  return (
+    <div className="space-y-4">
+      <h2 className="font-serif text-xl mb-4 text-[#2D2A26]">Haberler & Duyurular</h2>
+      {news && news.length > 0 ? (
+        news.map((item: any) => (
+          <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-[#C5A880]/10">
+            <h3 className="font-medium text-[#2D2A26]">{item.title}</h3>
+          </div>
+        ))
+      ) : (
+        <div className="text-center py-10 text-[#2D2A26]/40 border-2 border-dashed border-[#C5A880]/20 rounded-xl">
+          Henüz haber eklenmemiş.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Ayarlar Bölümü
+function SettingsManager({ settings, onUpdate, inspiration, onUpdateInspiration }: any) {
+  const [form, setForm] = useState(settings || { vippsNumber: '' });
+  const [inspForm, setInspForm] = useState(inspiration || { verse: '', hadith: '' });
 
   const handleMainSubmit = (e: FormEvent) => {
     e.preventDefault();
     onUpdate(form);
     onUpdateInspiration(inspForm);
-    alert("Ayarlar kaydedildi!");
+    alert("Ayarlar başarıyla kaydedildi!");
   };
 
   return (
-    <div className="space-y-8">
-      <form onSubmit={handleMainSubmit} className="space-y-4">
-        <h2 className="font-serif text-xl">Genel Ayarlar</h2>
-        <input className="w-full p-2 border" placeholder="Vipps Numarası" value={form.vippsNumber || ''} onChange={e => setForm({...form, vippsNumber: e.target.value})} />
-        <button type="submit" className="w-full bg-[#C5A880] text-white p-3 rounded">Kaydet</button>
-      </form>
-
-      <div className="border-t pt-8">
-        <h2 className="font-serif text-xl">Şifre Değiştir</h2>
-        {/* Şifre formu buraya eklenecek */}
+    <form onSubmit={handleMainSubmit} className="space-y-6">
+      <h2 className="font-serif text-xl text-[#2D2A26]">Genel Ayarlar</h2>
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-[#2D2A26]/60 uppercase">Vipps Numarası</label>
+        <input 
+          className="w-full p-3 rounded-xl border border-[#C5A880]/20 bg-white" 
+          placeholder="29816" 
+          value={form.vippsNumber || ''} 
+          onChange={e => setForm({...form, vippsNumber: e.target.value})} 
+        />
       </div>
-    </div>
-  );
-}
-
-// Haber Yönetimi
-function NewsManager({ news, onAdd, onUpdate, onDelete }: any) {
-  return (
-    <div>
-      <h2 className="font-serif text-xl mb-4">Haberler</h2>
-      {news.map((item: any) => (
-        <div key={item.id} className="bg-white p-4 mb-2 rounded shadow">{item.title}</div>
-      ))}
-    </div>
+      <button type="submit" className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium shadow-md">
+        Değişiklikleri Kaydet
+      </button>
+    </form>
   );
 }
