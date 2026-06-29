@@ -42,7 +42,7 @@ export function HomePage() {
         const dayOfYear = Math.floor(diff / oneDay);
 
         const { data, error } = await supabase
-          .from('daily_inspiration')
+          .from('inspiration')
           .select('verse_text, verse_reference, hadith_text, hadith_source')
           .eq('day_of_year', dayOfYear)
           .single();
