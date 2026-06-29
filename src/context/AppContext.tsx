@@ -137,10 +137,13 @@ const addNews = async (item: any) => {
   const { error } = await client.from('news').insert([item]);
 
   if (error) {
-    console.error('NEWS INSERT ERROR:', error);
+    console.error(error);
     alert('Haber eklenemedi: ' + error.message);
     return;
   }
+
+  await loadAllData();
+};
 
   await loadAllData();
 };
@@ -180,14 +183,14 @@ const addNews = async (item: any) => {
     await loadAllData();
   };
 
- const addSohbet = async (item: any) => {
+const addSohbet = async (item: any) => {
   const client = supabase;
   if (!client) return;
 
   const { error } = await client.from('sohbet').insert([item]);
 
   if (error) {
-    console.error('SOHBET INSERT ERROR:', error);
+    console.error(error);
     alert('Sohbet eklenemedi: ' + error.message);
     return;
   }
