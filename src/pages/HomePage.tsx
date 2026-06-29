@@ -11,7 +11,7 @@ import { useLocation } from '../lib/useLocation';
 import { NewsModal } from '../components/NewsModal';
 import { SohbetModal } from '../components/SohbetModal';
 import { InstallAppButton } from '../components/InstallAppButton';
-import { supabase } from '../lib/supabaseClient'; 
+import { supabase } from '../lib/supabase';
 import type { NewsItem, SohbetItem } from '../types';
 
 export function HomePage() {
