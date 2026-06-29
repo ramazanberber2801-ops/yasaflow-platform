@@ -92,7 +92,7 @@ export function HomePage() {
 
   const prayerItems = prayerData
     ? [
-        { name: 'Sabah', time: prayerData.timings.Fajr, icon: Sunrise, color: '#C5A880' },
+        { name: 'Imsak', time: prayerData.timings.Fajr, icon: Sunrise, color: '#C5A880' },
         { name: 'Güneş', time: prayerData.timings.Sunrise, icon: Sun, color: '#E8B86D' },
         { name: 'Öğle', time: prayerData.timings.Dhuhr, icon: CloudSun, color: '#D4A04C' },
         { name: 'İkindi', time: prayerData.timings.Asr, icon: Sun, color: '#C5A880' },
