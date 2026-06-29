@@ -130,12 +130,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentAdmin(null);
   };
 
-  const addNews = async (item: any) => {
-    const client = supabase;
-    if (!client) return;
-    await client.from('news').insert(item);
-    await loadAllData();
-  };
+const addNews = async (item: any) => {
+  const client = supabase;
+  if (!client) return;
+
+  const { error } = await client.from('news').insert([item]);
+
+  if (error) {
+    console.error('NEWS INSERT ERROR:', error);
+    alert('Haber eklenemedi: ' + error.message);
+    return;
+  }
+
+  await loadAllData();
+};
 
   const updateNews = async (id: string, item: any) => {
     const client = supabase;
@@ -172,11 +180,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadAllData();
   };
 
-  const addSohbet = async (item: any) => {
-    const client = supabase;
-    if (!client) return;
-    await client.from('sohbet').insert(item);
-    await loadAllData();
+ const addSohbet = async (item: any) => {
+  const client = supabase;
+  if (!client) return;
+
+  const { error } = await client.from('sohbet').insert([item]);
+
+  if (error) {
+    console.error('SOHBET INSERT ERROR:', error);
+    alert('Sohbet eklenemedi: ' + error.message);
+    return;
+  }
+
+  await loadAllData();
+};
   };
 
   const updateSohbet = async (id: string, item: any) => {
