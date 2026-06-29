@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Heart, X, Copy, Check, Sparkles, ExternalLink } from 'lucide-react';
+import { X, Copy, Check, HandHeart, Moon, Sparkles, ExternalLink } from 'lucide-react';
 
 interface DonationModalProps {
   open: boolean;
@@ -18,68 +18,58 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Vipps'in resmi internet yönlendirme sayfası (Asla QR hatası vermeyen kesin çözüm)
-  const vippsDeepLink = `https://www.vipps.no/i-vipps/vipps-nummer/?number=29816`;
+  const vippsDeepLink = `https://qr.vipps.no/28/?v=1&e=${vippsNumber}`;
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[#2D2A26]/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#2D2A26]/70 backdrop-blur-md" onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-[#FAF6F0] rounded-2xl shadow-2xl border-2 border-[#C5A880]/30 overflow-hidden">
-        {/* Header */}
-        <div className="relative px-6 py-8 bg-gradient-to-br from-[#C5A880] to-[#B8935A]">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-            aria-label="Kapat"
-          >
-            <X size={18} className="text-white" />
+      <div className="relative w-full max-w-md bg-[#FAF6F0] rounded-[2rem] shadow-2xl border border-[#C5A880]/20 overflow-hidden">
+        {/* Header - Hilal Temalı */}
+        <div className="px-6 pt-10 pb-6 text-center relative overflow-hidden">
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-black/5 transition-colors">
+            <X size={20} className="text-[#2D2A26]" />
           </button>
-          <div className="flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-3">
-              <Heart size={28} className="text-white" fill="white" />
-            </div>
-            <h2 className="font-serif text-2xl text-white">Bağış Yapın</h2>
-            <p className="text-sm text-white/80 mt-1">Desteğiniz derneğimizin hizmetlerine katkı sağlar</p>
+          
+          <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+             {/* Hilal ve Veren El Simgesi */}
+             <div className="absolute inset-0 bg-[#C5A880]/10 rounded-full blur-xl" />
+             <Moon size={60} className="text-[#C5A880] absolute rotate-[-15deg]" />
+             <HandHeart size={40} className="text-[#2D2A26] relative z-10" />
           </div>
+          
+          <h2 className="font-serif text-2xl text-[#2D2A26]">Destek ve İyilik</h2>
+          <p className="text-sm text-[#2D2A26]/60 mt-1 italic">"Veren el, alan elden üstündür."</p>
         </div>
 
-        {/* Body — Vipps only */}
-        <div className="p-6">
-          <div className="bg-white rounded-xl p-5 border-2 border-[#C5A880]/30 shadow-sm text-center">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[#C5A880]/15 flex items-center justify-center">
-                <Heart size={18} className="text-[#C5A880]" fill="currentColor" />
-              </div>
-              <span className="text-sm font-semibold text-[#2D2A26]">Vipps</span>
+        {/* Body */}
+        <div className="px-6 pb-8">
+          <div className="bg-white rounded-3xl p-6 border border-[#C5A880]/10 shadow-sm text-center mb-6">
+            <p className="text-[10px] font-bold tracking-widest uppercase text-[#C5A880] mb-2">Vipps Numarası</p>
+            <div className="flex items-center justify-center gap-3">
+              <span className="font-mono text-4xl font-bold text-[#2D2A26]">{vippsNumber}</span>
+              <button onClick={copyToClipboard} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                {copied ? <Check size={20} className="text-green-600" /> : <Copy size={20} className="text-[#C5A880]" />}
+              </button>
             </div>
-            <p className="font-serif text-3xl text-[#2D2A26] tabular-nums mb-4">{vippsNumber}</p>
-            <button
-              onClick={copyToClipboard}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#C5A880]/10 hover:bg-[#C5A880]/20 text-[#C5A880] text-xs font-medium transition-colors"
-            >
-              {copied ? <><Check size={14} /> Kopyalandı</> : <><Copy size={14} /> Numarayı Kopyala</>}
-            </button>
           </div>
 
-          {/* Vipps App Trigger Button */}
           <a
             href={vippsDeepLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F25405] text-white font-semibold text-sm hover:from-[#FF7B45] hover:to-[#F26415] transition-all shadow-md active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#2D2A26] text-white font-bold text-base hover:bg-[#C5A880] transition-colors shadow-lg active:scale-[0.98]"
           >
+            <span>Vipps ile Destek Ol</span>
             <ExternalLink size={18} />
-            Vipps Uygulamasında Aç
           </a>
 
-          <div className="flex items-start gap-2 text-xs text-[#2D2A26]/50 bg-[#C5A880]/5 rounded-lg p-3 mt-4">
-            <Sparkles size={14} className="text-[#C5A880] shrink-0 mt-0.5" />
-            <span>Tüm bağışlar derneğimizin faaliyetleri, etkinlikleri ve sosyal yardım çalışmalarında kullanılır. Allah kabul etsin.</span>
+          <div className="mt-6 flex items-start gap-3 text-[11px] text-[#2D2A26]/40 text-center">
+            <Sparkles size={14} className="text-[#C5A880] shrink-0 mx-auto" />
+            <p>Yaptığınız hayırların kabul olması dileğiyle. Bağışlarınız camimizin tüm sosyal yardım faaliyetlerinde kullanılmaktadır.</p>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
