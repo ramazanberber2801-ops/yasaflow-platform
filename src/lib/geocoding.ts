@@ -58,25 +58,37 @@ export async function searchCities(query: string, count = 8): Promise<GeoResult[
 /**
  * Reverse geocode coordinates to a human-readable city name.
  * Uses Open-Meteo's reverse geocoding endpoint.
+ * Hata veya CORS durumunda varsayılan olarak "Drammen" döner.
  */
-export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+export async function reverseGeocode(lat: number, lng: number): Promise<string> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
 
     const response = await fetch(
       `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lng}&language=tr&format=json`,
-      { signal: controller.signal },
+      { 
+        signal: controller.signal,
+        mode: 'cors' // CORS politikasını tarayıcıya açıkça dikte ediyoruz
+      },
     );
     clearTimeout(timeoutId);
 
-    if (!response.ok) return null;
+    // Eğer HTTP kodu 200 değilse hataya zorla (catch bloğuna düşsün)
+    if (!response.ok) {
+      throw new Error(`API Hatası: ${response.status}`);
+    }
+    
     const data = await response.json();
-    if (!data.results || !Array.isArray(data.results) || data.results.length === 0) return null;
+    if (!data.results || !Array.isArray(data.results) || data.results.length === 0) {
+      return "Drammen";
+    }
 
     const r = data.results[0];
-    return r.name ?? null;
-  } catch {
-    return null;
+    return r.name ?? "Drammen";
+  } catch (error) {
+    console.warn("Geocoding başarısız oldu veya CORS engeline takıldı. Varsayılan konum (Drammen) seçiliyor:", error);
+    // Cankurtaran simidimiz: API patlasa bile "Drammen" dönerek ön yüzün çökmesini engelliyoruz.
+    return "Drammen";
   }
 }
