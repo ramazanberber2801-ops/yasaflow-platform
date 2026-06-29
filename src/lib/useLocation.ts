@@ -20,7 +20,6 @@ export interface SelectedCity {
 
 const STORAGE_KEY = 'dtim_selected_city';
 
-// Cihaz kilitlenmesin diye ana üssümüzü net olarak Drammen yapıyoruz
 const DEFAULT_CITY: SelectedCity = {
   name: 'Drammen',
   country: 'Norveç',
@@ -33,11 +32,10 @@ function loadStoredCity(): { city: SelectedCity; isAuto: boolean } {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Hatalı döngüye girmemesi için isAuto'yu zorunlu olarak false döndürüyoruz
-      return { city: parsed.city || DEFAULT_CITY, isAuto: false };
+      return { city: parsed.city, isAuto: parsed.isAuto };
     }
   } catch { /* ignore */ }
-  return { city: DEFAULT_CITY, isAuto: false }; 
+  return { city: DEFAULT_CITY, isAuto: true };
 }
 
 function saveStoredCity(city: SelectedCity, isAuto: boolean) {
@@ -58,44 +56,28 @@ export function useLocation() {
   const [searching, setSearching] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Namaz vakitlerini getiren ana fonksiyon
+  // Fetch prayer times whenever city changes
   useEffect(() => {
     setLoading(true);
-    fetchPrayerTimes(city.latitude, city.longitude)
-      .then(data => {
-        setPrayerData(data);
-      })
-      .catch((err) => {
-        console.error("Namaz vakitleri alınamadı:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    fetchPrayerTimes(city.latitude, city.longitude).then(data => {
+      setPrayerData(data);
+      setLoading(false);
+    });
   }, [city.latitude, city.longitude]);
 
-  // İlk açılışta bozulan API'ye otomatik gitmesini engelliyoruz
+  // Try to get auto location on first mount if isAuto
   useEffect(() => {
-    if (!isAuto) {
-      setLoading(false);
-      return;
-    }
-    
-    if (!navigator.geolocation) {
-      setLoading(false);
-      return;
-    }
+    if (!isAuto) return;
+    if (!navigator.geolocation) return;
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        
+        // Reverse geocode using Open-Meteo
         fetch(
           `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=tr&count=1`
         )
-          .then(res => {
-            if (!res.ok) throw new Error("CORS veya Sunucu Hatası");
-            return res.json();
-          })
+          .then(res => res.json())
           .then(data => {
             if (data?.results?.[0]) {
               const r = data.results[0];
@@ -106,35 +88,30 @@ export function useLocation() {
                 longitude: r.longitude,
               };
               setCity(newCity);
-              saveStoredCity(newCity, false); // Tekrar otomatik döngüye girmesin
-              setIsAuto(false);
+              saveStoredCity(newCity, true);
             } else {
-              throw new Error();
+              // Use raw coordinates if reverse geocode fails
+              const newCity: SelectedCity = {
+                name: 'Mevcut Konum',
+                country: '',
+                latitude,
+                longitude,
+              };
+              setCity(newCity);
+              saveStoredCity(newCity, true);
             }
           })
           .catch(() => {
-            const fallbackCity: SelectedCity = {
-              name: 'Mevcut Konum',
-              country: '',
-              latitude,
-              longitude,
-            };
-            setCity(fallbackCity);
-            saveStoredCity(fallbackCity, false);
-            setIsAuto(false);
-          })
-          .finally(() => {
-            setLoading(false);
+            // Keep default city if reverse geocode fails
           });
       },
       () => {
-        setCity(DEFAULT_CITY);
-        setIsAuto(false);
-        setLoading(false);
+        // Keep default city if geolocation denied
       },
-      { timeout: 4000, enableHighAccuracy: false }
+      { timeout: 8000, enableHighAccuracy: false }
     );
-  }, [isAuto]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -181,7 +158,45 @@ export function useLocation() {
 
   const resetToAuto = useCallback(() => {
     setIsAuto(true);
-    setLoading(true);
+    setShowSelector(false);
+    setSearchQuery('');
+    setSearchResults([]);
+
+    // Try geolocation again
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          fetch(
+            `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=tr&count=1`
+          )
+            .then(res => res.json())
+            .then(data => {
+              if (data?.results?.[0]) {
+                const r = data.results[0];
+                const newCity: SelectedCity = {
+                  name: r.name,
+                  country: r.country ?? '',
+                  latitude: r.latitude,
+                  longitude: r.longitude,
+                };
+                setCity(newCity);
+                saveStoredCity(newCity, true);
+              }
+            })
+            .catch(() => {});
+        },
+        () => {
+          // Fall back to default
+          setCity(DEFAULT_CITY);
+          saveStoredCity(DEFAULT_CITY, true);
+        },
+        { timeout: 8000, enableHighAccuracy: false }
+      );
+    } else {
+      setCity(DEFAULT_CITY);
+      saveStoredCity(DEFAULT_CITY, true);
+    }
   }, []);
 
   return {
