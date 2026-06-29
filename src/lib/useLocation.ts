@@ -59,7 +59,7 @@ export function useLocation() {
   // Fetch prayer times whenever city changes
   useEffect(() => {
     setLoading(true);
-    fetchPrayerTimes(city.latitude, city.longitude).then(data => {
+    fetchPrayerTimes(city.latitude, city.longitude, city.name).then(data => {
       setPrayerData(data);
       setLoading(false);
     });
