@@ -11,7 +11,7 @@ import { useLocation } from '../lib/useLocation';
 import { NewsModal } from '../components/NewsModal';
 import { SohbetModal } from '../components/SohbetModal';
 import { InstallAppButton } from '../components/InstallAppButton';
-import { supabase } from '../lib/supabaseClient'; // Supabase bağlantısı eklendi
+import { supabase } from '../lib/supabaseClient'; // Supabase bağlantısı
 import type { NewsItem, SohbetItem } from '../types';
 
 export function HomePage() {
@@ -36,10 +36,12 @@ export function HomePage() {
   useEffect(() => {
     async function fetchDailyInspiration() {
       try {
-        const start = new Date(new Date().getFullYear(), 0, 0);
-        const diff = new Date().getTime() - start.getTime();
-        const oneDay = 1000 * 60 * 60 * 24;
-        const dayOfYear = Math.floor(diff / oneDay);
+        // Zaman dilimi kaymalarını önleyen kesin gün hesaplama yöntemi
+        const simdi = new Date();
+        const baslangic = new Date(simdi.getFullYear(), 0, 1);
+        const fark = simdi.getTime() - baslangic.getTime();
+        const birGun = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(fark / birGun) + 1;
 
         const { data, error } = await supabase
           .from('inspiration')
@@ -49,6 +51,8 @@ export function HomePage() {
         
         if (!error && data) {
           setDailyData(data);
+        } else {
+          console.log("Supabase verisi bulunamadı veya hata:", error);
         }
       } catch (err) {
         console.error("Ayet/Hadis yüklenirken hata oluştu:", err);
