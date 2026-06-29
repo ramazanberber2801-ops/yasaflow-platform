@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Calendar, Clock, MapPin, ChevronRight, Newspaper,
   BookOpen, Sun, Moon, Sunrise, Sunset, CloudSun,
@@ -11,10 +11,18 @@ import { useLocation } from '../lib/useLocation';
 import { NewsModal } from '../components/NewsModal';
 import { SohbetModal } from '../components/SohbetModal';
 import { InstallAppButton } from '../components/InstallAppButton';
+import { supabase } from '../lib/supabaseClient'; // Supabase bağlantısı eklendi
 import type { NewsItem, SohbetItem } from '../types';
 
 export function HomePage() {
-  const { news, sohbet, settings, inspiration } = useApp();
+  const { news, sohbet, settings } = useApp();
+  const [dailyData, setDailyData] = useState<{
+    verse_text?: string;
+    verse_reference?: string;
+    hadith_text?: string;
+    hadith_source?: string;
+  } | null>(null);
+
   const now = useClock();
   const {
     city, isAuto, loading, prayerData, showSelector,
@@ -23,6 +31,31 @@ export function HomePage() {
   } = useLocation();
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   const [selectedSohbet, setSelectedSohbet] = useState<SohbetItem | null>(null);
+
+  // Günün Ayet ve Hadisini Yılın Gününe Göre Supabase'den Çekme
+  useEffect(() => {
+    async function fetchDailyInspiration() {
+      try {
+        const start = new Date(new Date().getFullYear(), 0, 0);
+        const diff = new Date().getTime() - start.getTime();
+        const oneDay = 1000 * 60 * 60 * 24;
+        const dayOfYear = Math.floor(diff / oneDay);
+
+        const { data, error } = await supabase
+          .from('daily_inspiration')
+          .select('verse_text, verse_reference, hadith_text, hadith_source')
+          .eq('day_of_year', dayOfYear)
+          .single();
+        
+        if (!error && data) {
+          setDailyData(data);
+        }
+      } catch (err) {
+        console.error("Ayet/Hadis yüklenirken hata oluştu:", err);
+      }
+    }
+    fetchDailyInspiration();
+  }, [now.getDate()]); // Gün değiştiğinde otomatik yenilenir
 
   const nextPrayer = prayerData ? getNextPrayer(prayerData.timings) : null;
   const timeUntil = nextPrayer ? getTimeUntil(nextPrayer.time) : null;
@@ -39,9 +72,6 @@ export function HomePage() {
   const featuredNews = news.slice(0, 6);
   const upcomingSohbet = sohbet.slice(0, 4);
 
-  const timeStr = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-  const dateStr = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' });
-
   return (
     <div className="min-h-screen pb-28">
       {/* ===== Top Header ===== */}
@@ -55,10 +85,9 @@ export function HomePage() {
         </div>
       </header>
 
-      {/* ===== Prayer Times Section (compact, global search) ===== */}
+      {/* ===== Prayer Times Section ===== */}
       <section className="px-4 pt-4">
         <div className="bg-white rounded-xl shadow-md border-2 border-[#C5A880]/25 overflow-hidden">
-          {/* Header bar with location + change button */}
           <div className="bg-[#2D2A26] px-4 py-2.5 flex items-center justify-between relative">
             <div className="flex items-center gap-1.5">
               {isAuto ? (
@@ -83,10 +112,8 @@ export function HomePage() {
               <ChevronDown size={11} className={`transition-transform ${showSelector ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* City search panel */}
             {showSelector && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-[#FAF6F0] rounded-b-xl shadow-2xl border-2 border-t-0 border-[#C5A880]/30 overflow-hidden z-20">
-                {/* Search input */}
                 <div className="p-3 space-y-3">
                   <div className="relative">
                     <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#2D2A26]/30" />
@@ -103,7 +130,6 @@ export function HomePage() {
                     )}
                   </div>
 
-                  {/* Search results */}
                   {searchResults.length > 0 && (
                     <div className="max-h-56 overflow-y-auto rounded-lg border border-[#C5A880]/15">
                       {searchResults.map((r) => (
@@ -124,14 +150,12 @@ export function HomePage() {
                     </div>
                   )}
 
-                  {/* Empty state for search */}
                   {searchQuery.trim().length >= 2 && !searching && searchResults.length === 0 && (
                     <p className="text-xs text-[#2D2A26]/40 text-center py-3">
                       Sonuç bulunamadı. Başka bir şehir deneyin.
                     </p>
                   )}
 
-                  {/* Hint text */}
                   {searchQuery.trim().length < 2 && (
                     <p className="text-[10px] text-[#2D2A26]/40 text-center py-1">
                       Oslo, Bergen, Istanbul, Aarhus, København...
@@ -139,7 +163,6 @@ export function HomePage() {
                   )}
                 </div>
 
-                {/* Auto location button */}
                 <div className="border-t border-[#C5A880]/15">
                   <button
                     onClick={resetToAuto}
@@ -159,7 +182,6 @@ export function HomePage() {
             )}
           </div>
 
-          {/* Next prayer banner - compact */}
           {nextPrayer && (
             <div className="bg-[#C5A880]/10 border-b-2 border-[#C5A880]/20 px-4 py-2 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -177,7 +199,6 @@ export function HomePage() {
             </div>
           )}
 
-          {/* Prayer Grid - compact */}
           <div className="p-2.5">
             {loading ? (
               <div className="grid grid-cols-3 gap-1.5">
@@ -218,19 +239,18 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ===== Install App Button (PWA) ===== */}
       <InstallAppButton />
 
-      {/* ===== Daily Verse / Hadith (custom, toggleable) ===== */}
-      {inspiration.published && (
+      {/* ===== Günlük Ayet / Hadit Veritabanı Alanı ===== */}
+      {dailyData && (
         <section className="px-4 mt-4">
           <div className="bg-[#2D2A26] rounded-xl border-2 border-[#2D2A26] shadow-md relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.06]">
               <BookOpen size={128} className="text-[#C5A880]" />
             </div>
             <div className="relative p-5 space-y-5">
-              {/* Verse */}
-              {inspiration.verseText && (
+              {/* Ayet Bölümü */}
+              {dailyData.verse_text && (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-7 h-7 rounded-full bg-[#C5A880]/20 flex items-center justify-center">
@@ -238,15 +258,15 @@ export function HomePage() {
                     </div>
                     <span className="text-[11px] font-semibold text-[#C5A880] uppercase tracking-wider">Günün Ayeti</span>
                   </div>
-                  <p className="text-sm text-[#FAF6F0]/90 leading-relaxed mb-2">{inspiration.verseText}</p>
-                  {inspiration.verseReference && (
-                    <p className="text-[11px] text-[#C5A880]/70 italic">{inspiration.verseReference}</p>
+                  <p className="text-sm text-[#FAF6F0]/90 leading-relaxed mb-2">{dailyData.verse_text}</p>
+                  {dailyData.verse_reference && (
+                    <p className="text-[11px] text-[#C5A880]/70 italic">{dailyData.verse_reference}</p>
                   )}
                 </div>
               )}
 
-              {/* Hadith */}
-              {inspiration.hadithText && (
+              {/* Hadis Bölümü */}
+              {dailyData.hadith_text && (
                 <div className="border-t border-[#FAF6F0]/10 pt-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-7 h-7 rounded-full bg-[#C5A880]/20 flex items-center justify-center">
@@ -254,9 +274,9 @@ export function HomePage() {
                     </div>
                     <span className="text-[11px] font-semibold text-[#C5A880] uppercase tracking-wider">Günün Hadisi</span>
                   </div>
-                  <p className="text-sm text-[#FAF6F0]/90 leading-relaxed mb-2">{inspiration.hadithText}</p>
-                  {inspiration.hadithSource && (
-                    <p className="text-[11px] text-[#C5A880]/70 italic">{inspiration.hadithSource}</p>
+                  <p className="text-sm text-[#FAF6F0]/90 leading-relaxed mb-2">{dailyData.hadith_text}</p>
+                  {dailyData.hadith_source && (
+                    <p className="text-[11px] text-[#C5A880]/70 italic">{dailyData.hadith_source}</p>
                   )}
                 </div>
               )}
