@@ -78,9 +78,7 @@ export function HomePage() {
           .eq('day_of_year', dayOfYear)
           .single();
 
-        if (!error && data) {
-          setDailyData(data);
-        }
+        if (!error && data) setDailyData(data);
       } catch (err) {
         console.error('Ayet/Hadis yüklenirken hata oluştu:', err);
       }
@@ -125,16 +123,26 @@ export function HomePage() {
       <section className="px-4 pt-4">
         <div className="bg-white rounded-xl shadow-md border-2 border-[#C5A880]/25 overflow-hidden">
           <div className="bg-[#2D2A26] px-4 py-2.5 flex items-center justify-between relative">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
               {isAuto ? (
                 <Crosshair size={13} className="text-[#C5A880] shrink-0" />
               ) : (
                 <MapPin size={13} className="text-[#C5A880] shrink-0" />
               )}
 
-              <span className="text-xs font-medium text-[#FAF6F0] truncate max-w-[140px]">
+              <span className="text-xs font-medium text-[#FAF6F0] truncate max-w-[145px]">
                 {city.name}
                 {city.country ? `, ${city.country}` : ''}
+              </span>
+
+              <span
+                className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ${
+                  isAuto
+                    ? 'bg-[#C5A880]/20 text-[#C5A880]'
+                    : 'bg-[#FAF6F0]/10 text-[#FAF6F0]/60'
+                }`}
+              >
+                {isAuto ? 'Otomatik' : 'Manuel'}
               </span>
             </div>
 
@@ -142,7 +150,7 @@ export function HomePage() {
               onClick={() => setShowSelector(!showSelector)}
               className="flex items-center gap-1 text-[10px] text-[#C5A880] hover:text-[#FAF6F0] transition-colors shrink-0"
             >
-              Değiştir
+              Şehir Değiştir
               <ChevronDown size={11} className={`transition-transform ${showSelector ? 'rotate-180' : ''}`} />
             </button>
 
@@ -155,34 +163,61 @@ export function HomePage() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => handleSearch(e.target.value)}
-                      placeholder="Şehir Ara..."
-                      className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-white border border-[#C5A880]/20 text-sm focus:outline-none focus:border-[#C5A880]"
+                      placeholder="Şehir veya bölge ara..."
+                      className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-white border border-[#C5A880]/20 text-sm text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880]"
+                      autoFocus
                     />
                     {searching && (
                       <Loader2 size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#C5A880] animate-spin" />
                     )}
                   </div>
 
-                  {searchResults.map((r) => (
-                    <button
-                      key={r.id}
-                      onClick={() => selectCity(r)}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-left border-b border-[#C5A880]/10 last:border-b-0"
-                    >
-                      <MapPin size={13} className="text-[#C5A880]" />
-                      <div className="min-w-0">
-                        <p className="text-xs truncate">{r.name}</p>
-                      </div>
-                    </button>
-                  ))}
+                  {searchResults.length > 0 && (
+                    <div className="max-h-56 overflow-y-auto rounded-lg border border-[#C5A880]/15 bg-white">
+                      {searchResults.map((r) => (
+                        <button
+                          key={r.id}
+                          onClick={() => selectCity(r)}
+                          className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-[#C5A880]/10 transition-colors border-b border-[#C5A880]/10 last:border-b-0"
+                        >
+                          <MapPin size={13} className="text-[#C5A880] shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium text-[#2D2A26] truncate">{r.name}</p>
+                            <p className="text-[10px] text-[#2D2A26]/40 truncate">
+                              {[r.admin1, r.country].filter(Boolean).join(', ')}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
+                  {searchQuery.trim().length >= 2 && !searching && searchResults.length === 0 && (
+                    <p className="text-xs text-[#2D2A26]/40 text-center py-3">
+                      Sonuç bulunamadı. Başka bir şehir deneyin.
+                    </p>
+                  )}
+
+                  {searchQuery.trim().length < 2 && (
+                    <p className="text-[10px] text-[#2D2A26]/40 text-center py-1">
+                      Oslo, Bergen, Drammen, İstanbul, København...
+                    </p>
+                  )}
+                </div>
+
+                <div className="border-t border-[#C5A880]/15">
                   <button
                     onClick={resetToAuto}
-                    className="w-full flex items-center gap-2 px-3 py-2.5 text-left bg-[#C5A880]/10 rounded-lg"
+                    className={`w-full flex items-center gap-2 px-3 py-3 text-left transition-colors ${
+                      isAuto ? 'bg-[#C5A880]/15' : 'hover:bg-[#C5A880]/5'
+                    }`}
                   >
-                    <Crosshair size={13} className="text-[#C5A880]" />
-                    <span className="text-xs text-[#2D2A26]">Konumumu Bul</span>
-                    {isAuto && <Check size={13} className="ml-auto text-[#C5A880]" />}
+                    <Crosshair size={15} className="text-[#C5A880] shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs font-medium text-[#2D2A26]">Konumumu Kullan</p>
+                      <p className="text-[10px] text-[#2D2A26]/40">GPS ile mevcut konumunu algıla</p>
+                    </div>
+                    {isAuto && <Check size={14} className="text-[#C5A880] shrink-0" />}
                   </button>
                 </div>
               </div>
@@ -191,12 +226,18 @@ export function HomePage() {
 
           {nextPrayer && (
             <div className="bg-[#C5A880]/10 border-b-2 border-[#C5A880]/20 px-4 py-2 flex items-center justify-between">
-              <span className="text-[11px] text-[#2D2A26]/70">
-                Sıradaki: <strong>{nextPrayer.name}</strong>
-              </span>
-              <span className="text-[10px] bg-[#C5A880] text-white px-2 py-0.5 rounded-full">
-                {timeUntil}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <Clock size={13} className="text-[#C5A880]" />
+                <span className="text-[11px] text-[#2D2A26]/70">
+                  Sıradaki: <strong>{nextPrayer.name}</strong>
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-semibold text-[#2D2A26] tabular-nums">{nextPrayer.time}</span>
+                <span className="text-[10px] bg-[#C5A880] text-white px-1.5 py-0.5 rounded-full font-medium tabular-nums">
+                  {timeUntil}
+                </span>
+              </div>
             </div>
           )}
 
@@ -213,9 +254,7 @@ export function HomePage() {
                     <div
                       key={p.name}
                       className={`rounded-lg p-2 text-center border-2 ${
-                        isNext
-                          ? 'bg-[#2D2A26] border-[#C5A880]'
-                          : 'bg-[#FAF6F0] border-[#C5A880]/20'
+                        isNext ? 'bg-[#2D2A26] border-[#C5A880]' : 'bg-[#FAF6F0] border-[#C5A880]/20'
                       }`}
                     >
                       <Icon
@@ -247,7 +286,7 @@ export function HomePage() {
               <>
                 <div className="flex items-center gap-2 mb-2">
                   <BookOpen size={14} className="text-[#C5A880]" />
-                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Günün Ayeti</h3>
+                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Bugünün Ayeti</h3>
                 </div>
                 <p className="text-sm mb-4">{dailyData.verse_text}</p>
               </>
@@ -257,7 +296,7 @@ export function HomePage() {
               <>
                 <div className="flex items-center gap-2 mb-2">
                   <BookOpen size={14} className="text-[#C5A880]" />
-                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Günün Hadisi</h3>
+                  <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Bugünün Hadisi</h3>
                 </div>
                 <p className="text-sm">{dailyData.hadith_text}</p>
               </>
@@ -289,21 +328,13 @@ export function HomePage() {
                   <span className="text-[10px] uppercase text-[#C5A880]">
                     {new Date(item.date).toLocaleDateString('tr-TR', { month: 'short' })}
                   </span>
-                  <span className="font-serif text-xl leading-none">
-                    {new Date(item.date).getDate()}
-                  </span>
-                  <span className="text-[10px] text-[#FAF6F0]/60 mt-0.5">
-                    {item.time}
-                  </span>
+                  <span className="font-serif text-xl leading-none">{new Date(item.date).getDate()}</span>
+                  <span className="text-[10px] text-[#FAF6F0]/60 mt-0.5">{item.time}</span>
                 </div>
 
                 <div className="flex-1 p-3 min-w-0">
-                  <h3 className="font-serif text-sm text-[#2D2A26] line-clamp-1">
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-[#2D2A26]/50 mt-1 line-clamp-2">
-                    {item.description}
-                  </p>
+                  <h3 className="font-serif text-sm text-[#2D2A26] line-clamp-1">{item.title}</h3>
+                  <p className="text-xs text-[#2D2A26]/50 mt-1 line-clamp-2">{item.description}</p>
 
                   <div className="flex items-center gap-3 mt-1.5">
                     <span className="flex items-center gap-1 text-[10px] text-[#2D2A26]/40">
@@ -329,7 +360,7 @@ export function HomePage() {
       <section className="px-4 mt-5">
         <div className="flex items-center gap-2 mb-3">
           <Newspaper size={18} className="text-[#C5A880]" />
-          <h2 className="font-serif text-lg text-[#2D2A26]">Haberler & Duyurular</h2>
+          <h2 className="font-serif text-lg text-[#2D2A26]">Duyurular ve Haberler</h2>
         </div>
 
         {featuredNews.length === 0 ? (
