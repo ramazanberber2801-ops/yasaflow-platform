@@ -23,7 +23,7 @@ const STORAGE_KEY = 'dtim_selected_city';
 // Cihaz kilitlenmesin diye ana üssümüzü net olarak Drammen yapıyoruz
 const DEFAULT_CITY: SelectedCity = {
   name: 'Drammen',
-  country: 'Norway',
+  country: 'Norveç',
   latitude: 59.7440,
   longitude: 10.2045,
 };
