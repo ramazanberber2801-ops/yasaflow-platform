@@ -58,7 +58,7 @@ export async function searchCities(query: string, count = 8): Promise<GeoResult[
 /**
  * Reverse geocode coordinates to a human-readable city name.
  * Uses Open-Meteo's reverse geocoding endpoint.
- * Hata veya CORS durumunda varsayılan olarak "Drammen" döner.
+ * Geri dönüş tipi projenin geneliyle uyumlu olması için 'string | null' olarak korunmuştur.
  */
 export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
@@ -75,7 +75,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`API Hatası: ${response.status}`);
+      return "Drammen";
     }
     
     const data = await response.json();
@@ -86,7 +86,8 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string |
     const r = data.results[0];
     return r.name ?? "Drammen";
   } catch (error) {
-    console.warn("Geocoding başarısız oldu, varsayılan konum seçiliyor:", error);
+    console.warn("Geocoding hatası alındı, Drammen seçiliyor:", error);
+    // Hata anında projenin tür kontrolüne uyması için string döner
     return "Drammen";
   }
 }
