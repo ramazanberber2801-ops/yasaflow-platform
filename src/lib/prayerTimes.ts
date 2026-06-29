@@ -87,7 +87,7 @@ export function getNextPrayer(timings: PrayerTimings): { name: string; time: str
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   const prayers = [
-    { name: 'Sabah', time: timings.Fajr },
+    { name: 'Imsak', time: timings.Fajr },
     { name: 'Güneş', time: timings.Sunrise },
     { name: 'Öğle', time: timings.Dhuhr },
     { name: 'İkindi', time: timings.Asr },
@@ -102,7 +102,7 @@ export function getNextPrayer(timings: PrayerTimings): { name: string; time: str
     if (mins > currentMinutes) return p;
   }
 
-  return { name: 'Sabah', time: timings.Fajr };
+  return { name: 'Imsak', time: timings.Fajr };
 }
 
 export function getTimeUntil(timeStr: string): string {
