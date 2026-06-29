@@ -76,12 +76,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSupabaseReady] = useState(isSupabaseConfigured);
 
-  // ── Initial load ───────────────────────────────────────────
-  useEffect(() => {
-    let mounted = true;
-
-    async function init() {
-      // Fetch all data from Supabase
+  // Verileri yenilemek için ortak bir fonksiyon (CRUD işlemlerinden sonra çağrılacak)
+  const refreshAllData = useCallback(async () => {
+    try {
       const [newsData, sohbetData, staffData, settingsData, inspData, adminsData] = await Promise.all([
         db.fetchNews(),
         db.fetchSohbet(),
@@ -91,19 +88,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
         db.fetchAdmins(),
       ]);
 
-      if (!mounted) return;
-
       setNews(newsData);
       setSohbet(sohbetData);
       setStaff(staffData);
       setSettings(settingsData);
       setInspiration(inspData);
       setAdmins(adminsData);
+      return adminsData;
+    } catch (err) {
+      console.error("Veriler güncellenirken hata oluştu:", err);
+      return [];
+    }
+  }, []);
+
+  // ── Initial load ───────────────────────────────────────────
+  useEffect(() => {
+    let mounted = true;
+
+    async function init() {
+      const adminsData = await refreshAllData();
+
+      if (!mounted) return;
 
       // Restore admin session
       const persistentSession = loadFromStorage<SessionData>(STORAGE_KEYS.SESSION, { active: false, admin: null, remember: false });
       if (persistentSession.active && persistentSession.admin && persistentSession.remember) {
-        // Verify the admin still exists in the DB
         const stillExists = adminsData.some(a => a.id === persistentSession.admin!.id);
         if (stillExists) {
           setIsAdmin(true);
@@ -130,37 +139,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     init();
 
     return () => { mounted = false; };
-  }, []);
-
-  // ── Realtime subscriptions ────────────────────────────────
-  // When the admin panel writes to Supabase, these subscriptions
-  // fire and refresh the local state so all users see changes instantly.
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
-    const unsubs: (() => void)[] = [];
-
-    unsubs.push(db.subscribeToTable('news', async () => {
-      setNews(await db.fetchNews());
-    }));
-    unsubs.push(db.subscribeToTable('sohbet', async () => {
-      setSohbet(await db.fetchSohbet());
-    }));
-    unsubs.push(db.subscribeToTable('staff', async () => {
-      setStaff(await db.fetchStaff());
-    }));
-    unsubs.push(db.subscribeToTable('settings', async () => {
-      setSettings(await db.fetchSettings());
-    }));
-    unsubs.push(db.subscribeToTable('inspiration', async () => {
-      setInspiration(await db.fetchInspiration());
-    }));
-    unsubs.push(db.subscribeToTable('admins', async () => {
-      setAdmins(await db.fetchAdmins());
-    }));
-
-    return () => { unsubs.forEach(fn => fn()); };
-  }, []);
+  }, [refreshAllData]);
 
   // ── Auth ──────────────────────────────────────────────────
   const login = useCallback((username: string, password: string, rememberMe: boolean): boolean => {
@@ -197,15 +176,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     const newAdmin: AdminAccount = { ...admin, id: genId('admin'), role: 'admin' };
     setAdmins(prev => [...prev, newAdmin]);
-    // Persist to Supabase
-    db.insertAdmin(newAdmin);
+    db.insertAdmin(newAdmin).then(() => refreshAllData());
     return { success: true };
-  }, [admins]);
+  }, [admins, refreshAllData]);
 
   const deleteAdmin = useCallback((id: string) => {
     setAdmins(prev => prev.filter(a => a.id !== id));
-    db.deleteAdmin(id);
-  }, []);
+    db.deleteAdmin(id).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   const updateAdminPassword = useCallback((username: string, newPassword: string) => {
     setAdmins(prev => prev.map(a => {
@@ -224,37 +202,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return a;
     }));
-    db.updateAdminPassword(username, newPassword);
-  }, [currentAdmin]);
+    db.updateAdminPassword(username, newPassword).then(() => refreshAllData());
+  }, [currentAdmin, refreshAllData]);
 
   // ── Settings ──────────────────────────────────────────────
   const updateSettings = useCallback((updates: Partial<MosqueSettings>) => {
     setSettings(prev => {
       const next = { ...prev, ...updates };
-      db.upsertSettings(next);
+      db.upsertSettings(next).then(() => refreshAllData());
       return next;
     });
-  }, []);
+  }, [refreshAllData]);
 
   const updateInspiration = useCallback((updates: Partial<DailyInspiration>) => {
     setInspiration(prev => {
       const next = { ...prev, ...updates };
-      db.upsertInspiration(next);
+      db.upsertInspiration(next).then(() => refreshAllData());
       return next;
     });
-  }, []);
+  }, [refreshAllData]);
 
   // ── News CRUD ─────────────────────────────────────────────
   const addNews = useCallback((item: Omit<NewsItem, 'id' | 'date'>) => {
     const newItem: NewsItem = { ...item, id: genId('news'), date: new Date().toISOString() };
     setNews(prev => [newItem, ...prev]);
-    db.insertNews(newItem);
-  }, []);
+    db.insertNews(newItem).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   const updateNews = useCallback((id: string, updates: Partial<NewsItem>) => {
     setNews(prev => prev.map(n => n.id === id ? { ...n, ...updates } : n));
-    db.updateNews(id, updates);
-  }, []);
+    db.updateNews(id, updates).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   const deleteNews = useCallback((id: string) => {
     setNews(prev => {
@@ -262,37 +240,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (item?.imageBase64) item.imageBase64 = undefined;
       return prev.filter(n => n.id !== id);
     });
-    db.deleteNews(id);
-  }, []);
+    db.deleteNews(id).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   // ── Staff CRUD ────────────────────────────────────────────
   const addStaff = useCallback((member: Omit<StaffMember, 'id'>) => {
     const newMember: StaffMember = { ...member, id: genId('staff') };
     setStaff(prev => [...prev, newMember]);
-    db.insertStaff(newMember);
-  }, []);
+    db.insertStaff(newMember).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   const updateStaff = useCallback((id: string, updates: Partial<StaffMember>) => {
     setStaff(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-    db.updateStaff(id, updates);
-  }, []);
+    db.updateStaff(id, updates).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   const deleteStaff = useCallback((id: string) => {
     setStaff(prev => prev.filter(s => s.id !== id));
-    db.deleteStaff(id);
-  }, []);
+    db.deleteStaff(id).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   // ── Sohbet CRUD ───────────────────────────────────────────
   const addSohbet = useCallback((item: Omit<SohbetItem, 'id'>) => {
     const newItem: SohbetItem = { ...item, id: genId('sohbet') };
     setSohbet(prev => [newItem, ...prev]);
-    db.insertSohbet(newItem);
-  }, []);
+    db.insertSohbet(newItem).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   const updateSohbet = useCallback((id: string, updates: Partial<SohbetItem>) => {
     setSohbet(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-    db.updateSohbet(id, updates);
-  }, []);
+    db.updateSohbet(id, updates).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   const deleteSohbet = useCallback((id: string) => {
     setSohbet(prev => {
@@ -300,8 +278,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (item?.imageBase64) item.imageBase64 = undefined;
       return prev.filter(s => s.id !== id);
     });
-    db.deleteSohbet(id);
-  }, []);
+    db.deleteSohbet(id).then(() => refreshAllData());
+  }, [refreshAllData]);
 
   return (
     <AppContext.Provider value={{
