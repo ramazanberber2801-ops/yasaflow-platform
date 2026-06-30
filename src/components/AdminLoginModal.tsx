@@ -37,6 +37,13 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
             Beni Hatırla
           </label>
           <button className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium">
+            <button
+  type="button"
+  onClick={() => setShowForgot(true)}
+  className="w-full text-xs text-[#C5A880] hover:underline mt-2"
+>
+  Şifremi Unuttum?
+</button>
             {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Giriş Yap'}
           </button>
         </form>
