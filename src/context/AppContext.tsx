@@ -80,6 +80,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     iban: s.iban || '',
   });
 
+  const sendPush = async (title: string, body: string) => {
+    try {
+      await fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, body, url: '/' }),
+      });
+    } catch (e) {
+      console.error('PUSH ERROR:', e);
+    }
+  };
+
   const loadAllData = async () => {
     const client = supabase;
     if (!client) {
@@ -92,17 +104,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const [n, s, soh, insp, a, setRes] = await Promise.all([
         client
-  .from('news')
-  .select('*')
-  .order('date', { ascending: false }),
+          .from('news')
+          .select('*')
+          .order('date', { ascending: false }),
+
         client.from('staff').select('*'),
+
         client
-  .from('sohbet')
-  .select('*')
-  .gte('date', new Date().toISOString().split('T')[0])
-  .order('date', { ascending: true }),
+          .from('sohbet')
+          .select('*')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .order('date', { ascending: true }),
+
         client.from('inspiration').select('*').limit(1).maybeSingle(),
+
         client.from('admins').select('*'),
+
         client.from('settings').select('*').limit(1).maybeSingle(),
       ]);
 
@@ -162,6 +179,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
+    await sendPush('Yeni Duyuru', item.title || 'Yeni haber yayınlandı');
     await loadAllData();
   };
 
@@ -223,6 +241,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
+    await sendPush('Yeni Sohbet / Ders', item.title || 'Yeni program yayınlandı');
     await loadAllData();
   };
 
@@ -269,22 +288,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadAllData();
   };
 
-const addAdmin = async (admin: any) => {
-  const client = supabase;
-  if (!client) return;
+  const addAdmin = async (admin: any) => {
+    const client = supabase;
+    if (!client) return;
 
-  const { error } = await client
-    .from('admins')
-    .insert([admin]);
+    const { error } = await client.from('admins').insert([admin]);
 
-  if (error) {
-    console.error('ADMIN INSERT ERROR:', error);
-    alert('Admin eklenemedi: ' + error.message);
-    return;
-  }
+    if (error) {
+      console.error('ADMIN INSERT ERROR:', error);
+      alert('Admin eklenemedi: ' + error.message);
+      return;
+    }
 
-  await loadAllData();
-};
+    await loadAllData();
+  };
 
   const deleteAdmin = async (id: string) => {
     const client = supabase;
