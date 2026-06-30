@@ -276,14 +276,12 @@ export function HomePage() {
           </div>
         </div>
       </section>
-
 <InstallAppButton />
       {dailyData && (
         <section className="px-4 mt-4">
           <div className="bg-[#2D2A26] rounded-xl p-5 text-[#FAF6F0]">
             {dailyData.verse_text && (
-              <>
-                <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2 mb-2">
                   <BookOpen size={14} className="text-[#C5A880]" />
                   <h3 className="text-[#C5A880] text-[11px] font-bold uppercase">Bugünün Ayeti</h3>
                 </div>
