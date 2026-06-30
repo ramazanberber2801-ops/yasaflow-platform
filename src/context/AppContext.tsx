@@ -1,146 +1,316 @@
-import { useState, useRef, type FormEvent } from 'react';
-import {
-  X, Newspaper, Users, LogOut, Trash2, Edit3, Plus,
-  Upload, Save, ArrowLeft, ShieldCheck, Mic, Settings as SettingsIcon,
-  UserCog, Check, Eye, EyeOff
-} from 'lucide-react';
-import { useApp } from '../context/AppContext';
-import { fileToOptimizedBase64 } from '../lib/imageUtils';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
-type AdminTab = 'news' | 'sohbet' | 'staff' | 'settings' | 'admins';
-
-const inputClass = "w-full px-4 py-2.5 rounded-lg bg-white border border-[#C5A880]/20 text-sm text-[#2D2A26] placeholder-[#2D2A26]/30 focus:outline-none focus:border-[#C5A880]";
-
-/* --- YARDIMCI BİLEŞENLER --- */
-function BackButton({ onClick }: { onClick: () => void }) {
-  return <button onClick={onClick} className="flex items-center gap-1.5 text-sm text-[#2D2A26]/60 mb-4"><ArrowLeft size={16} /> Geri</button>;
+interface AppContextType {
+  news: any[];
+  staff: any[];
+  sohbet: any[];
+  settings: any;
+  inspiration: any;
+  admins: any[];
+  currentAdmin: any | null;
+  loading: boolean;
+  isAdmin: boolean;
+  isInitialized: boolean;
+  login: (u: string, p: string, r?: string) => Promise<boolean>;
+  logout: () => void;
+  addNews: (item: any) => Promise<void>;
+  updateNews: (id: string, item: any) => Promise<void>;
+  deleteNews: (id: string) => Promise<void>;
+  addStaff: (item: any) => Promise<void>;
+  updateStaff: (id: string, item: any) => Promise<void>;
+  deleteStaff: (id: string) => Promise<void>;
+  addSohbet: (item: any) => Promise<void>;
+  updateSohbet: (id: string, item: any) => Promise<void>;
+  deleteSohbet: (id: string) => Promise<void>;
+  updateSettings: (settings: any) => Promise<void>;
+  updateInspiration: (updates: any) => Promise<void>;
+  addAdmin: (admin: any) => Promise<void>;
+  deleteAdmin: (id: string) => Promise<void>;
+  updateAdminPassword: (id: string, newPassword: string) => Promise<void>;
 }
 
-function AddButton({ label, onClick }: { label: string; onClick: () => void }) {
-  return <button onClick={onClick} className="w-full mb-4 py-3 rounded-xl bg-[#C5A880] text-white font-medium flex items-center justify-center gap-2"><Plus size={18} /> {label}</button>;
-}
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
-function ActionButtons({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <button onClick={onEdit} className="w-8 h-8 rounded-lg bg-[#C5A880]/10 flex items-center justify-center"><Edit3 size={14} className="text-[#C5A880]" /></button>
-      <button onClick={onDelete} className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"><Trash2 size={14} className="text-red-500" /></button>
-    </div>
-  );
-}
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [news, setNews] = useState<any[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
+  const [sohbet, setSohbet] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>({ vippsNumber: '29816' });
+  const [inspiration, setInspiration] = useState<any>({});
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isInitialized] = useState(true);
 
-function SaveCancelButtons({ onCancel, saving }: { onCancel: () => void, saving?: boolean }) {
-  return (
-    <div className="flex gap-3">
-      <button type="button" onClick={onCancel} className="flex-1 py-3 rounded-lg bg-white border border-[#C5A880]/30 text-sm">İptal</button>
-      <button type="submit" disabled={saving} className="flex-1 py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium flex items-center justify-center gap-2">
-        <Save size={16} /> {saving ? 'Kaydediliyor...' : 'Kaydet'}
-      </button>
-    </div>
-  );
-}
+  const mapSettingsFromDb = (row: any) => ({
+    id: row.id,
+    mosqueName: row.mosque_name || '',
+    shortName: row.short_name || '',
+    vippsNumber: row.vipps_number || '',
+    address: row.address || '',
+    mapUrl: row.map_url || '',
+    phone: row.phone || '',
+    whatsappNumber: row.whatsapp_number || '',
+    bankAccount: row.bank_account || '',
+    iban: row.iban || '',
+  });
 
-function EmptyState({ text }: { text: string }) {
-  return <div className="bg-white rounded-xl p-8 text-center border-2 border-[#C5A880]/25"><p className="text-sm text-[#2D2A26]/50">{text}</p></div>;
-}
+  const mapSettingsToDb = (s: any) => ({
+    mosque_name: s.mosqueName || '',
+    short_name: s.shortName || '',
+    vipps_number: s.vippsNumber || '',
+    address: s.address || '',
+    map_url: s.mapUrl || '',
+    phone: s.phone || '',
+    whatsapp_number: s.whatsappNumber || '',
+    bank_account: s.bankAccount || '',
+    iban: s.iban || '',
+  });
 
-/* --- YÖNETİM BİLEŞENLERİ --- */
+  const loadAllData = async () => {
+    const client = supabase;
+    if (!client) {
+      setLoading(false);
+      return;
+    }
 
-function NewsManager({ items, onAdd, onUpdate, onDelete }: any) {
-  const [editing, setEditing] = useState<any | null>(null);
-  const [showForm, setShowForm] = useState(false);
+    setLoading(true);
 
-  if (showForm || editing) {
-    return <NewsForm item={editing} onAdd={onAdd} onUpdate={onUpdate} onClose={() => { setEditing(null); setShowForm(false); }} />;
-  }
+    try {
+      const [n, s, soh, insp, a, setRes] = await Promise.all([
+        client.from('news').select('*'),
+        client.from('staff').select('*'),
+        client.from('sohbet').select('*'),
+        client.from('inspiration').select('*').limit(1).maybeSingle(),
+        client.from('admins').select('*'),
+        client.from('settings').select('*').limit(1).maybeSingle(),
+      ]);
 
-  return (
-    <div className="p-4">
-      <AddButton label="Yeni Haber Ekle" onClick={() => setShowForm(true)} />
-      {items.length === 0 ? <EmptyState text="Henüz haber eklenmemiş." /> : (
-        <div className="space-y-3">
-          {items.map((item: any) => (
-            <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3">
-              {item.image_base64 && <img src={item.image_base64} className="w-16 h-16 rounded-lg object-cover" />}
-              <div className="flex-1 min-w-0">
-                <span className="text-[10px] text-[#C5A880] uppercase">{item.category}</span>
-                <h3 className="font-serif text-sm truncate">{item.title}</h3>
-                <p className="text-xs text-[#2D2A26]/50 truncate">{item.content}</p>
-              </div>
-              <ActionButtons onEdit={() => setEditing(item)} onDelete={() => { if (confirm('Silmek istiyor musunuz?')) onDelete(item.id); }} />
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
-  const [title, setTitle] = useState(item?.title || '');
-  const [content, setContent] = useState(item?.content || '');
-  const [category, setCategory] = useState(item?.category || 'Duyuru');
-  const [imageBase64, setImageBase64] = useState(item?.image_base64 || '');
-  const [isSaving, setIsSaving] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
-  const uploadImage = async (e: any) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const base64 = await fileToOptimizedBase64(file);
-      setImageBase64(base64);
+      if (n.data) setNews(n.data);
+      if (s.data) setStaff(s.data);
+      if (soh.data) setSohbet(soh.data);
+      if (insp.data) setInspiration(insp.data);
+      if (a.data) setAdmins(a.data);
+      if (setRes.data) setSettings(mapSettingsFromDb(setRes.data));
+    } catch (e) {
+      console.error('Veri yükleme hatası:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-    const data = { title, content, category, image_base64: imageBase64, date: item?.date || new Date().toISOString() };
-    if (item) await onUpdate(item.id, data);
-    else await onAdd(data);
-    onClose();
+  useEffect(() => {
+    loadAllData();
+  }, []);
+
+  const login = async (u: string, p: string): Promise<boolean> => {
+    const client = supabase;
+    if (!client) return false;
+
+    const { data, error } = await client
+      .from('admins')
+      .select('*')
+      .eq('username', u)
+      .eq('password', p)
+      .maybeSingle();
+
+    if (data && !error) {
+      setCurrentAdmin(data);
+      setIsAdmin(true);
+      return true;
+    }
+
+    return false;
+  };
+
+  const logout = () => {
+    setIsAdmin(false);
+    setCurrentAdmin(null);
+  };
+
+  const addNews = async (item: any) => {
+    const client = supabase;
+    if (!client) return;
+
+    const { error } = await client.from('news').insert([item]);
+
+    if (error) {
+      console.error('NEWS INSERT ERROR:', error);
+      alert('Haber eklenemedi: ' + error.message);
+      return;
+    }
+
+    await loadAllData();
+  };
+
+  const updateNews = async (id: string, item: any) => {
+    const client = supabase;
+    if (!client) return;
+
+    const { error } = await client.from('news').update(item).eq('id', id);
+
+    if (error) {
+      alert('Haber güncellenemedi: ' + error.message);
+      return;
+    }
+
+    await loadAllData();
+  };
+
+  const deleteNews = async (id: string) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('news').delete().eq('id', id);
+    await loadAllData();
+  };
+
+  const addStaff = async (item: any) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('staff').insert([item]);
+    await loadAllData();
+  };
+
+  const updateStaff = async (id: string, item: any) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('staff').update(item).eq('id', id);
+    await loadAllData();
+  };
+
+  const deleteStaff = async (id: string) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('staff').delete().eq('id', id);
+    await loadAllData();
+  };
+
+  const addSohbet = async (item: any) => {
+    const client = supabase;
+    if (!client) return;
+
+    const { error } = await client.from('sohbet').insert([item]);
+
+    if (error) {
+      console.error('SOHBET INSERT ERROR:', error);
+      alert('Sohbet eklenemedi: ' + error.message);
+      return;
+    }
+
+    await loadAllData();
+  };
+
+  const updateSohbet = async (id: string, item: any) => {
+    const client = supabase;
+    if (!client) return;
+
+    const { error } = await client.from('sohbet').update(item).eq('id', id);
+
+    if (error) {
+      alert('Sohbet güncellenemedi: ' + error.message);
+      return;
+    }
+
+    await loadAllData();
+  };
+
+  const deleteSohbet = async (id: string) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('sohbet').delete().eq('id', id);
+    await loadAllData();
+  };
+
+  const updateSettings = async (s: any) => {
+    setSettings(s);
+
+    const client = supabase;
+    if (!client) return;
+
+    const dbSettings = mapSettingsToDb(s);
+    const id = s.id || 1;
+
+    await client.from('settings').update(dbSettings).eq('id', id);
+    await loadAllData();
+  };
+
+  const updateInspiration = async (updates: any) => {
+    const client = supabase;
+    if (!client || !inspiration?.id) return;
+
+    await client.from('inspiration').update(updates).eq('id', inspiration.id);
+    await loadAllData();
+  };
+
+  const addAdmin = async (admin: any) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('admins').insert([admin]);
+    await loadAllData();
+  };
+
+  const deleteAdmin = async (id: string) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('admins').delete().eq('id', id);
+    await loadAllData();
+  };
+
+  const updateAdminPassword = async (id: string, newPassword: string) => {
+    const client = supabase;
+    if (!client) return;
+
+    await client.from('admins').update({ password: newPassword }).eq('id', id);
+    await loadAllData();
   };
 
   return (
-    <div className="p-4">
-      <BackButton onClick={onClose} />
-      <form onSubmit={submit} className="space-y-4">
-        <h2 className="font-serif text-xl">{item ? 'Haberi Düzenle' : 'Yeni Haber'}</h2>
-        {imageBase64 ? (
-          <div className="relative"><img src={imageBase64} className="w-full h-40 object-cover rounded-xl" /><button type="button" onClick={() => setImageBase64('')} className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-2"><Trash2 size={14}/></button></div>
-        ) : (
-          <label className="h-32 border-2 border-dashed border-[#C5A880]/30 rounded-xl flex flex-col items-center justify-center cursor-pointer"><Upload size={20}/><span className="text-xs text-[#2D2A26]/50 mt-2">Resim Seç</span><input type="file" ref={fileRef} onChange={uploadImage} className="hidden" /></label>
-        )}
-        <input className={inputClass} value={title} onChange={e => setTitle(e.target.value)} placeholder="Başlık" required />
-        <select className={inputClass} value={category} onChange={e => setCategory(e.target.value)}><option>Duyuru</option><option>Etkinlik</option><option>Eğitim</option><option>Ramazan</option></select>
-        <textarea className={`${inputClass} resize-none`} rows={6} value={content} onChange={e => setContent(e.target.value)} placeholder="İçerik" required />
-        <SaveCancelButtons onCancel={onClose} saving={isSaving} />
-      </form>
-    </div>
+    <AppContext.Provider
+      value={{
+        news,
+        staff,
+        sohbet,
+        settings,
+        inspiration,
+        admins,
+        currentAdmin,
+        loading,
+        isAdmin,
+        isInitialized,
+        login,
+        logout,
+        addNews,
+        updateNews,
+        deleteNews,
+        addStaff,
+        updateStaff,
+        deleteStaff,
+        addSohbet,
+        updateSohbet,
+        deleteSohbet,
+        updateSettings,
+        updateInspiration,
+        addAdmin,
+        deleteAdmin,
+        updateAdminPassword,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
   );
-}
+};
 
-// (Diğer Manager bileşenlerini buraya aynı yapıda ekleyebilirsiniz: SohbetManager, StaffManager, SettingsManager, AdminsManager)
-
-/* --- ANA PANEL BİLEŞENİ --- */
-
-export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { news, staff, sohbet, settings, admins, currentAdmin, logout, addNews, updateNews, deleteNews } = useApp();
-  const [tab, setTab] = useState<AdminTab>('news');
-
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-[80] bg-[#FAF6F0] flex flex-col">
-      <header className="bg-[#2D2A26] px-5 py-4 flex items-center justify-between shrink-0 shadow-md">
-         {/* Başlık ve Çıkış butonları... */}
-         <button onClick={onClose} className="text-white">Kapat</button>
-      </header>
-
-      <main className="flex-1 overflow-y-auto">
-        {tab === 'news' && <NewsManager items={news} onAdd={addNews} onUpdate={updateNews} onDelete={deleteNews} />}
-        {/* Diğer sekmeler... */}
-      </main>
-    </div>
-  );
-}
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) throw new Error('useApp, AppProvider içinde kullanılmalı');
+  return context;
+};
