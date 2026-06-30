@@ -24,14 +24,15 @@ export function ForgotPasswordModal({
 
   const findAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setError('');
 
     const client = supabase;
     if (!client) {
       setError('Sistem bağlantısı yok.');
-      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     const { data, error } = await client
       .from('admins')
@@ -41,14 +42,9 @@ export function ForgotPasswordModal({
 
     setLoading(false);
 
-    if (error || !data) {
-      setError('Kullanıcı bulunamadı.');
-      return;
-    }
-
-    if (!data.security_question) {
-      setError('Güvenlik sorusu tanımlı değil.');
-      return;
+    if (error || !data) return setError('Kullanıcı bulunamadı.');
+    if (!data.security_question || !data.security_answer) {
+      return setError('Güvenlik sorusu tanımlı değil.');
     }
 
     setAdmin(data);
@@ -59,14 +55,21 @@ export function ForgotPasswordModal({
     e.preventDefault();
     setError('');
 
-    if (answer.trim().toLowerCase() !== String(admin?.security_answer).trim().toLowerCase()) {
-      setError('Güvenlik cevabı hatalı.');
-      return;
+    if (!admin) return setError('Kullanıcı bilgisi bulunamadı.');
+
+    if (
+      answer.trim().toLowerCase() !==
+      String(admin.security_answer).trim().toLowerCase()
+    ) {
+      return setError('Cevap hatalı.');
+    }
+
+    if (newPassword.length < 6) {
+      return setError('Yeni şifre en az 6 karakter olmalıdır.');
     }
 
     if (newPassword !== confirmPassword) {
-      setError('Şifreler eşleşmiyor.');
-      return;
+      return setError('Şifreler eşleşmiyor.');
     }
 
     const client = supabase;
@@ -95,47 +98,80 @@ export function ForgotPasswordModal({
   return (
     <div className="fixed inset-0 z-[150] bg-black/70 flex items-center justify-center p-4">
       <div className="bg-[#FAF6F0] w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex justify-between mb-5">
           <h2 className="font-serif text-xl">Şifremi Sıfırla</h2>
-          <button onClick={onClose}><X size={20} /></button>
+          <button onClick={onClose}>
+            <X size={20} />
+          </button>
         </div>
 
         {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
         {step === 'username' && (
           <form onSubmit={findAdmin} className="space-y-4">
-            <input 
-              className="w-full p-3 border rounded-xl" 
-              placeholder="Kullanıcı Adı" 
-              value={username} 
-              onChange={e => setUsername(e.target.value)} 
-              required 
+            <input
+              className="w-full p-3 border rounded-xl"
+              placeholder="Kullanıcı Adı"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
             />
+
             <button className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium">
               {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Devam Et'}
             </button>
           </form>
         )}
 
-        {step === 'question' && admin && (
+        {step === 'question' && (
           <form onSubmit={resetPassword} className="space-y-4">
-            <div className="bg-white p-3 rounded-lg border">
-              <p className="text-xs text-gray-500 mb-1">Güvenlik Sorusu</p>
-              <p className="text-sm font-medium">{admin.security_question}</p>
-            </div>
-            <input className="w-full p-3 border rounded-xl" placeholder="Cevap" onChange={e => setAnswer(e.target.value)} required />
-            <input type="password" className="w-full p-3 border rounded-xl" placeholder="Yeni Şifre" onChange={e => setNewPassword(e.target.value)} required />
-            <input type="password" className="w-full p-3 border rounded-xl" placeholder="Yeni Şifre Tekrar" onChange={e => setConfirmPassword(e.target.value)} required />
-            <button className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium">
+            <p className="text-sm font-medium bg-white p-3 rounded-lg border">
+              {admin?.security_question}
+            </p>
+
+            <input
+              className="w-full p-3 border rounded-xl"
+              placeholder="Cevap"
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              required
+            />
+
+            <input
+              type="password"
+              className="w-full p-3 border rounded-xl"
+              placeholder="Yeni Şifre"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
+
+            <input
+              type="password"
+              className="w-full p-3 border rounded-xl"
+              placeholder="Tekrar"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+
+            <button className="w-full bg-[#C5A880] text-white p-3 rounded-xl">
               {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Güncelle'}
             </button>
           </form>
         )}
 
         {step === 'done' && (
-          <div className="text-center space-y-4">
-            <p className="text-sm">Şifreniz başarıyla güncellendi.</p>
-            <button onClick={onClose} className="w-full bg-[#C5A880] text-white p-3 rounded-xl">Kapat</button>
+          <div className="space-y-4">
+            <p className="text-sm text-green-700">
+              Şifreniz güncellendi. Giriş yapabilirsiniz.
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full bg-[#C5A880] text-white p-3 rounded-xl font-medium"
+            >
+              Girişe Dön
+            </button>
           </div>
         )}
       </div>
