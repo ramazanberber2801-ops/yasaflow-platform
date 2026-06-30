@@ -312,7 +312,7 @@ function SohbetForm({ item, onAdd, onUpdate, onClose }: any) {
     if (!description.trim()) return setError('Açıklama zorunludur.');
     if (!speaker.trim()) return setError('Konuşmacı zorunludur.');
 
-    const data = {
+ const data = {
   id: item?.id || `sohbet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   title,
   description,
@@ -320,6 +320,15 @@ function SohbetForm({ item, onAdd, onUpdate, onClose }: any) {
   time,
   location,
   speaker
+};
+
+if (item) {
+  await onUpdate(item.id, data);
+} else {
+  await onAdd(data);
+}
+
+onClose();
 };
 
   return (
