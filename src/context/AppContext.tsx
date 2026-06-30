@@ -269,13 +269,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadAllData();
   };
 
-  const addAdmin = async (admin: any) => {
-    const client = supabase;
-    if (!client) return;
+const addAdmin = async (admin: any) => {
+  const client = supabase;
+  if (!client) return;
 
-    await client.from('admins').insert([admin]);
-    await loadAllData();
-  };
+  const { error } = await client
+    .from('admins')
+    .insert([admin]);
+
+  if (error) {
+    console.error('ADMIN INSERT ERROR:', error);
+    alert('Admin eklenemedi: ' + error.message);
+    return;
+  }
+
+  await loadAllData();
+};
 
   const deleteAdmin = async (id: string) => {
     const client = supabase;
