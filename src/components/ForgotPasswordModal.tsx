@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -19,6 +19,17 @@ export function ForgotPasswordModal({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && initialUsername?.trim()) {
+      setUsername(initialUsername.trim());
+
+      setTimeout(() => {
+        const form = document.getElementById('forgot-password-form') as HTMLFormElement | null;
+        form?.requestSubmit();
+      }, 0);
+    }
+  }, [open, initialUsername]);
 
   if (!open) return null;
 
@@ -108,7 +119,7 @@ export function ForgotPasswordModal({
         {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
         {step === 'username' && (
-          <form onSubmit={findAdmin} className="space-y-4">
+          <form id="forgot-password-form" onSubmit={findAdmin} className="space-y-4">
             <input
               className="w-full p-3 border rounded-xl"
               placeholder="Kullanıcı Adı"
