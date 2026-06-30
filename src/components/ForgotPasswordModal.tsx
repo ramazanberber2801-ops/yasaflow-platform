@@ -4,9 +4,11 @@ import { supabase } from '../lib/supabase';
 
 export function ForgotPasswordModal({
   open,
+  initialUsername,
   onClose,
 }: {
   open: boolean;
+  initialUsername: string;
   onClose: () => void;
 }) {
   const [step, setStep] = useState<'username' | 'question' | 'done'>('username');
