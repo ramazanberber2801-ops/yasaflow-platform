@@ -523,10 +523,10 @@ function AdminsManager({ admins, onAdd, onDelete, isSuperadmin }: any) {
     if (!displayName.trim()) return setMsg('Görünen ad zorunludur.');
     if (password.length < 6) return setMsg('Şifre en az 6 karakter olmalıdır.');
 
-   await onAdd({
+await onAdd({
   id: `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   username: username.trim(),
-  displayName: displayName.trim(),
+  display_name: displayName.trim(),
   password,
   role: 'admin',
   security_question: null,
