@@ -70,10 +70,11 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
           Şifremi Unuttum?
         </button>
 
-        <ForgotPasswordModal
-          open={showForgot}
-          onClose={() => setShowForgot(false)}
-        />
+      <ForgotPasswordModal
+  open={showForgot}
+  initialUsername={username}
+  onClose={() => setShowForgot(false)}
+/>
       </div>
     </div>
   );
