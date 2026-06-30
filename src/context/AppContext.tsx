@@ -96,7 +96,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   .select('*')
   .order('date', { ascending: false }),
         client.from('staff').select('*'),
-        client.from('sohbet').select('*'),
+        client
+  .from('sohbet')
+  .select('*')
+  .gte('date', new Date().toISOString().split('T')[0])
+  .order('date', { ascending: true }),
         client.from('inspiration').select('*').limit(1).maybeSingle(),
         client.from('admins').select('*'),
         client.from('settings').select('*').limit(1).maybeSingle(),
