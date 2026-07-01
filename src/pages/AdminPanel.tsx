@@ -189,6 +189,7 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
   const [content, setContent] = useState(item?.content || '');
   const [category, setCategory] = useState(item?.category || 'Duyuru');
   const [imageBase64, setImageBase64] = useState(item?.imageBase64 || item?.image_base64 || '');
+  const [sendPush, setSendPush] = useState(item ? false : true);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -205,14 +206,15 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
     if (!title.trim()) return setError('Başlık zorunludur.');
     if (!content.trim()) return setError('İçerik zorunludur.');
 
-const data = {
-  id: item?.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  title: title.trim(),
-  content: content.trim(),
-  category,
-  image_base64: imageBase64,
-  date: item?.date || new Date().toISOString()
-};
+    const data = {
+      id: item?.id || `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title: title.trim(),
+      content: content.trim(),
+      category,
+      image_base64: imageBase64,
+      date: item?.date || new Date().toISOString(),
+      _sendPush: sendPush,
+    };
 
     if (item) await onUpdate(item.id, data);
     else await onAdd(data);
@@ -252,6 +254,15 @@ const data = {
         </select>
 
         <textarea className={`${inputClass} resize-none`} rows={6} value={content} onChange={e => setContent(e.target.value)} placeholder="İçerik" />
+
+        <label className="flex items-center gap-2 text-xs text-[#2D2A26]/70 bg-white rounded-lg border border-[#C5A880]/20 p-3">
+          <input
+            type="checkbox"
+            checked={sendPush}
+            onChange={(e) => setSendPush(e.target.checked)}
+          />
+          Bildirim Gönder
+        </label>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <SaveCancelButtons onCancel={onClose} />
@@ -305,6 +316,7 @@ function SohbetForm({ item, onAdd, onUpdate, onClose }: any) {
   const [time, setTime] = useState(item?.time || '19:00');
   const [location, setLocation] = useState(item?.location || 'Dernek Merkezi - Drammen');
   const [speaker, setSpeaker] = useState(item?.speaker || '');
+  const [sendPush, setSendPush] = useState(item ? false : true);
   const [error, setError] = useState('');
 
   const submit = async (e: FormEvent) => {
@@ -313,24 +325,22 @@ function SohbetForm({ item, onAdd, onUpdate, onClose }: any) {
     if (!description.trim()) return setError('Açıklama zorunludur.');
     if (!speaker.trim()) return setError('Konuşmacı zorunludur.');
 
- const data = {
-  id: item?.id || `sohbet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-  title,
-  description,
-  date,
-  time,
-  location,
-  speaker
-};
+    const data = {
+      id: item?.id || `sohbet-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      title,
+      description,
+      date,
+      time,
+      location,
+      speaker,
+      _sendPush: sendPush,
+    };
 
-if (item) {
-  await onUpdate(item.id, data);
-} else {
-  await onAdd(data);
-}
+    if (item) await onUpdate(item.id, data);
+    else await onAdd(data);
 
-onClose();
-};
+    onClose();
+  };
 
   return (
     <div className="p-4">
@@ -348,6 +358,15 @@ onClose();
 
         <input className={inputClass} value={location} onChange={e => setLocation(e.target.value)} placeholder="Konum" />
         <input className={inputClass} value={speaker} onChange={e => setSpeaker(e.target.value)} placeholder="Konuşmacı" />
+
+        <label className="flex items-center gap-2 text-xs text-[#2D2A26]/70 bg-white rounded-lg border border-[#C5A880]/20 p-3">
+          <input
+            type="checkbox"
+            checked={sendPush}
+            onChange={(e) => setSendPush(e.target.checked)}
+          />
+          Bildirim Gönder
+        </label>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
         <SaveCancelButtons onCancel={onClose} />
