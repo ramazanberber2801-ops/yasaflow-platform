@@ -100,11 +100,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setLoading(true);
+
     try {
       const [n, s, soh, insp, a, setRes] = await Promise.all([
         client.from('news').select('*').order('date', { ascending: false }),
         client.from('staff').select('*'),
-        client.from('sohbet').select('*').gte('date', new Date().toISOString().split('T')[0]).order('date', { ascending: true }),
+        client
+          .from('sohbet')
+          .select('*')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .order('date', { ascending: true }),
         client.from('inspiration').select('*').limit(1).maybeSingle(),
         client.from('admins').select('*'),
         client.from('settings').select('*').limit(1).maybeSingle(),
@@ -130,13 +135,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const login = async (u: string, p: string): Promise<boolean> => {
     const client = supabase;
     if (!client) return false;
-    const { data, error } = await client.from('admins').select('*').eq('username', u).eq('password', p).maybeSingle();
+
+    const { data, error } = await client
+      .from('admins')
+      .select('*')
+      .eq('username', u)
+      .eq('password', p)
+      .maybeSingle();
+
     if (data && !error) {
       setCurrentAdmin(data);
       setIsAdmin(true);
       localStorage.setItem('dtim_admin', JSON.stringify(data));
       return true;
     }
+
     return false;
   };
 
@@ -149,34 +162,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addNews = async (item: any) => {
     const client = supabase;
     if (!client) return;
+
     const shouldSendPush = item._sendPush === true;
     const cleanItem = { ...item };
     delete cleanItem._sendPush;
 
     const { error } = await client.from('news').insert([cleanItem]);
+
     if (error) {
       console.error('NEWS INSERT ERROR:', error);
       alert('Haber eklenemedi: ' + error.message);
       return;
     }
-    if (shouldSendPush) await sendPush('Yeni Duyuru', cleanItem.title || 'Yeni haber yayınlandı');
+
+    if (shouldSendPush) {
+      await sendPush('Yeni Duyuru', cleanItem.title || 'Yeni haber yayınlandı');
+    }
+
     await loadAllData();
   };
 
   const updateNews = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
+
     const { error } = await client.from('news').update(item).eq('id', id);
+
     if (error) {
       alert('Haber güncellenemedi: ' + error.message);
       return;
     }
+
     await loadAllData();
   };
 
   const deleteNews = async (id: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('news').delete().eq('id', id);
     await loadAllData();
   };
@@ -184,6 +207,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addStaff = async (item: any) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('staff').insert([item]);
     await loadAllData();
   };
@@ -191,6 +215,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateStaff = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('staff').update(item).eq('id', id);
     await loadAllData();
   };
@@ -198,6 +223,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteStaff = async (id: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('staff').delete().eq('id', id);
     await loadAllData();
   };
@@ -205,50 +231,65 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addSohbet = async (item: any) => {
     const client = supabase;
     if (!client) return;
+
     const shouldSendPush = item._sendPush === true;
     const cleanItem = { ...item };
     delete cleanItem._sendPush;
 
     const { error } = await client.from('sohbet').insert([cleanItem]);
+
     if (error) {
       console.error('SOHBET INSERT ERROR:', error);
       alert('Sohbet eklenemedi: ' + error.message);
       return;
     }
-    if (shouldSendPush) await sendPush('Yeni Sohbet / Ders', cleanItem.title || 'Yeni program yayınlandı');
+
+    if (shouldSendPush) {
+      await sendPush('Yeni Sohbet / Ders', cleanItem.title || 'Yeni program yayınlandı');
+    }
+
     await loadAllData();
   };
 
   const updateSohbet = async (id: string, item: any) => {
     const client = supabase;
     if (!client) return;
+
     const { error } = await client.from('sohbet').update(item).eq('id', id);
+
     if (error) {
       alert('Sohbet güncellenemedi: ' + error.message);
       return;
     }
+
     await loadAllData();
   };
 
   const deleteSohbet = async (id: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('sohbet').delete().eq('id', id);
     await loadAllData();
   };
 
   const updateSettings = async (s: any) => {
     setSettings(s);
+
     const client = supabase;
     if (!client) return;
+
     const dbSettings = mapSettingsToDb(s);
-    await client.from('settings').update(dbSettings).eq('id', s.id || 1);
+    const id = s.id || 1;
+
+    await client.from('settings').update(dbSettings).eq('id', id);
     await loadAllData();
   };
 
   const updateInspiration = async (updates: any) => {
     const client = supabase;
     if (!client || !inspiration?.id) return;
+
     await client.from('inspiration').update(updates).eq('id', inspiration.id);
     await loadAllData();
   };
@@ -256,18 +297,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addAdmin = async (admin: any) => {
     const client = supabase;
     if (!client) return;
+
     const { error } = await client.from('admins').insert([admin]);
+
     if (error) {
       console.error('ADMIN INSERT ERROR:', error);
       alert('Admin eklenemedi: ' + error.message);
       return;
     }
+
     await loadAllData();
   };
 
   const deleteAdmin = async (id: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('admins').delete().eq('id', id);
     await loadAllData();
   };
@@ -275,6 +320,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateAdminPassword = async (id: string, newPassword: string) => {
     const client = supabase;
     if (!client) return;
+
     await client.from('admins').update({ password: newPassword }).eq('id', id);
     await loadAllData();
   };
@@ -282,10 +328,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
-        news, staff, sohbet, settings, inspiration, admins, currentAdmin,
-        loading, isAdmin, isInitialized, login, logout, addNews, updateNews,
-        deleteNews, addStaff, updateStaff, deleteStaff, addSohbet, updateSohbet,
-        deleteSohbet, updateSettings, updateInspiration, addAdmin, deleteAdmin,
+        news,
+        staff,
+        sohbet,
+        settings,
+        inspiration,
+        admins,
+        currentAdmin,
+        loading,
+        isAdmin,
+        isInitialized,
+        login,
+        logout,
+        addNews,
+        updateNews,
+        deleteNews,
+        addStaff,
+        updateStaff,
+        deleteStaff,
+        addSohbet,
+        updateSohbet,
+        deleteSohbet,
+        updateSettings,
+        updateInspiration,
+        addAdmin,
+        deleteAdmin,
         updateAdminPassword,
       }}
     >
