@@ -337,12 +337,12 @@ export function HomePage() {
               <h2 className="font-serif text-lg text-[#C5A880]">RAMAZAN</h2>
             </div>
 
-           <p className="text-base text-[#C5A880] font-medium mt-1 mb-3">
+           <p className="text-sm text-[#C5A880] font-medium mt-1 mb-3">
               Ramazan'ın {ramadanDay}. Günü
             </p>
 
             <div className="bg-[#FAF6F0]/10 rounded-2xl p-6 text-center mb-5 border border-[#C5A880]/20">
-              <p className="text-sm text-[#C5A880] mb-2">
+              <p className="text-sm text-[#C5A880] mb-4">
   {getIftarCountdown().includes('Hayırlı')
     ? 'İftar Vakti'
     : 'İftara Kalan'}
@@ -377,8 +377,7 @@ export function HomePage() {
             {todaySohbet.length > 0 && (
             <button
   onClick={() => setSelectedSohbet(todaySohbet[0])}
-  className="w-full mt-4 py-4 rounded-xl bg-[#D4B483] text-white font-semibold flex items-center justify-center gap-2"
->
+ className="w-full mt-4 py-4 rounded-xl bg-[#D4B483] text-white font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98]"
   <Calendar size={18} />
   <span>Bugünkü Program</span>
   <ChevronRight size={18} />
