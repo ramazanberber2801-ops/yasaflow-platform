@@ -18,7 +18,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
     news, staff, sohbet, settings, admins, currentAdmin, logout,
     addNews, updateNews, deleteNews,
     addStaff, updateStaff, deleteStaff,
-    addSohbet, updateSohbet, deleteSohbet,
+    addSohbet, updateSohbet, deleteSohbet, sendSohbetReminder,
     updateSettings, addAdmin, deleteAdmin, updateAdminPassword
   } = useApp();
 
@@ -87,7 +87,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
 
       <main className="flex-1 overflow-y-auto">
         {tab === 'news' && <NewsManager items={news} onAdd={addNews} onUpdate={updateNews} onDelete={deleteNews} />}
-        {tab === 'sohbet' && <SohbetManager items={sohbet} onAdd={addSohbet} onUpdate={updateSohbet} onDelete={deleteSohbet} />}
+        {tab === 'sohbet' && <SohbetManager items={sohbet} onAdd={addSohbet} onUpdate={updateSohbet} onDelete={deleteSohbet} onReminder={sendSohbetReminder} />}
         {tab === 'staff' && <StaffManager items={staff} onAdd={addStaff} onUpdate={updateStaff} onDelete={deleteStaff} />}
         {tab === 'settings' && <SettingsManager settings={settings} onUpdate={updateSettings} currentAdmin={currentAdmin} onUpdatePassword={updateAdminPassword} />}
         {tab === 'admins' && <AdminsManager admins={admins} onAdd={addAdmin} onDelete={deleteAdmin} isSuperadmin={isSuperadmin} />}
@@ -273,7 +273,7 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
 
 /* SOHBET */
 
-function SohbetManager({ items, onAdd, onUpdate, onDelete }: any) {
+function SohbetManager({ items, onAdd, onUpdate, onDelete, onReminder }: any) {
   const [editing, setEditing] = useState<any | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -293,14 +293,39 @@ function SohbetManager({ items, onAdd, onUpdate, onDelete }: any) {
                 <span className="text-[9px] text-[#C5A880]">{item.date}</span>
                 <span className="font-serif text-sm">{item.time}</span>
               </div>
+
               <div className="flex-1 min-w-0">
                 <h3 className="font-serif text-sm truncate">{item.title}</h3>
                 <p className="text-xs text-[#2D2A26]/50 truncate">{item.description}</p>
                 <p className="text-[10px] text-[#2D2A26]/40">{item.speaker}</p>
               </div>
-              <ActionButtons onEdit={() => setEditing(item)} onDelete={() => {
-                if (confirm('Bu programı silmek istiyor musunuz?')) onDelete(item.id);
-              }} />
+
+              <div className="flex flex-col gap-1.5">
+                <button
+                  onClick={() => {
+                    if (confirm('Bu program için hatırlatma gönderilsin mi?')) {
+                      onReminder(item);
+                    }
+                  }}
+                  className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-sm"
+                  title="Hatırlatma Gönder"
+                >
+                  🔔
+                </button>
+
+                <button onClick={() => setEditing(item)} className="w-8 h-8 rounded-lg bg-[#C5A880]/10 flex items-center justify-center">
+                  <Edit3 size={14} className="text-[#C5A880]" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (confirm('Bu programı silmek istiyor musunuz?')) onDelete(item.id);
+                  }}
+                  className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center"
+                >
+                  <Trash2 size={14} className="text-red-500" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
