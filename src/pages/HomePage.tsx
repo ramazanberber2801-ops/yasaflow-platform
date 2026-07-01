@@ -29,8 +29,8 @@ import { InstallAppButton } from '../components/InstallAppButton';
 import { supabase } from '../lib/supabase';
 import type { NewsItem, SohbetItem } from '../types';
 
-type NewsWithDbImage = NewsItem & { image_base64?: string };
-type SohbetWithDbImage = SohbetItem & { image_base64?: string };
+type NewsWithDbImage = NewsItem & { image_base_64?: string };
+type SohbetWithDbImage = SohbetItem & { image_base_64?: string };
 
 export function HomePage() {
   const { news, sohbet, settings } = useApp();
@@ -327,13 +327,15 @@ export function HomePage() {
               <h2 className="font-serif text-lg text-[#C5A880]">RAMAZAN</h2>
             </div>
 
-            <p className="text-sm text-[#FAF6F0]/70 mb-3">
+            <p className="text-base text-[#C5A880] font-medium mb-5">
               Ramazan'ın {ramadanDay}. Günü
             </p>
 
             <div className="bg-[#FAF6F0]/10 rounded-xl p-4 text-center mb-4">
-              <p className="text-xs text-[#FAF6F0]/60 mb-1">İftara kalan</p>
-              <p className="font-serif text-2xl text-[#C5A880] tabular-nums">
+              <p className="text-sm text-[#C5A880] mb-2">
+                İftara Kalan
+              </p>
+              <p className="font-serif text-4xl font-bold text-[#C5A880] tabular-nums tracking-wide">
                 {getIftarCountdown()}
               </p>
             </div>
@@ -499,3 +501,4 @@ export function HomePage() {
     </div>
   );
 }
+
