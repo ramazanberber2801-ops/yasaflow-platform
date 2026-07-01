@@ -143,7 +143,9 @@ export function HomePage() {
     target.setHours(h, m, 0, 0);
 
     const diff = target.getTime() - now.getTime();
-    if (diff <= 0) return 'İftar vakti girdi';
+    if (diff <= 0) {
+  return '🌙 Hayırlı İftarlar';
+}
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff / (1000 * 60)) % 60);
@@ -339,7 +341,7 @@ export function HomePage() {
               Ramazan'ın {ramadanDay}. Günü
             </p>
 
-            <div className="bg-[#FAF6F0]/10 rounded-xl p-4 text-center mb-4">
+            <div className="bg-[#FAF6F0]/10 rounded-2xl p-6 text-center mb-5 border border-[#C5A880]/20">
               <p className="text-sm text-[#C5A880] mb-2">
                 İftara Kalan
               </p>
@@ -349,12 +351,12 @@ export function HomePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#FAF6F0]/10 rounded-lg p-3 text-center">
+              <div className="bg-[#FAF6F0]/10 rounded-xl p-4 text-center border border-[#C5A880]/20">
                 <p className="text-xs text-[#FAF6F0]/60">İmsak</p>
                 <p className="font-semibold text-sm">{imsakTime}</p>
               </div>
 
-              <div className="bg-[#FAF6F0]/10 rounded-lg p-3 text-center">
+              <div className="bg-[#FAF6F0]/10 rounded-xl p-4 text-center border border-[#C5A880]/20">
                 <p className="text-xs text-[#FAF6F0]/60">İftar</p>
                 <p className="font-semibold text-sm">{iftarTime}</p>
               </div>
