@@ -113,17 +113,24 @@ export function HomePage() {
   const featuredNews = (news || []).slice(0, 6) as NewsWithDbImage[];
   const upcomingSohbet = (sohbet || []).slice(0, 4) as SohbetWithDbImage[];
 
-  const todayKey = now.toISOString().split('T')[0];
+  const parseLocalDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   const todaySohbet = (sohbet || []).filter((item: any) => item.date === todayKey);
 
   const ramadanStart = settings?.ramadanStartDate
-    ? new Date(settings.ramadanStartDate)
+    ? parseLocalDate(settings.ramadanStartDate)
     : null;
 
   const ramadanDay =
     settings?.ramadanEnabled && ramadanStart
-      ? Math.floor((new Date(todayKey).getTime() - ramadanStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      ? Math.floor((todayDate.getTime() - ramadanStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
       : null;
 
   const showRamadanCard =
