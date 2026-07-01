@@ -104,6 +104,46 @@ export function HomePage() {
   const featuredNews = (news || []).slice(0, 6) as NewsWithDbImage[];
   const upcomingSohbet = (sohbet || []).slice(0, 4) as SohbetWithDbImage[];
 
+  const todayKey = now.toISOString().split('T')[0];
+
+  const todaySohbet = (sohbet || []).filter((item: any) => item.date === todayKey);
+
+  const ramadanStart = settings?.ramadanStartDate
+    ? new Date(settings.ramadanStartDate)
+    : null;
+
+  const ramadanDay =
+    settings?.ramadanEnabled && ramadanStart
+      ? Math.floor((new Date(todayKey).getTime() - ramadanStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : null;
+
+  const showRamadanCard =
+    settings?.ramadanEnabled &&
+    ramadanDay !== null &&
+    ramadanDay >= 1 &&
+    ramadanDay <= 30 &&
+    prayerData;
+
+  const iftarTime = prayerData?.timings?.Maghrib || '';
+  const imsakTime = prayerData?.timings?.Fajr || '';
+
+  const getIftarCountdown = () => {
+    if (!iftarTime) return '';
+
+    const [h, m] = iftarTime.split(':').map(Number);
+    const target = new Date(now);
+    target.setHours(h, m, 0, 0);
+
+    const diff = target.getTime() - now.getTime();
+    if (diff <= 0) return 'İftar vakti girdi';
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
   return (
     <div className="min-h-screen pb-28">
       <header className="bg-[#2D2A26] text-[#FAF6F0] sticky top-0 z-30 shadow-md">
@@ -277,7 +317,50 @@ export function HomePage() {
         </div>
       </section>
 
-     <InstallAppButton />
+      <InstallAppButton />
+
+      {showRamadanCard && (
+        <section className="px-4 mt-4">
+          <div className="bg-[#2D2A26] rounded-xl p-5 text-[#FAF6F0] border-2 border-[#C5A880]/30">
+            <div className="flex items-center gap-2 mb-3">
+              <Moon size={18} className="text-[#C5A880]" />
+              <h2 className="font-serif text-lg text-[#C5A880]">RAMAZAN</h2>
+            </div>
+
+            <p className="text-sm text-[#FAF6F0]/70 mb-3">
+              Ramazan'ın {ramadanDay}. Günü
+            </p>
+
+            <div className="bg-[#FAF6F0]/10 rounded-xl p-4 text-center mb-4">
+              <p className="text-xs text-[#FAF6F0]/60 mb-1">İftara kalan</p>
+              <p className="font-serif text-2xl text-[#C5A880] tabular-nums">
+                {getIftarCountdown()}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-[#FAF6F0]/10 rounded-lg p-3 text-center">
+                <p className="text-xs text-[#FAF6F0]/60">İmsak</p>
+                <p className="font-semibold text-sm">{imsakTime}</p>
+              </div>
+
+              <div className="bg-[#FAF6F0]/10 rounded-lg p-3 text-center">
+                <p className="text-xs text-[#FAF6F0]/60">İftar</p>
+                <p className="font-semibold text-sm">{iftarTime}</p>
+              </div>
+            </div>
+
+            {todaySohbet.length > 0 && (
+              <button
+                onClick={() => setSelectedSohbet(todaySohbet[0])}
+                className="mt-4 w-full py-3 rounded-lg bg-[#C5A880] text-white text-sm font-medium"
+              >
+                Bugünkü Program →
+              </button>
+            )}
+          </div>
+        </section>
+      )}
 
       {dailyData && (
         <section className="px-4 mt-4">
