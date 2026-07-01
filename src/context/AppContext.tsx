@@ -186,11 +186,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const client = supabase;
     if (!client) return;
 
-    const { error } = await client.from('news').update(item).eq('id', id);
+    const shouldSendPush = item._sendPush === true;
+    const cleanItem = { ...item };
+    delete cleanItem._sendPush;
+
+    const { error } = await client.from('news').update(cleanItem).eq('id', id);
 
     if (error) {
       alert('Haber güncellenemedi: ' + error.message);
       return;
+    }
+
+    if (shouldSendPush) {
+      await sendPush('Duyuru Güncellendi', cleanItem.title || 'Bir duyuru güncellendi');
     }
 
     await loadAllData();
@@ -255,11 +263,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const client = supabase;
     if (!client) return;
 
-    const { error } = await client.from('sohbet').update(item).eq('id', id);
+    const shouldSendPush = item._sendPush === true;
+    const cleanItem = { ...item };
+    delete cleanItem._sendPush;
+
+    const { error } = await client.from('sohbet').update(cleanItem).eq('id', id);
 
     if (error) {
       alert('Sohbet güncellenemedi: ' + error.message);
       return;
+    }
+
+    if (shouldSendPush) {
+      await sendPush('Sohbet / Ders Güncellendi', cleanItem.title || 'Bir program güncellendi');
     }
 
     await loadAllData();
