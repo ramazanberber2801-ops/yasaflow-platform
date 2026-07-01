@@ -128,17 +128,32 @@ export function HomePage() {
     ? parseLocalDate(settings.ramadanStartDate)
     : null;
 
+  const ramadanEnd = settings?.ramadanEndDate
+    ? parseLocalDate(settings.ramadanEndDate)
+    : null;
+
   const ramadanDay =
     settings?.ramadanEnabled && ramadanStart
       ? Math.floor((todayDate.getTime() - ramadanStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
       : null;
 
+  const bayramDate = ramadanEnd
+    ? new Date(ramadanEnd.getFullYear(), ramadanEnd.getMonth(), ramadanEnd.getDate() + 1)
+    : null;
+
   const showRamadanCard =
     settings?.ramadanEnabled &&
+    ramadanStart &&
+    ramadanEnd &&
+    todayDate >= ramadanStart &&
+    todayDate <= ramadanEnd &&
     ramadanDay !== null &&
-    ramadanDay >= 1 &&
-    ramadanDay <= 30 &&
     prayerData;
+
+  const showBayramCard =
+    settings?.ramadanEnabled &&
+    bayramDate &&
+    todayDate.getTime() === bayramDate.getTime();
 
   const iftarTime = prayerData?.timings?.Maghrib || '';
   const imsakTime = prayerData?.timings?.Fajr || '';
@@ -388,6 +403,29 @@ export function HomePage() {
                 <ChevronRight size={18} />
               </button>
             )}
+          </div>
+        </section>
+      )}
+
+      {showBayramCard && (
+        <section className="px-4 mt-4">
+          <div className="bg-[#2D2A26] rounded-xl p-6 text-center text-[#FAF6F0] border-2 border-[#C5A880]/30">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <Moon size={20} className="text-[#C5A880]" />
+              <h2 className="font-serif text-xl text-[#C5A880]">BAYRAM</h2>
+            </div>
+
+            <p className="font-serif text-3xl font-bold text-[#C5A880] leading-tight mb-3">
+              Bayramınız
+              <br />
+              Mübarek Olsun
+            </p>
+
+            <p className="text-sm text-[#FAF6F0]/70 leading-relaxed">
+              Allah ibadetlerinizi kabul eylesin.
+              <br />
+              Sağlık, huzur ve bereket dolu bayramlar dileriz.
+            </p>
           </div>
         </section>
       )}
