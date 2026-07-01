@@ -1,10 +1,76 @@
-import { X, Calendar, Clock, MapPin, User, MessageCircle } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, User, MessageCircle, Bell } from 'lucide-react';
 import type { SohbetItem } from '../types';
 import { WhatsAppButton } from './WhatsAppButton';
 
 interface SohbetModalProps {
   item: (SohbetItem & { image_base64?: string }) | null;
   onClose: () => void;
+}
+
+function escapeIcsText(value: string | undefined) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+
+function toIcsDate(date: string, time: string, addMinutes = 0) {
+  const [hours = '0', minutes = '0'] = (time || '00:00').split(':');
+  const start = new Date(date);
+  start.setHours(Number(hours), Number(minutes) + addMinutes, 0, 0);
+  return start.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+function downloadCalendarFile(item: SohbetItem, withReminder: boolean) {
+  const start = toIcsDate(item.date, item.time);
+  const end = toIcsDate(item.date, item.time, 120);
+  const title = escapeIcsText(item.title);
+  const description = escapeIcsText(`${item.description}\n\nKonuşmacı: ${item.speaker || ''}`);
+  const location = escapeIcsText(item.location);
+  const fileName = `${item.title || 'sohbet-ders'}`
+    .toLowerCase()
+    .replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ]+/gi, '-')
+    .replace(/^-+|-+$/g, '') || 'sohbet-ders';
+
+  const alarm = withReminder
+    ? [
+        'BEGIN:VALARM',
+        'TRIGGER:-PT1H',
+        'ACTION:DISPLAY',
+        `DESCRIPTION:${title} programı 1 saat içinde başlayacak.`,
+        'END:VALARM',
+      ]
+    : [];
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//DTIM//Sohbet Ders//NO',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${item.id || Date.now()}@dtim.no`,
+    `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${title}`,
+    `DESCRIPTION:${description}`,
+    `LOCATION:${location}`,
+    ...alarm,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].join('\r\n');
+
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${fileName}${withReminder ? '-hatirlatma' : ''}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 export function SohbetModal({ item, onClose }: SohbetModalProps) {
@@ -84,6 +150,30 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
                 {item.description}
               </p>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => downloadCalendarFile(item, false)}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white border-2 border-[#C5A880]/30 text-[#2D2A26] font-semibold text-sm hover:bg-[#C5A880]/10 transition-colors shadow-sm"
+              >
+                <Calendar size={18} className="text-[#C5A880]" />
+                Takvime Ekle
+              </button>
+
+              <button
+                type="button"
+                onClick={() => downloadCalendarFile(item, true)}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#C5A880] text-white font-semibold text-sm hover:bg-[#B89A6F] transition-colors shadow-sm"
+              >
+                <Bell size={18} />
+                Hatırlat Bana
+              </button>
+            </div>
+
+            <p className="text-[10px] text-[#2D2A26]/45 text-center mb-4">
+              Hatırlatma seçeneği takvime 1 saat önce alarm ekler.
+            </p>
 
             <WhatsAppButton
               message={`Merhaba Hocam, "${item.title}" programına katılmak istiyorum. Detayları öğrenebilir miyim?`}
