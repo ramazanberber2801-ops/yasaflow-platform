@@ -7,6 +7,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { fileToOptimizedBase64 } from '../lib/imageUtils';
 import { supabase } from '../lib/supabase';
+import { trackEvent } from '../lib/analytics';
 
 type AdminTab =
   | 'news'
@@ -815,6 +816,8 @@ function PushManager() {
       });
 
       if (!res.ok) throw new Error('Push gönderilemedi');
+
+      trackEvent('push_sent');
 
       alert('Bildirim gönderildi.');
       setTitle('');
