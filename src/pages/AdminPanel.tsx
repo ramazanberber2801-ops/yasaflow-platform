@@ -571,37 +571,37 @@ function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }:
         )}
 
         {isSuperadmin && (
-  <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
-    <h3 className="font-serif text-lg">🐑 Kurban Bayramı Modülü</h3>
+          <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+            <h3 className="font-serif text-lg">🐑 Kurban Bayramı Modülü</h3>
 
-    <label className="flex items-center gap-2 text-sm text-[#2D2A26]/70">
-      <input
-        type="checkbox"
-        checked={!!form.kurbanEnabled}
-        onChange={(e) => change('kurbanEnabled', e.target.checked)}
-      />
-      Kurban Bayramı Aktif
-    </label>
+            <label className="flex items-center gap-2 text-sm text-[#2D2A26]/70">
+              <input
+                type="checkbox"
+                checked={!!form.kurbanEnabled}
+                onChange={(e) => change('kurbanEnabled', e.target.checked)}
+              />
+              Kurban Bayramı Aktif
+            </label>
 
-    <p className="text-xs text-[#2D2A26]/60">
-      İlk Kurban Bayramı Günü
-    </p>
+            <p className="text-xs text-[#2D2A26]/60">
+              İlk Kurban Bayramı Günü
+            </p>
 
-    <input
-      type="date"
-      className={inputClass}
-      value={form.kurbanStartDate || ''}
-      onChange={(e) => {
-  change('kurbanStartDate', e.target.value);
-  change('kurbanEnabled', !!e.target.value);
-}}
-    />
+            <input
+              type="date"
+              className={inputClass}
+              value={form.kurbanStartDate || ''}
+              onChange={(e) => {
+                change('kurbanStartDate', e.target.value);
+                change('kurbanEnabled', !!e.target.value);
+              }}
+            />
 
-    <p className="text-xs text-[#2D2A26]/50">
-      App bu tarihten itibaren 4 gün boyunca Kurban Bayramı kartını gösterir.
-    </p>
-  </div>
-)}
+            <p className="text-xs text-[#2D2A26]/50">
+              App bu tarihten itibaren 4 gün boyunca Kurban Bayramı kartını gösterir.
+            </p>
+          </div>
+        )}
 
         {saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Kaydedildi.</p>}
 
@@ -867,6 +867,73 @@ function PushManager() {
 }
 
 function StatsManager() {
+  const [stats, setStats] = useState({
+    today: 0,
+    last7: 0,
+    last30: 0,
+    total: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadStats = async () => {
+      const client = supabase;
+      if (!client) {
+        setLoading(false);
+        return;
+      }
+
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(now.getDate() - 7);
+
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+
+      try {
+        // Toplam sayıyı tüm verileri çekmeden sadece sunucu tarafında saydırıyoruz
+        const { count: totalCount, error: totalError } = await client
+          .from('analytics_events')
+          .select('*', { count: 'exact', head: true });
+
+        if (totalError) throw totalError;
+
+        // Sadece son 30 günün datasını çekerek ciddi bir veri ve hız tasarrufu sağlıyoruz
+        const { data, error } = await client
+          .from('analytics_events')
+          .select('created_at')
+          .gte('created_at', thirtyDaysAgo.toISOString());
+
+        if (error) throw error;
+
+        const dates = (data || []).map((event: any) => new Date(event.created_at));
+
+        setStats({
+          today: dates.filter((date) => date >= todayStart).length,
+          last7: dates.filter((date) => date >= sevenDaysAgo).length,
+          last30: dates.length,
+          total: totalCount || 0,
+        });
+      } catch (err) {
+        console.error("İstatistik yüklenirken hata oluştu:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadStats();
+  }, []);
+
+  const cards = [
+    { label: 'Bugün', value: stats.today, icon: '📅' },
+    { label: 'Son 7 Gün', value: stats.last7, icon: '📅' },
+    { label: 'Son 30 Gün', value: stats.last30, icon: '📅' },
+    { label: 'Toplam', value: stats.total, icon: '🏆' },
+  ];
+
   return (
     <div className="p-4 space-y-4">
       <div className="flex items-center gap-2">
@@ -874,11 +941,24 @@ function StatsManager() {
         <h2 className="font-serif text-xl text-[#2D2A26]">İstatistik</h2>
       </div>
 
-      <div className="bg-white rounded-xl p-5 border-2 border-[#C5A880]/25 shadow-sm">
-        <p className="text-sm text-[#2D2A26]/60 leading-relaxed">
-          Statistik-fanen er klar. Neste steg er å hente data fra analytics_events og vise tallene her.
-        </p>
-      </div>
+      {loading ? (
+        <div className="bg-white rounded-xl p-5 border-2 border-[#C5A880]/25 shadow-sm">
+          <p className="text-sm text-[#2D2A26]/60">İstatistik yükleniyor...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          {cards.map((card) => (
+            <div
+              key={card.label}
+              className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 shadow-sm"
+            >
+              <p className="text-xs text-[#2D2A26]/50">{card.icon} {card.label}</p>
+              <p className="font-serif text-2xl text-[#2D2A26] mt-1">{card.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
