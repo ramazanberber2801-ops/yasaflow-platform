@@ -175,7 +175,7 @@ function NewsManager({ items, onAdd, onUpdate, onDelete }: any) {
       {items.length === 0 ? <EmptyState text="Henüz haber eklenmemiş." /> : (
         <div className="space-y-3">
           {items.map((item: any) => {
-            const imageSrc = item.imageBase64 || item.image_base_64;
+            const imageSrc = item.imageBase64 || item.;
             return (
               <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3">
                 {imageSrc && <img src={imageSrc} className="w-16 h-16 rounded-lg object-cover" />}
@@ -200,7 +200,7 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
   const [title, setTitle] = useState(item?.title || '');
   const [content, setContent] = useState(item?.content || '');
   const [category, setCategory] = useState(item?.category || 'Duyuru');
-  const [imageBase64, setImageBase64] = useState(item?.imageBase64 || item?.image_base_64 || '');
+  const [imageBase64, setImageBase64] = useState(item?.imageBase64 || item?. || '');
   const [sendPush, setSendPush] = useState(item ? false : true);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -223,7 +223,7 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
       title: title.trim(),
       content: content.trim(),
       category,
-      image_base_64: imageBase64,
+      image_base64: imageBase64,
       date: item?.date || new Date().toISOString(),
       _sendPush: sendPush,
     };
