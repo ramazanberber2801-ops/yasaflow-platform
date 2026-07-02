@@ -56,43 +56,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAdmin, setIsAdmin] = useState(!!savedAdmin);
   const [isInitialized] = useState(true);
 
- const mapSettingsFromDb = (row: any) => ({
-  id: row.id,
-  mosqueName: row.mosque_name || '',
-  shortName: row.short_name || '',
-  vippsNumber: row.vipps_number || '',
-  address: row.address || '',
-  mapUrl: row.map_url || '',
-  phone: row.phone || '',
-  whatsappNumber: row.whatsapp_number || '',
-  bankAccount: row.bank_account || '',
-  iban: row.iban || '',
-  ramadanEnabled: row.ramadan_enabled || false,
-  ramadanStartDate: row.ramadan_start_date || '',
-  ramadanEndDate: row.ramadan_end_date || '',
+  const mapSettingsFromDb = (row: any) => ({
+    id: row.id,
+    mosqueName: row.mosque_name || '',
+    shortName: row.short_name || '',
+    vippsNumber: row.vipps_number || '',
+    address: row.address || '',
+    mapUrl: row.map_url || '',
+    phone: row.phone || '',
+    whatsappNumber: row.whatsapp_number || '',
+    bankAccount: row.bank_account || '',
+    iban: row.iban || '',
+    ramadanEnabled: row.ramadan_enabled || false,
+    ramadanStartDate: row.ramadan_start_date || '',
+    ramadanEndDate: row.ramadan_end_date || '',
+    kurbanEnabled: row.kurban_enabled || false,
+    kurbanStartDate: row.kurban_start_date || '',
+  });
 
-  kurbanEnabled: row.kurban_enabled || false,
-  kurbanStartDate: row.kurban_start_date || '',
-});
-
-const mapSettingsToDb = (s: any) => ({
-  mosque_name: s.mosqueName || '',
-  short_name: s.shortName || '',
-  vipps_number: s.vippsNumber || '',
-  address: s.address || '',
-  map_url: s.mapUrl || '',
-  phone: s.phone || '',
-  whatsapp_number: s.whatsappNumber || '',
-  bank_account: s.bankAccount || '',
-  iban: s.iban || '',
-
-  ramadan_enabled: !!s.ramadanEnabled,
-  ramadan_start_date: s.ramadanStartDate || null,
-  ramadan_end_date: s.ramadanEndDate || null,
-
-  kurban_enabled: !!s.kurbanEnabled,
-  kurban_start_date: s.kurbanStartDate || null,
-});
+  const mapSettingsToDb = (s: any) => ({
+    mosque_name: s.mosqueName || '',
+    short_name: s.shortName || '',
+    vipps_number: s.vippsNumber || '',
+    address: s.address || '',
+    map_url: s.mapUrl || '',
+    phone: s.phone || '',
+    whatsapp_number: s.whatsappNumber || '',
+    bank_account: s.bankAccount || '',
+    iban: s.iban || '',
+    ramadan_enabled: !!s.ramadanEnabled,
+    ramadan_start_date: s.ramadanStartDate || null,
+    ramadan_end_date: s.ramadanEndDate || null,
+    kurban_enabled: !!s.kurbanEnabled,
+    kurban_start_date: s.kurbanStartDate || null,
+  });
 
   const sendPush = async (title: string, body: string) => {
     try {

@@ -155,6 +155,21 @@ export function HomePage() {
     bayramDate &&
     todayDate.getTime() === bayramDate.getTime();
 
+  const kurbanStart = settings?.kurbanStartDate
+    ? parseLocalDate(settings.kurbanStartDate)
+    : null;
+
+  const kurbanDay =
+    settings?.kurbanEnabled && kurbanStart
+      ? Math.floor((todayDate.getTime() - kurbanStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : null;
+
+  const showKurbanCard =
+    settings?.kurbanEnabled &&
+    kurbanDay !== null &&
+    kurbanDay >= 1 &&
+    kurbanDay <= 4;
+
   const iftarTime = prayerData?.timings?.Maghrib || '';
   const imsakTime = prayerData?.timings?.Fajr || '';
 
@@ -426,6 +441,43 @@ export function HomePage() {
               <br />
               Sağlık, huzur ve bereket dolu bayramlar dileriz.
             </p>
+          </div>
+        </section>
+      )}
+
+      {showKurbanCard && (
+        <section className="px-4 mt-4">
+          <div className="bg-[#2D2A26] rounded-xl p-6 text-center text-[#FAF6F0] border-2 border-[#C5A880]/30">
+            <h2 className="font-serif text-xl text-[#C5A880] mb-3">
+              KURBAN BAYRAMI
+            </h2>
+
+            <p className="text-sm text-[#C5A880] font-medium mb-3">
+              Kurban Bayramı'nın {kurbanDay}. Günü
+            </p>
+
+            <p className="font-serif text-3xl font-bold text-[#C5A880] leading-tight mb-4">
+              Kurban Bayramınız
+              <br />
+              Mübarek Olsun
+            </p>
+
+            <p className="text-sm text-[#FAF6F0]/70 leading-relaxed">
+              Allah kurbanlarınızı kabul eylesin.
+              <br />
+              Sağlık, huzur ve bereket dolu bayramlar dileriz.
+            </p>
+
+            {todaySohbet.length > 0 && (
+              <button
+                onClick={() => setSelectedSohbet(todaySohbet[0])}
+                className="w-full mt-5 py-4 rounded-xl bg-[#D4B483] text-white font-semibold flex items-center justify-center gap-2 transition active:scale-[0.98]"
+              >
+                <Calendar size={18} />
+                <span>Bugünkü Bayram Programı</span>
+                <ChevronRight size={18} />
+              </button>
+            )}
           </div>
         </section>
       )}
