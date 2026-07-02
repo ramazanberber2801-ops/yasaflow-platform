@@ -167,15 +167,15 @@ function NewsManager({ items, onAdd, onUpdate, onDelete }: any) {
   if (showForm || editing) {
     return <NewsForm item={editing} onAdd={onAdd} onUpdate={onUpdate} onClose={() => { setEditing(null); setShowForm(false); }} />;
   }
-return (
+
+  return (
     <div className="p-4">
       <AddButton label="Yeni Haber Ekle" onClick={() => setShowForm(true)} />
 
       {items.length === 0 ? <EmptyState text="Henüz haber eklenmemiş." /> : (
         <div className="space-y-3">
           {items.map((item: any) => {
-            // 178. Satır Düzeltildi: "item." yerine "item.image" yazıldı
-            const imageSrc = item.imageBase64 || item.image;
+            const imageSrc = item.imageBase64 || item.image_base64;
             return (
               <div key={item.id} className="bg-white rounded-xl p-3 border-2 border-[#C5A880]/25 flex gap-3">
                 {imageSrc && <img src={imageSrc} className="w-16 h-16 rounded-lg object-cover" />}
@@ -200,8 +200,7 @@ function NewsForm({ item, onAdd, onUpdate, onClose }: any) {
   const [title, setTitle] = useState(item?.title || '');
   const [content, setContent] = useState(item?.content || '');
   const [category, setCategory] = useState(item?.category || 'Duyuru');
-  // 203. Satır Düzeltildi: "item?." yerine "item?.image" yazıldı
-  const [imageBase64, setImageBase64] = useState(item?.imageBase64 || item?.image || '');
+  const [imageBase64, setImageBase64] = useState(item?.imageBase64 || item?.image_base64 || '');
   const [sendPush, setSendPush] = useState(item ? false : true);
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -926,7 +925,7 @@ function StatsManager() {
             {cards.map((card) => (
               <div key={card.key} className="bg-[#FAF6F0] rounded-xl p-3">
                 <div className="text-xl mb-1">{card.icon}</div>
-                <p className="text-[11px] text-[#2D2A26]/50 Regel">{card.label}</p>
+                <p className="text-[11px] text-[#2D2A26]/50">{card.label}</p>
                 <p className="font-serif text-xl text-[#2D2A26]">
                   {countForRange(card.key, section.days)}
                 </p>
