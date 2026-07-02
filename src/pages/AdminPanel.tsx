@@ -566,6 +566,36 @@ function SettingsManager({ settings, onUpdate, currentAdmin, onUpdatePassword }:
           </div>
         )}
 
+        {isSuperadmin && (
+  <div className="bg-white rounded-xl p-4 border-2 border-[#C5A880]/25 space-y-3">
+    <h3 className="font-serif text-lg">🐑 Kurban Bayramı Modülü</h3>
+
+    <label className="flex items-center gap-2 text-sm text-[#2D2A26]/70">
+      <input
+        type="checkbox"
+        checked={!!form.kurbanEnabled}
+        onChange={(e) => change('kurbanEnabled', e.target.checked)}
+      />
+      Kurban Bayramı Aktif
+    </label>
+
+    <p className="text-xs text-[#2D2A26]/60">
+      İlk Kurban Bayramı Günü
+    </p>
+
+    <input
+      type="date"
+      className={inputClass}
+      value={form.kurbanStartDate || ''}
+      onChange={(e) => change('kurbanStartDate', e.target.value)}
+    />
+
+    <p className="text-xs text-[#2D2A26]/50">
+      App bu tarihten itibaren 4 gün boyunca Kurban Bayramı kartını gösterir.
+    </p>
+  </div>
+)}
+
         {saved && <p className="text-sm text-green-700 flex items-center gap-2"><Check size={16} /> Kaydedildi.</p>}
 
         <button type="submit" className="w-full py-3 rounded-lg bg-[#C5A880] text-white font-medium flex items-center justify-center gap-2">
