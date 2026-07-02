@@ -13,6 +13,7 @@ import { useApp } from '../context/AppContext';
 import { WhatsAppButton } from '../components/WhatsAppButton';
 import { subscribeToPushNotifications } from '../lib/pushNotifications';
 import { supabase } from '../lib/supabase';
+import { trackEvent } from '../lib/analytics';
 
 export function ContactPage() {
   const { staff, settings } = useApp();
@@ -108,6 +109,7 @@ export function ContactPage() {
               href={settings.mapUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent('contact_click', 'map', 'Finn frem')}
               className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#2D2A26] text-[#FAF6F0] font-semibold text-sm hover:bg-[#3D3A36] transition-colors shadow-md active:scale-[0.98]"
             >
               <Navigation size={17} />
@@ -174,13 +176,15 @@ export function ContactPage() {
               Dini konularda aklınıza takılan sorular mı var? İmamımız, dini sorularınızı
               WhatsApp üzerinden yanıtlamaktan mutluluk duyacaktır. Sorularınızı çekinmeden iletebilirsiniz.
             </p>
-            <WhatsAppButton
-              message="Merhaba Hocam, dini bir konuda sorum olacaktı."
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#25D366] text-white font-semibold text-sm hover:bg-[#1FB855] transition-colors shadow-sm"
-            >
-              <MessageCircle size={18} fill="white" />
-              WHATSAPP İLE SOR
-            </WhatsAppButton>
+            <div onClick={() => trackEvent('contact_click', 'whatsapp', 'Hocaya Sor')}>
+              <WhatsAppButton
+                message="Merhaba Hocam, dini bir konuda sorum olacaktı."
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#25D366] text-white font-semibold text-sm hover:bg-[#1FB855] transition-colors shadow-sm"
+              >
+                <MessageCircle size={18} fill="white" />
+                WHATSAPP İLE SOR
+              </WhatsAppButton>
+            </div>
           </div>
         </div>
       </section>
@@ -217,6 +221,7 @@ export function ContactPage() {
                   {member.phone && (
                     <a
                       href={`tel:${member.phone.replace(/\s/g, '')}`}
+                      onClick={() => trackEvent('contact_click', member.id, member.name)}
                       className="text-xs text-[#2D2A26]/50 hover:text-[#C5A880] transition-colors flex items-center gap-1 mt-1"
                     >
                       <Phone size={11} />
@@ -228,6 +233,7 @@ export function ContactPage() {
                 {member.phone && (
                   <a
                     href={`tel:${member.phone.replace(/\s/g, '')}`}
+                    onClick={() => trackEvent('contact_click', member.id, member.name)}
                     className="w-10 h-10 rounded-full bg-[#C5A880]/15 hover:bg-[#C5A880]/25 flex items-center justify-center transition-colors shrink-0"
                     aria-label={`${member.name} ara`}
                   >
