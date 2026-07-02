@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { trackEvent } from '../lib/analytics';
 
 interface AppContextType {
   news: any[];
@@ -93,11 +94,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const sendPush = async (title: string, body: string) => {
     try {
-      await fetch('/api/send-push', {
+      const res = await fetch('/api/send-push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, body, url: '/' }),
       });
+
+      if (res.ok) {
+        await trackEvent('push_sent', '', title);
+      }
     } catch (e) {
       console.error('PUSH ERROR:', e);
     }
