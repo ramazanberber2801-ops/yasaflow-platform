@@ -73,6 +73,36 @@ function downloadCalendarFile(item: SohbetItem, withReminder: boolean) {
   URL.revokeObjectURL(url);
 }
 
+function openGoogleCalendar(item: SohbetItem, withReminder: boolean) {
+  const start = toIcsDate(item.date, item.time).replace(/Z$/, 'Z');
+  const end = toIcsDate(item.date, item.time, 120).replace(/Z$/, 'Z');
+
+  const details = `${item.description || ''}\n\nKonuşmacı: ${item.speaker || ''}${
+    withReminder ? '\n\nHatırlatma: Google Takvim üzerinden alarm ekleyebilirsiniz.' : ''
+  }`;
+
+  const url =
+    'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    `&text=${encodeURIComponent(item.title || 'Sohbet / Ders')}` +
+    `&dates=${encodeURIComponent(`${start}/${end}`)}` +
+    `&details=${encodeURIComponent(details)}` +
+    `&location=${encodeURIComponent(item.location || '')}`;
+
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
+
+function addToCalendar(item: SohbetItem, withReminder: boolean) {
+  if (isAndroid()) {
+    openGoogleCalendar(item, withReminder);
+  } else {
+    downloadCalendarFile(item, withReminder);
+  }
+}
+
 export function SohbetModal({ item, onClose }: SohbetModalProps) {
   if (!item) return null;
 
@@ -154,7 +184,7 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <button
                 type="button"
-                onClick={() => downloadCalendarFile(item, false)}
+                onClick={() => addToCalendar(item, false)}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-white border-2 border-[#C5A880]/30 text-[#2D2A26] font-semibold text-sm hover:bg-[#C5A880]/10 transition-colors shadow-sm"
               >
                 <Calendar size={18} className="text-[#C5A880]" />
@@ -163,7 +193,7 @@ export function SohbetModal({ item, onClose }: SohbetModalProps) {
 
               <button
                 type="button"
-                onClick={() => downloadCalendarFile(item, true)}
+                onClick={() => addToCalendar(item, true)}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#C5A880] text-white font-semibold text-sm hover:bg-[#B89A6F] transition-colors shadow-sm"
               >
                 <Bell size={18} />
