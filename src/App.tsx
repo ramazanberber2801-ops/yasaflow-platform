@@ -9,8 +9,16 @@ import { InstallGuideModal } from './components/InstallGuideModal';
 import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
 import { SecuritySetupModal } from './components/SecuritySetupModal';
+import { supabase } from './lib/supabase';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
+
+type PushMessage = {
+  id: string;
+  title: string;
+  body: string;
+  expires_at: string;
+};
 
 function AppContent() {
   const { isAdmin, isInitialized, currentAdmin } = useApp();
@@ -22,6 +30,7 @@ function AppContent() {
   const [showSecuritySetup, setShowSecuritySetup] = useState(false);
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
+  const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
 
   // Enhetlig logikk for å styre panel- og sikkerhetsmodal-visning
   useEffect(() => {
@@ -38,6 +47,36 @@ function AppContent() {
       setShowPanel(false);
     }
   }, [isInitialized, isAdmin, currentAdmin]);
+
+  useEffect(() => {
+    if (!isInitialized || !supabase) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const messageId = params.get('push_message');
+
+    if (!messageId) return;
+
+    async function loadPushMessage() {
+      const { data, error } = await supabase
+        .from('push_messages')
+        .select('id, title, body, expires_at')
+        .eq('id', messageId)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (error) {
+        console.error('Kunne ikke hente push-melding:', error);
+        return;
+      }
+
+      if (data) {
+        setPushMessage(data);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    loadPushMessage();
+  }, [isInitialized]);
 
   const handleSecretTrigger = () => {
     if (isAdmin) {
@@ -109,6 +148,32 @@ function AppContent() {
           setShowPanel(true);
         }}
       />
+
+      {pushMessage && (
+        <div className="fixed inset-0 z-[100] bg-black/45 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-5 w-full max-w-sm border-2 border-[#C5A880]/25 shadow-xl">
+            <div className="w-12 h-12 rounded-full bg-[#C5A880]/15 flex items-center justify-center mb-3">
+              <span className="text-xl">🔔</span>
+            </div>
+
+            <h2 className="font-serif text-xl text-[#2D2A26] mb-2">
+              {pushMessage.title}
+            </h2>
+
+            <p className="text-sm text-[#2D2A26]/70 whitespace-pre-wrap mb-5">
+              {pushMessage.body}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setPushMessage(null)}
+              className="w-full py-3 rounded-xl bg-[#C5A880] text-white text-sm font-medium"
+            >
+              Kapat
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
