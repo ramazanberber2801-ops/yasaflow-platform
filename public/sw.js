@@ -1,5 +1,5 @@
 // DTIM Service Worker — offline caching + push notifications
-const CACHE_NAME = 'dtim-v14';
+const CACHE_NAME = 'dtim-v15';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
