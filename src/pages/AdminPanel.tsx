@@ -800,39 +800,63 @@ function PushManager() {
   const [sending, setSending] = useState(false);
 
   const sendPush = async () => {
-    if (!title.trim() || !message.trim()) {
-      alert('Başlık ve mesaj zorunludur.');
-      return;
+  if (!title.trim() || !message.trim()) {
+    alert('Başlık ve mesaj zorunludur.');
+    return;
+  }
+
+  if (!supabase) {
+    alert('Supabase bağlantısı yok.');
+    return;
+  }
+
+  setSending(true);
+
+  try {
+    const cleanTitle = title.trim();
+    const cleanMessage = message.trim();
+
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+
+    const { data: savedMessage, error: saveError } = await supabase
+      .from('push_messages')
+      .insert({
+        title: cleanTitle,
+        body: cleanMessage,
+        expires_at: expiresAt,
+      })
+      .select('id')
+      .single();
+
+    if (saveError) {
+      throw saveError;
     }
 
-    setSending(true);
+    const res = await fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: cleanTitle,
+        body: cleanMessage,
+        url: `/?push_message=${savedMessage.id}`,
+        message_id: savedMessage.id,
+      }),
+    });
 
-    try {
-      const res = await fetch('/api/send-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          body: message.trim(),
-          url: '/',
-        }),
-      });
+    if (!res.ok) throw new Error('Push gönderilemedi');
 
-      if (!res.ok) throw new Error('Push gönderilemedi');
+    trackEvent('push_sent');
 
-      trackEvent('push_sent');
-
-      alert('Bildirim gönderildi.');
-      setTitle('');
-      setMessage('');
-    } catch (err) {
-      console.error(err);
-      alert('Bildirim gönderilirken hata oluştu.');
-    } finally {
-      setSending(false);
-    }
-  };
-
+    alert('Bildirim gönderildi.');
+    setTitle('');
+    setMessage('');
+  } catch (err) {
+    console.error(err);
+    alert('Bildirim gönderilirken hata oluştu.');
+  } finally {
+    setSending(false);
+  }
+};
   return (
     <div className="p-4 space-y-4">
       <h2 className="font-serif text-xl">Toplu Bildirim Gönder</h2>
