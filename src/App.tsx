@@ -49,34 +49,30 @@ function AppContent() {
   }, [isInitialized, isAdmin, currentAdmin]);
 
   useEffect(() => {
-    const client = supabase;
-    if (!isInitialized || !client) return;
+    if (!isInitialized || !supabase) return;
 
     const params = new URLSearchParams(window.location.search);
     const messageId = params.get('push_message');
 
     if (!messageId) return;
 
-    async function loadPushMessage() {
-      const { data, error } = await client
-        .from('push_messages')
-        .select('id, title, body, expires_at')
-        .eq('id', messageId)
-        .gt('expires_at', new Date().toISOString())
-        .single();
+    supabase
+      .from('push_messages')
+      .select('id, title, body, expires_at')
+      .eq('id', messageId)
+      .gt('expires_at', new Date().toISOString())
+      .single()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Kunne ikke hente push-melding:', error);
+          return;
+        }
 
-      if (error) {
-        console.error('Kunne ikke hente push-melding:', error);
-        return;
-      }
-
-      if (data) {
-        setPushMessage(data);
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    }
-
-    loadPushMessage();
+        if (data) {
+          setPushMessage(data);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      });
   }, [isInitialized]);
 
   const handleSecretTrigger = () => {
