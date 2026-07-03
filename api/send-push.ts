@@ -38,11 +38,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ error: error.message });
   }
 
-  const payload = JSON.stringify({
-    title,
-    body,
-    url: url || '/',
-  });
+const payload = JSON.stringify({
+  title,
+  body,
+  url: url || '/',
+  message_id: message_id || null,
+});
 
   let sent = 0;
   let failed = 0;
