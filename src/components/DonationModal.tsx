@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { HandCoins, X, Copy, Check, Sparkles, ExternalLink } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
+import { useApp } from '../context/AppContext';
 
 interface DonationModalProps {
   open: boolean;
@@ -8,8 +9,9 @@ interface DonationModalProps {
 }
 
 export function DonationModal({ open, onClose }: DonationModalProps) {
+  const { settings } = useApp();
   const [copied, setCopied] = useState(false);
-  const vippsNumber = '29816';
+  const vippsNumber = settings?.vippsNumber || '29816';
 
   if (!open) return null;
 
@@ -19,7 +21,7 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const vippsDeepLink = `https://www.vipps.no/i-vipps/vipps-nummer/?number=${vippsNumber}`;
+  const vippsDeepLink = `https://www.vipps.no/i-vipps/vipps-nummer/?number=${encodeURIComponent(vippsNumber)}`;
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
