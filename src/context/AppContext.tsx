@@ -67,7 +67,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [news, setNews] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
   const [sohbet, setSohbet] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>({ vippsNumber: '29816', vippsButtonEnabled: true, vippsDonationUrl: '' });
+  const [settings, setSettings] = useState<any>({
+    vippsNumber: '29816',
+    vippsButtonEnabled: true,
+    vippsDonationUrl: '',
+    brandingPrimaryColor: '#C5A880',
+    brandingSecondaryColor: '#2D2A26',
+    brandingBackgroundColor: '#FAF6F0',
+    brandingTextColor: '#2D2A26',
+  });
   const [inspiration, setInspiration] = useState<any>({});
   const [admins, setAdmins] = useState<any[]>([]);
   const [currentAdmin, setCurrentAdmin] = useState<any | null>(savedAdmin);
@@ -82,6 +90,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     vippsNumber: row.vipps_number || '',
     vippsButtonEnabled: row.vipps_button_enabled !== false,
     vippsDonationUrl: row.vipps_donation_url || '',
+    brandingPrimaryColor: row.branding_primary_color || '#C5A880',
+    brandingSecondaryColor: row.branding_secondary_color || '#2D2A26',
+    brandingBackgroundColor: row.branding_background_color || '#FAF6F0',
+    brandingTextColor: row.branding_text_color || '#2D2A26',
     address: row.address || '',
     mapUrl: row.map_url || '',
     phone: row.phone || '',
@@ -101,6 +113,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     vipps_number: s.vippsNumber || '',
     vipps_button_enabled: s.vippsButtonEnabled !== false,
     vipps_donation_url: s.vippsDonationUrl || null,
+    branding_primary_color: s.brandingPrimaryColor || null,
+    branding_secondary_color: s.brandingSecondaryColor || null,
+    branding_background_color: s.brandingBackgroundColor || null,
+    branding_text_color: s.brandingTextColor || null,
     address: s.address || '',
     map_url: s.mapUrl || '',
     phone: s.phone || '',
