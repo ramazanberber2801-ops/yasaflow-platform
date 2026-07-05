@@ -32,7 +32,7 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && <p className="text-red-500 text-xs">{error}</p>}
-            <input className="w-full p-3 border rounded-xl" placeholder="Kullanıcı Adı" onChange={e => setUsername(e.target.value)} required />
+            <input className="w-full p-3 border rounded-xl" placeholder="Brukernavn" onChange={e => setUsername(e.target.value)} required />
             <input type="password" className="w-full p-3 border rounded-xl" placeholder="Şifre" onChange={e => setPassword(e.target.value)} required />
             <button type="submit" className="w-full bg-[#C5A880] text-white p-3 rounded-xl">{loading ? <Loader2 className="animate-spin mx-auto" /> : 'Giriş Yap'}</button>
           </form>
