@@ -34,22 +34,28 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const ADMIN_SAFE_COLUMNS = 'id, username, display_name, role, auth_user_id';
+
 const sanitizeAdmin = (admin: any | null) => {
   if (!admin) return null;
 
-  const { password: _password, security_answer: securityAnswer, ...safeAdmin } = admin;
+  const {
+    password: _password,
+    security_question: _securityQuestion,
+    security_answer: _securityAnswer,
+    ...safeAdmin
+  } = admin;
 
   return {
     ...safeAdmin,
-    // Keep compatibility with the existing security setup check without storing the real answer.
-    security_answer: securityAnswer ? '__set__' : '',
+    displayName: safeAdmin.displayName || safeAdmin.display_name || safeAdmin.username,
   };
 };
 
 const getSavedAdmin = () => {
   try {
     const saved = localStorage.getItem('dtim_admin');
-    return saved ? JSON.parse(saved) : null;
+    return saved ? sanitizeAdmin(JSON.parse(saved)) : null;
   } catch {
     return null;
   }
@@ -146,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           .gte('date', new Date().toISOString().split('T')[0])
           .order('date', { ascending: true }),
         client.from('inspiration').select('*').limit(1).maybeSingle(),
-        client.from('admins').select('*'),
+        client.from('admins').select(ADMIN_SAFE_COLUMNS),
         client.from('settings').select('*').limit(1).maybeSingle(),
       ]);
 
@@ -183,7 +189,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const { data: adminData, error: adminError } = await client
       .from('admins')
-      .select('*')
+      .select(ADMIN_SAFE_COLUMNS)
       .eq('auth_user_id', authData.user.id)
       .maybeSingle();
 
@@ -342,7 +348,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const client = supabase;
     if (!client) return;
 
-    const { error } = await client.from('admins').insert([admin]);
+    const cleanAdmin = {
+      id: admin.id,
+      username: admin.username,
+      display_name: admin.display_name || admin.displayName || admin.username,
+      role: admin.role || 'admin',
+      auth_user_id: admin.auth_user_id || null,
+    };
+
+    const { error } = await client.from('admins').insert([cleanAdmin]);
 
     if (error) {
       alert('Admin eklenemedi: ' + error.message);
@@ -359,11 +373,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await loadAllData();
   };
 
-  const updateAdminPassword = async (id: string, newPass: string) => {
+  const updateAdminPassword = async (_id: string, newPass: string) => {
     const client = supabase;
     if (!client) return;
-    await client.from('admins').update({ ['pass' + 'word']: newPass }).eq('id', id);
-    await loadAllData();
+
+    const { error } = await client.auth.updateUser({ password: newPass });
+
+    if (error) {
+      alert('Şifre güncellenemedi: ' + error.message);
+      return;
+    }
   };
 
   return (
