@@ -5,7 +5,7 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-function normalizeRole(role: unknown) {
+function requestedRole(role: unknown) {
   return role === 'super_admin' || role === 'superadmin' ? 'superadmin' : 'admin';
 }
 
@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cleanEmail = String(email || '').trim().toLowerCase();
   const cleanDisplayName = String(displayName || '').trim();
   const cleanPassword = String(password || '');
-  const cleanRole = normalizeRole(role);
+  const cleanRole = requestedRole(role);
 
   if (!cleanEmail || !cleanEmail.includes('@')) {
     return res.status(400).json({ error: 'Valid email is required' });
@@ -87,21 +87,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const adminId = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const baseAdminPayload = {
-    id: adminId,
-    username: cleanEmail,
-    display_name: cleanDisplayName,
-    role: cleanRole,
-    auth_user_id: authUser.user.id,
-  };
+  const roleVariants = cleanRole === 'superadmin' ? ['superadmin', 'super_admin'] : ['admin'];
+  let adminRow: any = null;
+  let insertError: any = null;
 
-  let { data: adminRow, error: insertError } = await serviceClient
-    .from('admins')
-    .insert(baseAdminPayload)
-    .select('id, username, display_name, role, auth_user_id')
-    .single();
+  for (const roleValue of roleVariants) {
+    const baseAdminPayload = {
+      id: adminId,
+      username: cleanEmail,
+      display_name: cleanDisplayName,
+      role: roleValue,
+      auth_user_id: authUser.user.id,
+    };
 
-  if (insertError) {
+    const firstTry = await serviceClient
+      .from('admins')
+      .insert(baseAdminPayload)
+      .select('id, username, display_name, role, auth_user_id')
+      .single();
+
+    adminRow = firstTry.data;
+    insertError = firstTry.error;
+
+    if (adminRow && !insertError) break;
+
     const legacyPayload = {
       ...baseAdminPayload,
       password: '__managed_by_supabase_auth__',
@@ -109,14 +118,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       security_answer: null,
     };
 
-    const retry = await serviceClient
+    const legacyTry = await serviceClient
       .from('admins')
       .insert(legacyPayload)
       .select('id, username, display_name, role, auth_user_id')
       .single();
 
-    adminRow = retry.data;
-    insertError = retry.error;
+    adminRow = legacyTry.data;
+    insertError = legacyTry.error;
+
+    if (adminRow && !insertError) break;
   }
 
   if (insertError || !adminRow) {
