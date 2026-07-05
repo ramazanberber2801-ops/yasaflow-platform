@@ -34,6 +34,18 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const sanitizeAdmin = (admin: any | null) => {
+  if (!admin) return null;
+
+  const { password: _password, security_answer: securityAnswer, ...safeAdmin } = admin;
+
+  return {
+    ...safeAdmin,
+    // Keep compatibility with the existing security setup check without storing the real answer.
+    security_answer: securityAnswer ? '__set__' : '',
+  };
+};
+
 const getSavedAdmin = () => {
   try {
     const saved = localStorage.getItem('dtim_admin');
@@ -142,7 +154,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (s.data) setStaff(s.data);
       if (soh.data) setSohbet(soh.data);
       if (insp.data) setInspiration(insp.data);
-      if (a.data) setAdmins(a.data);
+      if (a.data) setAdmins(a.data.map(sanitizeAdmin));
       if (setRes.data) setSettings(mapSettingsFromDb(setRes.data));
     } catch (e) {
       console.error('Veri yükleme hatası:', e);
@@ -155,28 +167,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     loadAllData();
   }, []);
 
-  const login = async (u: string, p: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     const client = supabase;
     if (!client) return false;
 
-    const { data, error } = await client
-      .from('admins')
-      .select('*')
-      .eq('username', u)
-      .eq('pass' + 'word', p)
-      .maybeSingle();
+    const { data: authData, error: authError } = await client.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
 
-    if (data && !error) {
-      setCurrentAdmin(data);
-      setIsAdmin(true);
-      localStorage.setItem('dtim_admin', JSON.stringify(data));
-      return true;
+    if (authError || !authData.user) {
+      console.error('Admin auth login failed:', authError);
+      return false;
     }
 
-    return false;
+    const { data: adminData, error: adminError } = await client
+      .from('admins')
+      .select('*')
+      .eq('auth_user_id', authData.user.id)
+      .maybeSingle();
+
+    if (!adminData || adminError) {
+      console.error('Admin profile not found:', adminError);
+      await client.auth.signOut();
+      return false;
+    }
+
+    const safeAdmin = sanitizeAdmin(adminData);
+    setCurrentAdmin(safeAdmin);
+    setIsAdmin(true);
+    localStorage.setItem('dtim_admin', JSON.stringify(safeAdmin));
+    return true;
   };
 
   const logout = () => {
+    if (supabase) void supabase.auth.signOut();
     localStorage.removeItem('dtim_admin');
     setIsAdmin(false);
     setCurrentAdmin(null);
