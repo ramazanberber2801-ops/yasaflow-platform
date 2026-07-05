@@ -63,46 +63,69 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[#2D2A26]/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 backdrop-blur-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary) 60%, transparent)' }} onClick={onClose} />
 
-      <div className="relative w-full max-w-md bg-[#FAF6F0] rounded-2xl shadow-2xl border-2 border-[#C5A880]/30 overflow-hidden">
-        <div className="relative px-6 py-8 bg-gradient-to-br from-[#C5A880] to-[#B8935A]">
+      <div
+        className="relative w-full max-w-md rounded-2xl shadow-2xl border-2 overflow-hidden"
+        style={{
+          backgroundColor: 'var(--brand-background)',
+          color: 'var(--brand-text)',
+          borderColor: 'color-mix(in srgb, var(--brand-primary) 30%, transparent)',
+        }}
+      >
+        <div
+          className="relative px-6 py-8"
+          style={{
+            background: 'linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 80%, #000 20%))',
+            color: 'var(--brand-primary-text)',
+          }}
+        >
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
             aria-label="Kapat"
           >
-            <X size={18} className="text-white" />
+            <X size={18} />
           </button>
 
           <div className="flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-3">
-              <HandCoins size={28} className="text-white" />
+              <HandCoins size={28} />
             </div>
 
-            <h2 className="font-serif text-2xl text-white">Camiye Destek Ol</h2>
-            <p className="text-sm text-white/80 mt-1">
+            <h2 className="font-serif text-2xl">Camiye Destek Ol</h2>
+            <p className="text-sm opacity-80 mt-1">
               Bağışlarınız camimizin faaliyetlerine katkı sağlar
             </p>
           </div>
         </div>
 
         <div className="p-6">
-          <div className="bg-white rounded-xl p-5 border-2 border-[#C5A880]/30 shadow-sm text-center">
+          <div
+            className="bg-white rounded-xl p-5 border-2 shadow-sm text-center"
+            style={{ borderColor: 'color-mix(in srgb, var(--brand-primary) 30%, transparent)' }}
+          >
             <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="w-10 h-10 rounded-full bg-[#C5A880]/15 flex items-center justify-center">
-                <HandCoins size={18} className="text-[#C5A880]" />
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: 'color-mix(in srgb, var(--brand-primary) 15%, transparent)' }}
+              >
+                <HandCoins size={18} style={{ color: 'var(--brand-primary)' }} />
               </div>
-              <span className="text-sm font-semibold text-[#2D2A26]">Vipps</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--brand-text)' }}>Vipps</span>
             </div>
 
-            <p className="font-serif text-3xl text-[#2D2A26] tabular-nums mb-4">
+            <p className="font-serif text-3xl tabular-nums mb-4" style={{ color: 'var(--brand-text)' }}>
               {vippsNumber}
             </p>
 
             <button
               onClick={copyToClipboard}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#C5A880]/10 hover:bg-[#C5A880]/20 text-[#C5A880] text-xs font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-colors"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--brand-primary) 10%, transparent)',
+                color: 'var(--brand-primary)',
+              }}
             >
               {copied ? (
                 <>
@@ -121,7 +144,8 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
               type="button"
               onClick={openVipps}
               disabled={openingVipps}
-              className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F25405] text-white font-semibold text-sm hover:from-[#FF7B45] hover:to-[#F26415] transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
+              className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl font-semibold text-sm transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
+              style={{ backgroundColor: 'var(--brand-secondary)', color: 'var(--brand-secondary-text)' }}
             >
               {openingVipps ? <Loader2 size={18} className="animate-spin" /> : <ExternalLink size={18} />}
               {openingVipps ? 'Vipps Açılıyor...' : 'Vipps Uygulamasında Aç'}
@@ -129,13 +153,19 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
           )}
 
           {!vippsButtonEnabled && (
-            <p className="mt-4 text-center text-xs text-[#2D2A26]/50">
+            <p className="mt-4 text-center text-xs opacity-50">
               Vipps uygulaması bağlantısı kapalı. Bağış için numarayı kopyalayabilirsiniz.
             </p>
           )}
 
-          <div className="flex items-start gap-2 text-xs text-[#2D2A26]/50 bg-[#C5A880]/5 rounded-lg p-3 mt-4">
-            <Sparkles size={14} className="text-[#C5A880] shrink-0 mt-0.5" />
+          <div
+            className="flex items-start gap-2 text-xs rounded-lg p-3 mt-4"
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--brand-primary) 5%, transparent)',
+              color: 'color-mix(in srgb, var(--brand-text) 60%, transparent)',
+            }}
+          >
+            <Sparkles size={14} className="shrink-0 mt-0.5" style={{ color: 'var(--brand-primary)' }} />
             <span>
               Tüm bağışlar derneğimizin faaliyetleri, etkinlikleri ve sosyal yardım çalışmalarında kullanılır. Allah kabul etsin.
             </span>
