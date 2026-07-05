@@ -173,14 +173,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let authUserId = '';
   let createdNewAuthUser = false;
 
+  const temporaryMetadata = {
+    display_name: cleanDisplayName,
+    role: cleanRole,
+    must_change_password: true,
+  };
+
   const { data: authUser, error: createUserError } = await serviceClient.auth.admin.createUser({
     email: cleanEmail,
     password: cleanPassword,
     email_confirm: true,
-    user_metadata: {
-      display_name: cleanDisplayName,
-      role: cleanRole,
-    },
+    user_metadata: temporaryMetadata,
   });
 
   if (authUser?.user && !createUserError) {
@@ -197,10 +200,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     await serviceClient.auth.admin.updateUserById(authUserId, {
       password: cleanPassword,
-      user_metadata: {
-        display_name: cleanDisplayName,
-        role: cleanRole,
-      },
+      user_metadata: temporaryMetadata,
     });
   }
 
