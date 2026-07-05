@@ -6,7 +6,7 @@ const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function normalizeRole(role: unknown) {
-  return role === 'super_admin' || role === 'superadmin' ? 'super_admin' : 'admin';
+  return role === 'super_admin' || role === 'superadmin' ? 'superadmin' : 'admin';
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
