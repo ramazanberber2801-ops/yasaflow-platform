@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { HandCoins, X, Copy, Check, Sparkles, ExternalLink } from 'lucide-react';
+import { HandCoins, X, Copy, Check, Sparkles, ExternalLink, Loader2 } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
 import { useApp } from '../context/AppContext';
 
@@ -11,6 +11,7 @@ interface DonationModalProps {
 export function DonationModal({ open, onClose }: DonationModalProps) {
   const { settings } = useApp();
   const [copied, setCopied] = useState(false);
+  const [openingVipps, setOpeningVipps] = useState(false);
   const vippsNumber = settings?.vippsNumber || '29816';
 
   if (!open) return null;
@@ -21,7 +22,31 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const vippsDeepLink = `https://www.vipps.no/i-vipps/vipps-nummer/?number=${encodeURIComponent(vippsNumber)}`;
+  const fallbackVippsUrl = `https://www.vipps.no/i-vipps/vipps-nummer/?number=${encodeURIComponent(vippsNumber)}`;
+
+  const openVipps = async () => {
+    setOpeningVipps(true);
+
+    try {
+      const res = await fetch('/api/vipps-donation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vippsNumber }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      const targetUrl = data.url || data.fallbackUrl || fallbackVippsUrl;
+
+      await trackEvent('donation_click', vippsNumber, data.source || 'Vipps');
+      window.location.href = targetUrl;
+    } catch (error) {
+      console.error('Vipps åpning feilet:', error);
+      await trackEvent('donation_click', vippsNumber, 'Vipps fallback');
+      window.location.href = fallbackVippsUrl;
+    } finally {
+      setOpeningVipps(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
@@ -78,16 +103,15 @@ export function DonationModal({ open, onClose }: DonationModalProps) {
             </button>
           </div>
 
-          <a
-            href={vippsDeepLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => trackEvent('donation_click', vippsNumber, 'Vipps')}
-            className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F25405] text-white font-semibold text-sm hover:from-[#FF7B45] hover:to-[#F26415] transition-all shadow-md active:scale-[0.98]"
+          <button
+            type="button"
+            onClick={openVipps}
+            disabled={openingVipps}
+            className="mt-4 w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F25405] text-white font-semibold text-sm hover:from-[#FF7B45] hover:to-[#F26415] transition-all shadow-md active:scale-[0.98] disabled:opacity-60"
           >
-            <ExternalLink size={18} />
-            Vipps Uygulamasında Aç
-          </a>
+            {openingVipps ? <Loader2 size={18} className="animate-spin" /> : <ExternalLink size={18} />}
+            {openingVipps ? 'Vipps Açılıyor...' : 'Vipps Uygulamasında Aç'}
+          </button>
 
           <div className="flex items-start gap-2 text-xs text-[#2D2A26]/50 bg-[#C5A880]/5 rounded-lg p-3 mt-4">
             <Sparkles size={14} className="text-[#C5A880] shrink-0 mt-0.5" />
