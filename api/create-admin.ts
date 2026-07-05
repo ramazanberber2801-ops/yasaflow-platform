@@ -87,18 +87,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const adminId = `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const baseAdminPayload = {
+    id: adminId,
+    username: cleanEmail,
+    display_name: cleanDisplayName,
+    role: cleanRole,
+    auth_user_id: authUser.user.id,
+  };
 
-  const { data: adminRow, error: insertError } = await serviceClient
+  let { data: adminRow, error: insertError } = await serviceClient
     .from('admins')
-    .insert({
-      id: adminId,
-      username: cleanEmail,
-      display_name: cleanDisplayName,
-      role: cleanRole,
-      auth_user_id: authUser.user.id,
-    })
+    .insert(baseAdminPayload)
     .select('id, username, display_name, role, auth_user_id')
     .single();
+
+  if (insertError) {
+    const legacyPayload = {
+      ...baseAdminPayload,
+      password: '__managed_by_supabase_auth__',
+      security_question: null,
+      security_answer: null,
+    };
+
+    const retry = await serviceClient
+      .from('admins')
+      .insert(legacyPayload)
+      .select('id, username, display_name, role, auth_user_id')
+      .single();
+
+    adminRow = retry.data;
+    insertError = retry.error;
+  }
 
   if (insertError || !adminRow) {
     await serviceClient.auth.admin.deleteUser(authUser.user.id);
