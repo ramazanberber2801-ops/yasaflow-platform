@@ -1,0 +1,188 @@
+export type ThemeId =
+  | 'classic-mosque'
+  | 'modern-mosque'
+  | 'nordic-mosque'
+  | 'dark-emerald'
+  | 'heritage-mosque'
+  | 'community-modern'
+  | 'community-minimal'
+  | 'sports-dynamic'
+  | 'charity-clean'
+  | string;
+
+export type ThemeCategory = 'mosque' | 'community' | 'sports' | 'charity' | 'custom';
+
+export type ThemeTokens = {
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+  card: string;
+  borderRadius: 'soft' | 'rounded' | 'pill';
+  density: 'compact' | 'comfortable' | 'spacious';
+};
+
+export type ThemeDefinition = {
+  id: ThemeId;
+  name: string;
+  category: ThemeCategory;
+  description: string;
+  tokens: ThemeTokens;
+};
+
+export const DEFAULT_THEME_ID: ThemeId = 'classic-mosque';
+
+export const themes: ThemeDefinition[] = [
+  {
+    id: 'classic-mosque',
+    name: 'Classic Mosque',
+    category: 'mosque',
+    description: 'Tradisjonelt moskéuttrykk med varme toner og tydelig kontrast.',
+    tokens: {
+      primary: '#C5A880',
+      secondary: '#2D2A26',
+      background: '#FAF6F0',
+      text: '#2D2A26',
+      card: '#FFFFFF',
+      borderRadius: 'rounded',
+      density: 'comfortable',
+    },
+  },
+  {
+    id: 'modern-mosque',
+    name: 'Modern Mosque',
+    category: 'mosque',
+    description: 'Lys, moderne og ren stil for moskeer og islamske organisasjoner.',
+    tokens: {
+      primary: '#0F766E',
+      secondary: '#0F172A',
+      background: '#F8FAFC',
+      text: '#111827',
+      card: '#FFFFFF',
+      borderRadius: 'soft',
+      density: 'comfortable',
+    },
+  },
+  {
+    id: 'nordic-mosque',
+    name: 'Nordic Mosque',
+    category: 'mosque',
+    description: 'Skandinavisk uttrykk med mye luft og rolige farger.',
+    tokens: {
+      primary: '#64748B',
+      secondary: '#1E293B',
+      background: '#F1F5F9',
+      text: '#0F172A',
+      card: '#FFFFFF',
+      borderRadius: 'soft',
+      density: 'spacious',
+    },
+  },
+  {
+    id: 'dark-emerald',
+    name: 'Dark Emerald',
+    category: 'mosque',
+    description: 'Mørkt premium-tema med grønn aksent.',
+    tokens: {
+      primary: '#34D399',
+      secondary: '#022C22',
+      background: '#052E26',
+      text: '#ECFDF5',
+      card: '#064E3B',
+      borderRadius: 'rounded',
+      density: 'comfortable',
+    },
+  },
+  {
+    id: 'heritage-mosque',
+    name: 'Heritage Mosque',
+    category: 'mosque',
+    description: 'Klassisk og varm stil inspirert av tradisjonelle mønstre.',
+    tokens: {
+      primary: '#B45309',
+      secondary: '#422006',
+      background: '#FFF7ED',
+      text: '#292524',
+      card: '#FFFFFF',
+      borderRadius: 'rounded',
+      density: 'comfortable',
+    },
+  },
+  {
+    id: 'community-modern',
+    name: 'Community Modern',
+    category: 'community',
+    description: 'Nøytral og profesjonell stil for foreninger.',
+    tokens: {
+      primary: '#2563EB',
+      secondary: '#1E293B',
+      background: '#F8FAFC',
+      text: '#111827',
+      card: '#FFFFFF',
+      borderRadius: 'soft',
+      density: 'comfortable',
+    },
+  },
+  {
+    id: 'community-minimal',
+    name: 'Community Minimal',
+    category: 'community',
+    description: 'Enkel og lett stil med minimalt visuelt støy.',
+    tokens: {
+      primary: '#52525B',
+      secondary: '#18181B',
+      background: '#FAFAFA',
+      text: '#18181B',
+      card: '#FFFFFF',
+      borderRadius: 'soft',
+      density: 'spacious',
+    },
+  },
+  {
+    id: 'sports-dynamic',
+    name: 'Sports Dynamic',
+    category: 'sports',
+    description: 'Aktiv og tydelig stil for idrettslag.',
+    tokens: {
+      primary: '#DC2626',
+      secondary: '#111827',
+      background: '#F9FAFB',
+      text: '#111827',
+      card: '#FFFFFF',
+      borderRadius: 'rounded',
+      density: 'compact',
+    },
+  },
+  {
+    id: 'charity-clean',
+    name: 'Charity Clean',
+    category: 'charity',
+    description: 'Mykt og tillitsvekkende tema for stiftelser og veldedighet.',
+    tokens: {
+      primary: '#16A34A',
+      secondary: '#14532D',
+      background: '#F0FDF4',
+      text: '#1F2937',
+      card: '#FFFFFF',
+      borderRadius: 'rounded',
+      density: 'comfortable',
+    },
+  },
+];
+
+export function getTheme(themeId: ThemeId = DEFAULT_THEME_ID) {
+  return themes.find((theme) => theme.id === themeId) || themes.find((theme) => theme.id === DEFAULT_THEME_ID) || themes[0];
+}
+
+export function getThemesByCategory(category: ThemeCategory) {
+  return themes.filter((theme) => theme.category === category);
+}
+
+export function themeToCssVars(theme: ThemeDefinition) {
+  return {
+    '--brand-primary': theme.tokens.primary,
+    '--brand-secondary': theme.tokens.secondary,
+    '--brand-background': theme.tokens.background,
+    '--brand-text': theme.tokens.text,
+  } as React.CSSProperties;
+}
