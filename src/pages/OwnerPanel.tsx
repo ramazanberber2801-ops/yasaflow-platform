@@ -3,6 +3,7 @@ import {
   Building2,
   Boxes,
   Brush,
+  ChevronDown,
   Cloud,
   CreditCard,
   ExternalLink,
@@ -11,9 +12,11 @@ import {
   Palette,
   Plus,
   Rocket,
+  Search,
   Server,
   ShieldCheck,
   Sparkles,
+  X,
 } from 'lucide-react';
 
 const brand = {
@@ -134,8 +137,23 @@ export function OwnerPanel() {
   const [organizations, setOrganizations] = useState<Organization[]>(defaultOrganizations);
   const [selectedOrgId, setSelectedOrgId] = useState('dtim');
   const [form, setForm] = useState<Organization>(defaultOrganizations[0]);
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [orgSearch, setOrgSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'Alle' | Organization['status']>('Alle');
+  const [hostingFilter, setHostingFilter] = useState<'Alle' | Organization['hosting']>('Alle');
+
   const activeModules = useMemo(() => modules.filter((mod) => mod.enabled).length, [modules]);
   const selectedOrg = organizations.find((org) => org.id === selectedOrgId) || organizations[0];
+
+  const filteredOrganizations = useMemo(() => {
+    const query = orgSearch.trim().toLowerCase();
+    return organizations.filter((org) => {
+      const matchesSearch = !query || [org.name, org.domain, org.hosting, org.status].some((value) => value.toLowerCase().includes(query));
+      const matchesStatus = statusFilter === 'Alle' || org.status === statusFilter;
+      const matchesHosting = hostingFilter === 'Alle' || org.hosting === hostingFilter;
+      return matchesSearch && matchesStatus && matchesHosting;
+    });
+  }, [organizations, orgSearch, statusFilter, hostingFilter]);
 
   const toggleModule = (id: string) => {
     setModules((prev) =>
@@ -150,6 +168,8 @@ export function OwnerPanel() {
   const selectOrganization = (org: Organization) => {
     setSelectedOrgId(org.id);
     setForm(org);
+    setSelectorOpen(false);
+    setOrgSearch('');
   };
 
   const newOrganization = () => {
@@ -158,6 +178,7 @@ export function OwnerPanel() {
     setOrganizations((prev) => [...prev, org]);
     setSelectedOrgId(id);
     setForm(org);
+    setSelectorOpen(false);
   };
 
   const saveOrganization = () => {
@@ -179,8 +200,8 @@ export function OwnerPanel() {
     <div className="p-4 space-y-5" style={{ color: brand.text }}>
       <div className="rounded-3xl p-5 shadow-sm border-2 overflow-hidden relative" style={{ backgroundColor: brand.secondary, color: brand.secondaryText, borderColor: mix(brand.primary, 24) }}>
         <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full opacity-25" style={{ backgroundColor: brand.primary }} />
-        <div className="relative">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="relative space-y-4">
+          <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: mix(brand.primary, 25), color: brand.primary }}>
               <Sparkles size={20} />
             </div>
@@ -189,47 +210,104 @@ export function OwnerPanel() {
               <h2 className="font-serif text-2xl leading-tight">Owner Dashboard</h2>
             </div>
           </div>
-          <p className="text-sm opacity-75 max-w-xl">Kontrollsenteret for organisasjoner, moduler, branding, themes, layouts, hosting og pakker.</p>
+          <button
+            type="button"
+            onClick={() => setSelectorOpen(true)}
+            className="w-full rounded-2xl border px-4 py-3 text-left flex items-center justify-between gap-3"
+            style={{ backgroundColor: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.14)' }}
+          >
+            <div>
+              <p className="text-[10px] uppercase opacity-55">Aktiv organisasjon</p>
+              <p className="font-serif text-xl">{selectedOrg?.name || 'Velg organisasjon'}</p>
+              <p className="text-xs opacity-65">{selectedOrg?.status} · {selectedOrg?.hosting} · {activeModules} moduler</p>
+            </div>
+            <ChevronDown size={18} />
+          </button>
         </div>
       </div>
+
+      {selectorOpen && (
+        <div className="fixed inset-0 z-[120] bg-black/50 flex items-end sm:items-center justify-center p-3">
+          <div className="w-full max-w-lg max-h-[82vh] rounded-3xl bg-white shadow-2xl overflow-hidden" style={{ color: brand.text }}>
+            <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: mix(brand.primary, 18) }}>
+              <div>
+                <p className="text-xs opacity-50">Yasaflow Owner</p>
+                <h3 className="font-serif text-xl">Velg organisasjon</h3>
+              </div>
+              <button type="button" onClick={() => setSelectorOpen(false)} className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: mix(brand.primary, 10) }}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              <div className="relative">
+                <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-45" />
+                <input
+                  autoFocus
+                  value={orgSearch}
+                  onChange={(e) => setOrgSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border text-sm"
+                  style={{ borderColor: mix(brand.primary, 22), color: brand.text }}
+                  placeholder="Søk navn, domene, status eller hosting..."
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as any)} className="px-3 py-2 rounded-xl border text-xs bg-white" style={{ borderColor: mix(brand.primary, 18) }}>
+                  <option>Alle</option>
+                  <option>Aktiv</option>
+                  <option>Prøve</option>
+                  <option>Frosset</option>
+                </select>
+                <select value={hostingFilter} onChange={(e) => setHostingFilter(e.target.value as any)} className="px-3 py-2 rounded-xl border text-xs bg-white" style={{ borderColor: mix(brand.primary, 18) }}>
+                  <option>Alle</option>
+                  <option>Managed</option>
+                  <option>Self Hosted</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="px-4 pb-4 space-y-2 overflow-y-auto max-h-[42vh]">
+              {filteredOrganizations.length === 0 ? (
+                <div className="rounded-2xl border p-6 text-center text-sm opacity-60" style={{ borderColor: mix(brand.primary, 18) }}>Ingen treff.</div>
+              ) : (
+                filteredOrganizations.map((org) => {
+                  const active = org.id === selectedOrgId;
+                  return (
+                    <button
+                      key={org.id}
+                      type="button"
+                      onClick={() => selectOrganization(org)}
+                      className="w-full rounded-2xl border p-3 text-left"
+                      style={{ borderColor: active ? brand.primary : mix(brand.primary, 16), backgroundColor: active ? mix(brand.primary, 8, '#FFFFFF') : '#FFFFFF' }}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-serif text-base">{org.name}</p>
+                          <p className="text-xs opacity-50">{org.domain || 'Ingen domene'} · {org.hosting}</p>
+                        </div>
+                        <span className="text-[10px] uppercase px-2 py-1 rounded-full" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}>{org.status}</span>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="p-4 border-t" style={{ borderColor: mix(brand.primary, 18) }}>
+              <button type="button" onClick={newOrganization} className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
+                <Plus size={16} /> Ny organisasjon
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <OwnerCard title="Organisasjoner" value={organizations.length} icon={Building2} note={`Valgt: ${selectedOrg?.name || 'Ingen'}`} />
         <OwnerCard title="Aktive moduler" value={activeModules} icon={Boxes} note="Core + valgte tillegg." />
         <OwnerCard title="Hosting" value={selectedOrg?.hosting || 'Managed'} icon={Cloud} note={selectedOrg?.status || 'Aktiv'} />
-        <OwnerCard title="Status" value="Plan" icon={Rocket} note="Organisasjonsregister er lokalt." />
+        <OwnerCard title="Status" value="Plan" icon={Rocket} note="Organisasjonsvelger er lokal." />
       </div>
-
-      <SectionCard title="Organisasjoner" icon={Building2}>
-        <div className="space-y-3">
-          <button type="button" onClick={newOrganization} className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
-            <Plus size={16} /> Ny organisasjon
-          </button>
-
-          <div className="space-y-2">
-            {organizations.map((org) => {
-              const active = org.id === selectedOrgId;
-              return (
-                <button
-                  key={org.id}
-                  type="button"
-                  onClick={() => selectOrganization(org)}
-                  className="w-full rounded-xl border p-3 text-left"
-                  style={{ borderColor: active ? brand.primary : mix(brand.primary, 16), backgroundColor: active ? mix(brand.primary, 8, '#FFFFFF') : '#FFFFFF' }}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{org.name}</p>
-                      <p className="text-[11px] opacity-50">{org.domain || 'Ingen domene'} · {org.hosting}</p>
-                    </div>
-                    <span className="text-[10px] uppercase px-2 py-1 rounded-full" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}>{org.status}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </SectionCard>
 
       <SectionCard title="Rediger organisasjon" icon={Building2}>
         <div className="space-y-3">
