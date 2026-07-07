@@ -2,14 +2,15 @@ import { useState, useEffect, useRef, type FormEvent, type CSSProperties, type R
 import {
   X, Newspaper, Users, LogOut, Trash2, Edit3, Plus,
   Upload, Save, ArrowLeft, ShieldCheck, Mic, Settings as SettingsIcon,
-  UserCog, Check, Eye, EyeOff, Bell, BarChart3, Palette
+  UserCog, Check, Eye, EyeOff, Bell, BarChart3, Palette, Crown
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { fileToOptimizedBase64 } from '../lib/imageUtils';
 import { supabase } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
+import { OwnerPanel } from './OwnerPanel';
 
-type AdminTab = 'news' | 'sohbet' | 'staff' | 'settings' | 'branding' | 'admins' | 'push' | 'stats';
+type AdminTab = 'owner' | 'news' | 'sohbet' | 'staff' | 'settings' | 'branding' | 'admins' | 'push' | 'stats';
 
 const brand = {
   primary: 'var(--brand-primary)',
@@ -81,6 +82,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
   };
 
   const tabs = [
+    ...(isSuperadmin ? [{ id: 'owner' as AdminTab, label: 'Owner', icon: Crown }] : []),
     { id: 'news' as AdminTab, label: 'Haberler', icon: Newspaper },
     { id: 'sohbet' as AdminTab, label: 'Sohbet/Ders', icon: Mic },
     { id: 'staff' as AdminTab, label: 'Yönetim', icon: Users },
@@ -136,6 +138,7 @@ export function AdminPanel({ open, onClose }: { open: boolean; onClose: () => vo
       </div>
 
       <main className="flex-1 overflow-y-auto">
+        {tab === 'owner' && isSuperadmin && <OwnerPanel />}
         {tab === 'news' && <NewsManager items={news} onAdd={addNews} onUpdate={updateNews} onDelete={deleteNews} />}
         {tab === 'sohbet' && <SohbetManager items={sohbet} onAdd={addSohbet} onUpdate={updateSohbet} onDelete={deleteSohbet} onReminder={sendSohbetReminder} />}
         {tab === 'staff' && <StaffManager items={staff} onAdd={addStaff} onUpdate={updateStaff} onDelete={deleteStaff} />}
