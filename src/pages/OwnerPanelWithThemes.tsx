@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, Palette, RotateCcw, Search, Star } from 'lucide-react';
 import { OwnerPanel as BaseOwnerPanel } from './OwnerPanelPersisted';
+import { supabase } from '../lib/supabase';
 import { themes, type ThemeCategory } from '../lib/themeEngine';
 
 const brand = {
@@ -61,8 +62,10 @@ function readThemeVars() {
 export function OwnerPanel() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<ThemeCategory | 'all'>('all');
+  const [activeThemeId, setActiveThemeId] = useState('classic-mosque');
   const [previewThemeId, setPreviewThemeId] = useState<string | null>(null);
   const [previewSnapshot, setPreviewSnapshot] = useState<Record<string, string> | null>(null);
+  const [themeStatus, setThemeStatus] = useState('Tema kan forhåndsvises.');
   const [favorites, setFavorites] = useState<Record<string, boolean>>({
     'classic-mosque': true,
     'modern-mosque': true,
@@ -82,12 +85,38 @@ export function OwnerPanel() {
     if (!previewSnapshot) setPreviewSnapshot(readThemeVars());
     setThemeVars(theme);
     setPreviewThemeId(theme.id);
+    setThemeStatus(`Preview: ${theme.name}`);
   }
 
   function cancelPreview() {
     if (previewSnapshot) restoreThemeVars(previewSnapshot);
     setPreviewThemeId(null);
     setPreviewSnapshot(null);
+    setThemeStatus('Preview avbrutt.');
+  }
+
+  async function applyTheme(theme: (typeof themes)[number]) {
+    setThemeVars(theme);
+    setActiveThemeId(theme.id);
+    setPreviewThemeId(null);
+    setPreviewSnapshot(null);
+
+    if (!supabase) {
+      setThemeStatus('Tema brukt lokalt. Supabase er ikke koblet.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('organizations')
+      .update({ theme_id: theme.id })
+      .eq('id', 'dtim');
+
+    if (error) {
+      setThemeStatus('Tema brukt lokalt, men ble ikke lagret. Kjør theme_id SQL først.');
+      return;
+    }
+
+    setThemeStatus(`${theme.name} er lagret for DTIM.`);
   }
 
   return (
@@ -101,9 +130,11 @@ export function OwnerPanel() {
           </div>
           <div>
             <h3 className="font-serif text-lg">Theme Library</h3>
-            <p className="text-xs opacity-50">Prøv tema uten å lagre. Permanent lagring per organisasjon kommer etterpå.</p>
+            <p className="text-xs opacity-50">Prøv tema uten å lagre, eller bruk tema for organisasjonen.</p>
           </div>
         </div>
+
+        <p className="text-xs opacity-60 mb-3">{themeStatus}</p>
 
         {previewThemeId && (
           <div className="mb-4 rounded-2xl border p-3 flex items-center justify-between gap-3" style={{ borderColor: mix(brand.primary, 20), backgroundColor: mix(brand.primary, 7, '#FFFFFF') }}>
@@ -162,7 +193,9 @@ export function OwnerPanel() {
                 key={theme.id}
                 theme={theme}
                 favorite={!!favorites[theme.id]}
+                isActive={activeThemeId === theme.id}
                 isPreviewing={previewThemeId === theme.id}
+                onApply={() => applyTheme(theme)}
                 onPreview={() => previewTheme(theme)}
                 onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))}
               />
@@ -181,7 +214,9 @@ export function OwnerPanel() {
               key={theme.id}
               theme={theme}
               favorite={!!favorites[theme.id]}
+              isActive={activeThemeId === theme.id}
               isPreviewing={previewThemeId === theme.id}
+              onApply={() => applyTheme(theme)}
               onPreview={() => previewTheme(theme)}
               onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))}
             />
@@ -192,9 +227,9 @@ export function OwnerPanel() {
   );
 }
 
-function ThemeCard({ theme, favorite, isPreviewing, onFavorite, onPreview }: { theme: (typeof themes)[number]; favorite: boolean; isPreviewing: boolean; onFavorite: () => void; onPreview: () => void }) {
+function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPreview, onApply }: { theme: (typeof themes)[number]; favorite: boolean; isActive: boolean; isPreviewing: boolean; onFavorite: () => void; onPreview: () => void; onApply: () => void }) {
   return (
-    <div className="rounded-2xl border p-3" style={{ borderColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 14) }}>
+    <div className="rounded-2xl border p-3" style={{ borderColor: isPreviewing || isActive ? theme.tokens.primary : mix(brand.primary, 14) }}>
       <div
         className="rounded-xl p-3 mb-3 border"
         style={{ backgroundColor: theme.tokens.background, color: theme.tokens.text, borderColor: theme.tokens.primary }}
@@ -223,7 +258,7 @@ function ThemeCard({ theme, favorite, isPreviewing, onFavorite, onPreview }: { t
           >
             <Star size={15} fill={favorite ? 'currentColor' : 'none'} />
           </button>
-          {theme.id === 'classic-mosque' && (
+          {isActive && (
             <span className="text-[10px] px-2 py-1 rounded-full flex items-center gap-1" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}>
               <CheckCircle2 size={12} /> Aktiv
             </span>
@@ -238,14 +273,24 @@ function ThemeCard({ theme, favorite, isPreviewing, onFavorite, onPreview }: { t
         <span className="w-8 h-8 rounded-full border" style={{ backgroundColor: theme.tokens.card, borderColor: mix(brand.primary, 16) }} />
       </div>
 
-      <button
-        type="button"
-        onClick={onPreview}
-        className="w-full mt-3 rounded-xl py-2.5 text-xs font-medium"
-        style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? contrastText(theme.tokens.primary) : brand.primary }}
-      >
-        {isPreviewing ? 'Preview aktiv' : 'Prøv tema'}
-      </button>
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <button
+          type="button"
+          onClick={onPreview}
+          className="rounded-xl py-2.5 text-xs font-medium"
+          style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? contrastText(theme.tokens.primary) : brand.primary }}
+        >
+          {isPreviewing ? 'Preview aktiv' : 'Prøv tema'}
+        </button>
+        <button
+          type="button"
+          onClick={onApply}
+          className="rounded-xl py-2.5 text-xs font-medium"
+          style={{ backgroundColor: theme.tokens.primary, color: contrastText(theme.tokens.primary) }}
+        >
+          Bruk tema
+        </button>
+      </div>
     </div>
   );
 }
