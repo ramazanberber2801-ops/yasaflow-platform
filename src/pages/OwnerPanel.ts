@@ -1,1 +1,1 @@
-export { OwnerPanel } from './OwnerPanelDb';
+export { OwnerPanel } from './OwnerPanelCategorized';
