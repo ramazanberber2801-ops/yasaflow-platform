@@ -39,7 +39,7 @@ export const themes: ThemeDefinition[] = [
     category: 'mosque',
     description: 'Tradisjonelt moskéuttrykk med varme toner og tydelig kontrast.',
     tokens: {
-      primary: '#C5A880',
+      primary: '#8A6A24',
       secondary: '#2D2A26',
       background: '#FAF6F0',
       text: '#2D2A26',
@@ -69,7 +69,7 @@ export const themes: ThemeDefinition[] = [
     category: 'mosque',
     description: 'Skandinavisk uttrykk med mye luft og rolige farger.',
     tokens: {
-      primary: '#64748B',
+      primary: '#334155',
       secondary: '#1E293B',
       background: '#F1F5F9',
       text: '#0F172A',
@@ -80,15 +80,15 @@ export const themes: ThemeDefinition[] = [
   },
   {
     id: 'dark-emerald',
-    name: 'Dark Emerald',
+    name: 'Emerald Premium',
     category: 'mosque',
-    description: 'Mørkt premium-tema med grønn aksent.',
+    description: 'Premium grønt tema med mørke header-detaljer og lesbar lys flate.',
     tokens: {
-      primary: '#34D399',
+      primary: '#047857',
       secondary: '#022C22',
-      background: '#052E26',
-      text: '#ECFDF5',
-      card: '#064E3B',
+      background: '#ECFDF5',
+      text: '#10231D',
+      card: '#FFFFFF',
       borderRadius: 'rounded',
       density: 'comfortable',
     },
@@ -99,7 +99,7 @@ export const themes: ThemeDefinition[] = [
     category: 'mosque',
     description: 'Klassisk og varm stil inspirert av tradisjonelle mønstre.',
     tokens: {
-      primary: '#B45309',
+      primary: '#92400E',
       secondary: '#422006',
       background: '#FFF7ED',
       text: '#292524',
@@ -114,7 +114,7 @@ export const themes: ThemeDefinition[] = [
     category: 'community',
     description: 'Nøytral og profesjonell stil for foreninger.',
     tokens: {
-      primary: '#2563EB',
+      primary: '#1D4ED8',
       secondary: '#1E293B',
       background: '#F8FAFC',
       text: '#111827',
@@ -129,7 +129,7 @@ export const themes: ThemeDefinition[] = [
     category: 'community',
     description: 'Enkel og lett stil med minimalt visuelt støy.',
     tokens: {
-      primary: '#52525B',
+      primary: '#3F3F46',
       secondary: '#18181B',
       background: '#FAFAFA',
       text: '#18181B',
@@ -144,7 +144,7 @@ export const themes: ThemeDefinition[] = [
     category: 'sports',
     description: 'Aktiv og tydelig stil for idrettslag.',
     tokens: {
-      primary: '#DC2626',
+      primary: '#B91C1C',
       secondary: '#111827',
       background: '#F9FAFB',
       text: '#111827',
@@ -159,7 +159,7 @@ export const themes: ThemeDefinition[] = [
     category: 'charity',
     description: 'Mykt og tillitsvekkende tema for stiftelser og veldedighet.',
     tokens: {
-      primary: '#16A34A',
+      primary: '#15803D',
       secondary: '#14532D',
       background: '#F0FDF4',
       text: '#1F2937',
