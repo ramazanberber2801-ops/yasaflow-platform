@@ -9,6 +9,7 @@ import { InstallGuideModal } from './components/InstallGuideModal';
 import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
 import { supabase } from './lib/supabase';
+import { useOrganizationModules } from './lib/moduleEngine';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
 
@@ -101,6 +102,7 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
 
 function AppContent() {
   const { isAdmin, isInitialized, settings } = useApp();
+  const { enabled } = useOrganizationModules('dtim');
   const [page, setPage] = useState<Page>('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
@@ -110,7 +112,6 @@ function AppContent() {
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
-  const [activeModules, setActiveModules] = useState<Record<string, boolean>>({ donation: true, contact: true });
 
   const brandPrimary = safeColor(settings?.brandingPrimaryColor, '#C5A880');
   const brandSecondary = safeColor(settings?.brandingSecondaryColor, '#2D2A26');
@@ -125,8 +126,8 @@ function AppContent() {
     '--brand-secondary-text': contrastText(brandSecondary),
   } as React.CSSProperties;
 
-  const donationEnabled = activeModules.donation !== false;
-  const contactEnabled = activeModules.contact !== false;
+  const donationEnabled = enabled('donation');
+  const contactEnabled = enabled('contact');
 
   useEffect(() => {
     if (isInitialized && isAdmin) {
@@ -135,27 +136,6 @@ function AppContent() {
       setShowPanel(false);
     }
   }, [isInitialized, isAdmin]);
-
-  useEffect(() => {
-    if (!isInitialized || !supabase) return;
-
-    supabase
-      .from('organization_modules')
-      .select('module_id, enabled')
-      .eq('organization_id', 'dtim')
-      .then(({ data, error }) => {
-        if (error) {
-          console.warn('Kunne ikke hente modulstatus:', error.message);
-          return;
-        }
-
-        const next: Record<string, boolean> = {};
-        for (const row of data || []) {
-          next[row.module_id] = Boolean(row.enabled);
-        }
-        setActiveModules((prev) => ({ ...prev, ...next }));
-      });
-  }, [isInitialized]);
 
   useEffect(() => {
     if (page === 'contact' && !contactEnabled) {
