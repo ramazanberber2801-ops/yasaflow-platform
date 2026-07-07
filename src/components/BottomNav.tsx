@@ -7,9 +7,10 @@ interface BottomNavProps {
   onNavigate: (page: Page) => void;
   onDonate: () => void;
   onSecretTrigger: () => void;
+  showDonation?: boolean;
 }
 
-export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: BottomNavProps) {
+export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, showDonation = true }: BottomNavProps) {
   const inactiveColor = 'color-mix(in srgb, var(--brand-text) 40%, transparent)';
 
   return (
@@ -39,21 +40,23 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger }: Bo
             </span>
           </button>
 
-          <div className="flex flex-col items-center -mt-6">
-            <button
-              onClick={onDonate}
-              className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border-4"
-              style={{
-                background: 'linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 80%, #000 20%))',
-                boxShadow: '0 10px 20px color-mix(in srgb, var(--brand-primary) 30%, transparent)',
-                borderColor: 'var(--brand-background)',
-              }}
-              aria-label="Bağış Yap"
-            >
-              <HandCoins size={26} style={{ color: 'var(--brand-primary-text)' }} />
-            </button>
-            <span className="text-[10px] font-medium mt-1" style={{ color: 'var(--brand-primary)' }}>Bağış</span>
-          </div>
+          {showDonation && (
+            <div className="flex flex-col items-center -mt-6">
+              <button
+                onClick={onDonate}
+                className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border-4"
+                style={{
+                  background: 'linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 80%, #000 20%))',
+                  boxShadow: '0 10px 20px color-mix(in srgb, var(--brand-primary) 30%, transparent)',
+                  borderColor: 'var(--brand-background)',
+                }}
+                aria-label="Bağış Yap"
+              >
+                <HandCoins size={26} style={{ color: 'var(--brand-primary-text)' }} />
+              </button>
+              <span className="text-[10px] font-medium mt-1" style={{ color: 'var(--brand-primary)' }}>Bağış</span>
+            </div>
+          )}
 
           <button
             onClick={() => onNavigate('contact')}
