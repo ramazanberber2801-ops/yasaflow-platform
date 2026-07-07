@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, Palette, Search, Star } from 'lucide-react';
+import { CheckCircle2, Palette, RotateCcw, Search, Star } from 'lucide-react';
 import { OwnerPanel as BaseOwnerPanel } from './OwnerPanelPersisted';
 import { themes, type ThemeCategory } from '../lib/themeEngine';
 
@@ -21,9 +21,48 @@ const categories: Array<{ id: ThemeCategory | 'all'; label: string }> = [
 
 const recommendedIds = ['classic-mosque', 'modern-mosque', 'nordic-mosque', 'dark-emerald'];
 
+function contrastText(hex: string) {
+  const value = hex.replace('#', '');
+  const n = parseInt(value, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.58 ? '#2D2A26' : '#FFFFFF';
+}
+
+function setThemeVars(theme: (typeof themes)[number]) {
+  const root = document.documentElement;
+  root.style.setProperty('--brand-primary', theme.tokens.primary);
+  root.style.setProperty('--brand-secondary', theme.tokens.secondary);
+  root.style.setProperty('--brand-background', theme.tokens.background);
+  root.style.setProperty('--brand-text', theme.tokens.text);
+  root.style.setProperty('--brand-primary-text', contrastText(theme.tokens.primary));
+  root.style.setProperty('--brand-secondary-text', contrastText(theme.tokens.secondary));
+}
+
+function restoreThemeVars(snapshot: Record<string, string>) {
+  const root = document.documentElement;
+  Object.entries(snapshot).forEach(([key, value]) => root.style.setProperty(key, value));
+}
+
+function readThemeVars() {
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    '--brand-primary': styles.getPropertyValue('--brand-primary').trim(),
+    '--brand-secondary': styles.getPropertyValue('--brand-secondary').trim(),
+    '--brand-background': styles.getPropertyValue('--brand-background').trim(),
+    '--brand-text': styles.getPropertyValue('--brand-text').trim(),
+    '--brand-primary-text': styles.getPropertyValue('--brand-primary-text').trim(),
+    '--brand-secondary-text': styles.getPropertyValue('--brand-secondary-text').trim(),
+  };
+}
+
 export function OwnerPanel() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<ThemeCategory | 'all'>('all');
+  const [previewThemeId, setPreviewThemeId] = useState<string | null>(null);
+  const [previewSnapshot, setPreviewSnapshot] = useState<Record<string, string> | null>(null);
   const [favorites, setFavorites] = useState<Record<string, boolean>>({
     'classic-mosque': true,
     'modern-mosque': true,
@@ -39,6 +78,18 @@ export function OwnerPanel() {
     });
   }, [query, category]);
 
+  function previewTheme(theme: (typeof themes)[number]) {
+    if (!previewSnapshot) setPreviewSnapshot(readThemeVars());
+    setThemeVars(theme);
+    setPreviewThemeId(theme.id);
+  }
+
+  function cancelPreview() {
+    if (previewSnapshot) restoreThemeVars(previewSnapshot);
+    setPreviewThemeId(null);
+    setPreviewSnapshot(null);
+  }
+
   return (
     <div className="space-y-5">
       <BaseOwnerPanel />
@@ -50,9 +101,26 @@ export function OwnerPanel() {
           </div>
           <div>
             <h3 className="font-serif text-lg">Theme Library</h3>
-            <p className="text-xs opacity-50">Søk, filtrer og finn riktig design. Lagring per organisasjon kommer etterpå.</p>
+            <p className="text-xs opacity-50">Prøv tema uten å lagre. Permanent lagring per organisasjon kommer etterpå.</p>
           </div>
         </div>
+
+        {previewThemeId && (
+          <div className="mb-4 rounded-2xl border p-3 flex items-center justify-between gap-3" style={{ borderColor: mix(brand.primary, 20), backgroundColor: mix(brand.primary, 7, '#FFFFFF') }}>
+            <div>
+              <p className="text-sm font-medium">Preview aktiv</p>
+              <p className="text-xs opacity-55">Du ser nå {themes.find((theme) => theme.id === previewThemeId)?.name}. Ingenting er lagret.</p>
+            </div>
+            <button
+              type="button"
+              onClick={cancelPreview}
+              className="shrink-0 rounded-xl px-3 py-2 text-xs flex items-center gap-1"
+              style={{ backgroundColor: brand.primary, color: 'var(--brand-primary-text)' }}
+            >
+              <RotateCcw size={13} /> Avbryt
+            </button>
+          </div>
+        )}
 
         <div className="relative mb-3">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
@@ -94,6 +162,8 @@ export function OwnerPanel() {
                 key={theme.id}
                 theme={theme}
                 favorite={!!favorites[theme.id]}
+                isPreviewing={previewThemeId === theme.id}
+                onPreview={() => previewTheme(theme)}
                 onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))}
               />
             ))}
@@ -111,6 +181,8 @@ export function OwnerPanel() {
               key={theme.id}
               theme={theme}
               favorite={!!favorites[theme.id]}
+              isPreviewing={previewThemeId === theme.id}
+              onPreview={() => previewTheme(theme)}
               onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))}
             />
           ))}
@@ -120,9 +192,9 @@ export function OwnerPanel() {
   );
 }
 
-function ThemeCard({ theme, favorite, onFavorite }: { theme: (typeof themes)[number]; favorite: boolean; onFavorite: () => void }) {
+function ThemeCard({ theme, favorite, isPreviewing, onFavorite, onPreview }: { theme: (typeof themes)[number]; favorite: boolean; isPreviewing: boolean; onFavorite: () => void; onPreview: () => void }) {
   return (
-    <div className="rounded-2xl border p-3" style={{ borderColor: mix(brand.primary, 14) }}>
+    <div className="rounded-2xl border p-3" style={{ borderColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 14) }}>
       <div
         className="rounded-xl p-3 mb-3 border"
         style={{ backgroundColor: theme.tokens.background, color: theme.tokens.text, borderColor: theme.tokens.primary }}
@@ -165,6 +237,15 @@ function ThemeCard({ theme, favorite, onFavorite }: { theme: (typeof themes)[num
         <span className="w-8 h-8 rounded-full border" style={{ backgroundColor: theme.tokens.background, borderColor: mix(brand.primary, 16) }} />
         <span className="w-8 h-8 rounded-full border" style={{ backgroundColor: theme.tokens.card, borderColor: mix(brand.primary, 16) }} />
       </div>
+
+      <button
+        type="button"
+        onClick={onPreview}
+        className="w-full mt-3 rounded-xl py-2.5 text-xs font-medium"
+        style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? contrastText(theme.tokens.primary) : brand.primary }}
+      >
+        {isPreviewing ? 'Preview aktiv' : 'Prøv tema'}
+      </button>
     </div>
   );
 }
