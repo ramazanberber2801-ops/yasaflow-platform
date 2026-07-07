@@ -1,17 +1,13 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, CheckCircle2, Palette, RotateCcw, Search, Star } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Palette, RotateCcw, Search, ShieldCheck, Star } from 'lucide-react';
 import { OwnerPanel as BaseOwnerPanel } from './OwnerPanelPersisted';
 import { supabase } from '../lib/supabase';
 import { themes, type ThemeCategory } from '../lib/themeEngine';
 import { readableTextColor, themeContrastSummary } from '../lib/contrastEngine';
+import { validateTheme } from '../lib/themeValidator';
 
-const brand = {
-  primary: 'var(--brand-primary)',
-  text: 'var(--brand-text)',
-};
-
-const mix = (color: string, amount: number, fallback = 'transparent') =>
-  `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
+const brand = { primary: 'var(--brand-primary)', text: 'var(--brand-text)' };
+const mix = (color: string, amount: number, fallback = 'transparent') => `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
 const categories: Array<{ id: ThemeCategory | 'all'; label: string }> = [
   { id: 'all', label: 'Alle' },
@@ -34,8 +30,7 @@ function setThemeVars(theme: (typeof themes)[number]) {
 }
 
 function restoreThemeVars(snapshot: Record<string, string>) {
-  const root = document.documentElement;
-  Object.entries(snapshot).forEach(([key, value]) => root.style.setProperty(key, value));
+  Object.entries(snapshot).forEach(([key, value]) => document.documentElement.style.setProperty(key, value));
 }
 
 function readThemeVars() {
@@ -57,10 +52,7 @@ export function OwnerPanel() {
   const [previewThemeId, setPreviewThemeId] = useState<string | null>(null);
   const [previewSnapshot, setPreviewSnapshot] = useState<Record<string, string> | null>(null);
   const [themeStatus, setThemeStatus] = useState('Tema kan forhåndsvises.');
-  const [favorites, setFavorites] = useState<Record<string, boolean>>({
-    'classic-mosque': true,
-    'modern-mosque': true,
-  });
+  const [favorites, setFavorites] = useState<Record<string, boolean>>({ 'classic-mosque': true, 'modern-mosque': true });
 
   const recommended = themes.filter((theme) => recommendedIds.includes(theme.id));
   const filtered = useMemo(() => {
@@ -97,17 +89,8 @@ export function OwnerPanel() {
       return;
     }
 
-    const { error } = await supabase
-      .from('organizations')
-      .update({ theme_id: theme.id })
-      .eq('id', 'dtim');
-
-    if (error) {
-      setThemeStatus('Tema brukt lokalt, men ble ikke lagret. Kjør theme_id SQL først.');
-      return;
-    }
-
-    setThemeStatus(`${theme.name} er lagret for DTIM.`);
+    const { error } = await supabase.from('organizations').update({ theme_id: theme.id }).eq('id', 'dtim');
+    setThemeStatus(error ? 'Tema brukt lokalt, men ble ikke lagret. Kjør theme_id SQL først.' : `${theme.name} er lagret for DTIM.`);
   }
 
   return (
@@ -133,12 +116,7 @@ export function OwnerPanel() {
               <p className="text-sm font-medium">Preview aktiv</p>
               <p className="text-xs opacity-55">Du ser nå {themes.find((theme) => theme.id === previewThemeId)?.name}. Ingenting er lagret.</p>
             </div>
-            <button
-              type="button"
-              onClick={cancelPreview}
-              className="shrink-0 rounded-xl px-3 py-2 text-xs flex items-center gap-1"
-              style={{ backgroundColor: brand.primary, color: 'var(--brand-primary-text)' }}
-            >
+            <button type="button" onClick={cancelPreview} className="shrink-0 rounded-xl px-3 py-2 text-xs flex items-center gap-1" style={{ backgroundColor: brand.primary, color: 'var(--brand-primary-text)' }}>
               <RotateCcw size={13} /> Avbryt
             </button>
           </div>
@@ -146,13 +124,7 @@ export function OwnerPanel() {
 
         <div className="relative mb-3">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-40" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border py-3 pl-10 pr-3 text-sm"
-            style={{ borderColor: mix(brand.primary, 18), color: brand.text }}
-            placeholder="Søk tema..."
-          />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} className="w-full rounded-xl border py-3 pl-10 pr-3 text-sm" style={{ borderColor: mix(brand.primary, 18), color: brand.text }} placeholder="Søk tema..." />
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4">
@@ -162,11 +134,7 @@ export function OwnerPanel() {
               type="button"
               onClick={() => setCategory(cat.id)}
               className="shrink-0 rounded-full border px-3 py-2 text-xs"
-              style={{
-                borderColor: category === cat.id ? brand.primary : mix(brand.primary, 18),
-                backgroundColor: category === cat.id ? mix(brand.primary, 12, '#FFFFFF') : '#FFFFFF',
-                color: category === cat.id ? brand.primary : brand.text,
-              }}
+              style={{ borderColor: category === cat.id ? brand.primary : mix(brand.primary, 18), backgroundColor: category === cat.id ? mix(brand.primary, 12, '#FFFFFF') : '#FFFFFF', color: category === cat.id ? brand.primary : brand.text }}
             >
               {cat.label}
             </button>
@@ -180,16 +148,7 @@ export function OwnerPanel() {
           </div>
           <div className="grid grid-cols-1 gap-3">
             {recommended.map((theme) => (
-              <ThemeCard
-                key={theme.id}
-                theme={theme}
-                favorite={!!favorites[theme.id]}
-                isActive={activeThemeId === theme.id}
-                isPreviewing={previewThemeId === theme.id}
-                onApply={() => applyTheme(theme)}
-                onPreview={() => previewTheme(theme)}
-                onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))}
-              />
+              <ThemeCard key={theme.id} theme={theme} favorite={!!favorites[theme.id]} isActive={activeThemeId === theme.id} isPreviewing={previewThemeId === theme.id} onApply={() => applyTheme(theme)} onPreview={() => previewTheme(theme)} onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))} />
             ))}
           </div>
         </div>
@@ -201,16 +160,7 @@ export function OwnerPanel() {
 
         <div className="grid grid-cols-1 gap-3">
           {filtered.map((theme) => (
-            <ThemeCard
-              key={theme.id}
-              theme={theme}
-              favorite={!!favorites[theme.id]}
-              isActive={activeThemeId === theme.id}
-              isPreviewing={previewThemeId === theme.id}
-              onApply={() => applyTheme(theme)}
-              onPreview={() => previewTheme(theme)}
-              onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))}
-            />
+            <ThemeCard key={theme.id} theme={theme} favorite={!!favorites[theme.id]} isActive={activeThemeId === theme.id} isPreviewing={previewThemeId === theme.id} onApply={() => applyTheme(theme)} onPreview={() => previewTheme(theme)} onFavorite={() => setFavorites((prev) => ({ ...prev, [theme.id]: !prev[theme.id] }))} />
           ))}
         </div>
       </section>
@@ -220,14 +170,12 @@ export function OwnerPanel() {
 
 function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPreview, onApply }: { theme: (typeof themes)[number]; favorite: boolean; isActive: boolean; isPreviewing: boolean; onFavorite: () => void; onPreview: () => void; onApply: () => void }) {
   const contrast = themeContrastSummary(theme.tokens);
-  const statusColor = contrast.passed ? '#16A34A' : '#D97706';
+  const validation = validateTheme(theme.tokens);
+  const validationColor = validation.level === 'approved' ? '#16A34A' : validation.level === 'warning' ? '#D97706' : '#DC2626';
 
   return (
     <div className="rounded-2xl border p-3" style={{ borderColor: isPreviewing || isActive ? theme.tokens.primary : mix(brand.primary, 14) }}>
-      <div
-        className="rounded-xl p-3 mb-3 border"
-        style={{ backgroundColor: theme.tokens.background, color: theme.tokens.text, borderColor: theme.tokens.primary }}
-      >
+      <div className="rounded-xl p-3 mb-3 border" style={{ backgroundColor: theme.tokens.background, color: theme.tokens.text, borderColor: theme.tokens.primary }}>
         <div className="h-8 rounded-lg mb-3" style={{ backgroundColor: theme.tokens.secondary }} />
         <div className="grid grid-cols-3 gap-2">
           <div className="h-14 rounded-lg" style={{ backgroundColor: theme.tokens.card, border: `1px solid ${theme.tokens.primary}` }} />
@@ -243,13 +191,7 @@ function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPrev
           <p className="text-xs opacity-60 mt-2">{theme.description}</p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <button
-            type="button"
-            onClick={onFavorite}
-            className="w-8 h-8 rounded-full border flex items-center justify-center"
-            style={{ borderColor: mix(brand.primary, 18), color: favorite ? brand.primary : mix(brand.text, 35) }}
-            aria-label="Favoritt"
-          >
+          <button type="button" onClick={onFavorite} className="w-8 h-8 rounded-full border flex items-center justify-center" style={{ borderColor: mix(brand.primary, 18), color: favorite ? brand.primary : mix(brand.text, 35) }} aria-label="Favoritt">
             <Star size={15} fill={favorite ? 'currentColor' : 'none'} />
           </button>
           {isActive && (
@@ -260,19 +202,15 @@ function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPrev
         </div>
       </div>
 
-      <div className="mt-3 rounded-xl border p-2" style={{ borderColor: contrast.passed ? '#16A34A33' : '#D9770633', backgroundColor: contrast.passed ? '#DCFCE733' : '#FEF3C733' }}>
+      <div className="mt-3 rounded-xl border p-2" style={{ borderColor: `${validationColor}33`, backgroundColor: validation.level === 'approved' ? '#DCFCE733' : validation.level === 'warning' ? '#FEF3C733' : '#FEE2E233' }}>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium flex items-center gap-1" style={{ color: statusColor }}>
-            {contrast.passed ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
-            {contrast.passed ? 'Kontrast bestått' : 'Må forbedres'}
+          <span className="text-xs font-medium flex items-center gap-1" style={{ color: validationColor }}>
+            {validation.level === 'approved' ? <ShieldCheck size={13} /> : <AlertTriangle size={13} />}
+            {validation.label}
           </span>
-          <span className="text-[11px] opacity-60">{contrast.score}</span>
+          <span className="text-[11px] opacity-60">{validation.score}/100</span>
         </div>
-        {!contrast.passed && (
-          <p className="text-[11px] opacity-60 mt-1">
-            Laveste kontrast: {contrast.minRatio}:1. {contrast.failed[0]?.recommendation}
-          </p>
-        )}
+        <p className="text-[11px] opacity-60 mt-1">Kontrast: {contrast.score}{validation.issues[0] ? ` · ${validation.issues[0].message}` : ''}</p>
       </div>
 
       <div className="flex gap-2 mt-3">
@@ -283,20 +221,10 @@ function ThemeCard({ theme, favorite, isActive, isPreviewing, onFavorite, onPrev
       </div>
 
       <div className="grid grid-cols-2 gap-2 mt-3">
-        <button
-          type="button"
-          onClick={onPreview}
-          className="rounded-xl py-2.5 text-xs font-medium"
-          style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? readableTextColor(theme.tokens.primary) : brand.primary }}
-        >
+        <button type="button" onClick={onPreview} className="rounded-xl py-2.5 text-xs font-medium" style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? readableTextColor(theme.tokens.primary) : brand.primary }}>
           {isPreviewing ? 'Preview aktiv' : 'Prøv tema'}
         </button>
-        <button
-          type="button"
-          onClick={onApply}
-          className="rounded-xl py-2.5 text-xs font-medium"
-          style={{ backgroundColor: theme.tokens.primary, color: readableTextColor(theme.tokens.primary) }}
-        >
+        <button type="button" onClick={onApply} className="rounded-xl py-2.5 text-xs font-medium" style={{ backgroundColor: theme.tokens.primary, color: readableTextColor(theme.tokens.primary) }}>
           Bruk tema
         </button>
       </div>
