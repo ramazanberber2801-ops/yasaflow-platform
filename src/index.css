@@ -117,6 +117,24 @@ body {
   color: var(--brand-card-text) !important;
 }
 
+/* HomePage section headings and small actions */
+.min-h-screen.pb-28 section h2,
+.min-h-screen.pb-28 section h3.font-serif {
+  color: var(--brand-text) !important;
+}
+
+.min-h-screen.pb-28 section .flex.items-center.justify-between button,
+.min-h-screen.pb-28 section a.text-xs,
+.min-h-screen.pb-28 section button.text-xs {
+  color: var(--brand-primary) !important;
+}
+
+.min-h-screen.pb-28 section .w-8.h-8.rounded-lg,
+.min-h-screen.pb-28 section .w-9.h-9.rounded-xl {
+  background-color: var(--brand-subtle) !important;
+  color: var(--brand-primary) !important;
+}
+
 /* HomePage prayer time cards */
 .min-h-screen.pb-28 .grid.grid-cols-3.gap-1\.5 > .rounded-lg.p-2.text-center.border-2 {
   background-color: var(--brand-surface) !important;
