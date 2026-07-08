@@ -175,25 +175,40 @@ function AppContent() {
   }, [page, contactEnabled]);
 
   useEffect(() => {
-    if (!supabase) return;
+    const client = supabase;
+    if (!client) return;
 
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setShowRecovery(true);
-        setShowLogin(false);
-        setShowPanel(false);
-      }
-    });
-
-    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-    const query = new URLSearchParams(window.location.search);
-    const type = hash.get('type') || query.get('type');
-
-    if (type === 'recovery') {
+    const openRecovery = () => {
       setShowRecovery(true);
       setShowLogin(false);
       setShowPanel(false);
-    }
+    };
+
+    const handleRecoveryLink = async () => {
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const query = new URLSearchParams(window.location.search);
+      const type = hash.get('type') || query.get('type');
+      const code = query.get('code') || hash.get('code');
+
+      if (code) {
+        const { error } = await client.auth.exchangeCodeForSession(code);
+        if (error) {
+          console.error('Recovery code exchange failed:', error.message);
+        }
+      }
+
+      if (type === 'recovery' || code) {
+        openRecovery();
+      }
+    };
+
+    void handleRecoveryLink();
+
+    const { data } = client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        openRecovery();
+      }
+    });
 
     return () => data.subscription.unsubscribe();
   }, []);
