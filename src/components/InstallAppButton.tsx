@@ -66,26 +66,38 @@ export function InstallAppButton() {
 
   return (
     <div className="px-4 mt-4">
-      <div className="bg-gradient-to-r from-[#2D2A26] to-[#3D3A36] rounded-xl border-2 border-[#C5A880]/30 shadow-md p-4 flex items-center gap-3">
-        <div className="w-11 h-11 rounded-full bg-[#C5A880]/20 flex items-center justify-center shrink-0">
-          <Download size={20} className="text-[#C5A880]" />
+      <div
+        className="rounded-xl border-2 shadow-md p-4 flex items-center gap-3"
+        style={{
+          background: 'linear-gradient(135deg, var(--brand-secondary), color-mix(in srgb, var(--brand-secondary) 84%, var(--brand-primary) 16%))',
+          borderColor: 'var(--brand-border)',
+          color: 'var(--brand-secondary-text)',
+        }}
+      >
+        <div
+          className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--brand-primary) 22%, transparent)' }}
+        >
+          <Download size={20} style={{ color: 'var(--brand-primary)' }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-[#FAF6F0]">Uygulamayı Yükle</p>
-          <p className="text-[11px] text-[#FAF6F0]/50">Ana ekrana ekleyin, hızlı erişin</p>
+          <p className="text-sm font-medium">Uygulamayı Yükle</p>
+          <p className="text-[11px] opacity-60">Ana ekrana ekleyin, hızlı erişin</p>
         </div>
         <button
           onClick={handleInstall}
-          className="px-4 py-2 rounded-lg bg-[#C5A880] text-white text-xs font-semibold hover:bg-[#C5A880]/90 transition-colors shrink-0"
+          className="px-4 py-2 rounded-lg text-xs font-semibold transition-colors shrink-0"
+          style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-primary-text)' }}
         >
           Yükle
         </button>
         <button
           onClick={handleDismiss}
-          className="w-7 h-7 rounded-full hover:bg-[#FAF6F0]/10 flex items-center justify-center transition-colors shrink-0"
+          className="w-7 h-7 rounded-full flex items-center justify-center transition-colors shrink-0"
+          style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary-text) 8%, transparent)' }}
           aria-label="Kapat"
         >
-          <X size={15} className="text-[#FAF6F0]/40" />
+          <X size={15} style={{ color: 'color-mix(in srgb, var(--brand-secondary-text) 55%, transparent)' }} />
         </button>
       </div>
     </div>
