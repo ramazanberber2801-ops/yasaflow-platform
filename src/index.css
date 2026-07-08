@@ -166,6 +166,21 @@ body {
   color: var(--brand-secondary-text) !important;
 }
 
+/* HomePage special religious cards */
+.min-h-screen.pb-28 section .rounded-xl.p-5.border-2,
+.min-h-screen.pb-28 section .rounded-xl.p-6.text-center.border-2,
+.min-h-screen.pb-28 section .rounded-xl.p-5[style*="--brand-secondary"] {
+  background-color: var(--brand-secondary) !important;
+  color: var(--brand-secondary-text) !important;
+  border-color: var(--brand-primary) !important;
+}
+
+.min-h-screen.pb-28 section .rounded-xl.p-5.border-2 .rounded-2xl,
+.min-h-screen.pb-28 section .rounded-xl.p-5.border-2 .rounded-xl.p-4 {
+  background-color: color-mix(in srgb, var(--brand-secondary-text) 10%, transparent) !important;
+  border-color: color-mix(in srgb, var(--brand-primary) 25%, transparent) !important;
+}
+
 .opacity-40,
 .opacity-50,
 .opacity-60,
