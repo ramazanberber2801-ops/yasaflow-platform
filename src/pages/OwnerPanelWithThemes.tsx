@@ -22,12 +22,18 @@ const recommendedIds = ['classic-mosque', 'modern-mosque', 'nordic-mosque', 'dar
 
 function setThemeVars(theme: (typeof themes)[number]) {
   const root = document.documentElement;
+  const cardText = readableTextColor(theme.tokens.card) === '#FFFFFF' ? '#FFFFFF' : theme.tokens.text;
   root.style.setProperty('--brand-primary', theme.tokens.primary);
   root.style.setProperty('--brand-secondary', theme.tokens.secondary);
   root.style.setProperty('--brand-background', theme.tokens.background);
   root.style.setProperty('--brand-text', theme.tokens.text);
   root.style.setProperty('--brand-primary-text', readableTextColor(theme.tokens.primary));
   root.style.setProperty('--brand-secondary-text', readableTextColor(theme.tokens.secondary));
+  root.style.setProperty('--brand-card', theme.tokens.card);
+  root.style.setProperty('--brand-card-text', cardText);
+  root.style.setProperty('--brand-border', `color-mix(in srgb, ${theme.tokens.primary} 20%, transparent)`);
+  root.style.setProperty('--brand-muted-text', `color-mix(in srgb, ${theme.tokens.text} 58%, transparent)`);
+  root.style.setProperty('--brand-surface', `color-mix(in srgb, ${theme.tokens.background} 92%, #FFFFFF 8%)`);
 }
 
 function restoreThemeVars(snapshot: Record<string, string>) {
@@ -43,6 +49,11 @@ function readThemeVars() {
     '--brand-text': styles.getPropertyValue('--brand-text').trim(),
     '--brand-primary-text': styles.getPropertyValue('--brand-primary-text').trim(),
     '--brand-secondary-text': styles.getPropertyValue('--brand-secondary-text').trim(),
+    '--brand-card': styles.getPropertyValue('--brand-card').trim(),
+    '--brand-card-text': styles.getPropertyValue('--brand-card-text').trim(),
+    '--brand-border': styles.getPropertyValue('--brand-border').trim(),
+    '--brand-muted-text': styles.getPropertyValue('--brand-muted-text').trim(),
+    '--brand-surface': styles.getPropertyValue('--brand-surface').trim(),
   };
 }
 
@@ -226,9 +237,15 @@ function ThemeCard({ theme, favorite, isActive, isPreviewing, isInspected, onFav
       </div>
 
       <div className="grid grid-cols-3 gap-2 mt-3">
-        <button type="button" onClick={onInspect} className="rounded-xl py-2.5 text-xs font-medium border" style={{ borderColor: mix(theme.tokens.primary, 25), color: theme.tokens.primary, backgroundColor: '#FFFFFF' }}>Inspiser</button>
-        <button type="button" onClick={onPreview} className="rounded-xl py-2.5 text-xs font-medium" style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? readableTextColor(theme.tokens.primary) : brand.primary }}>{isPreviewing ? 'Preview' : 'Prøv'}</button>
-        <button type="button" onClick={onApply} className="rounded-xl py-2.5 text-xs font-medium" style={{ backgroundColor: theme.tokens.primary, color: readableTextColor(theme.tokens.primary) }}>Bruk</button>
+        <button type="button" onClick={onInspect} className="rounded-xl py-2.5 text-xs font-medium border" style={{ borderColor: mix(theme.tokens.primary, 30), color: theme.tokens.primary, backgroundColor: '#FFFFFF' }}>
+          Inspector
+        </button>
+        <button type="button" onClick={onPreview} className="rounded-xl py-2.5 text-xs font-medium" style={{ backgroundColor: isPreviewing ? theme.tokens.primary : mix(brand.primary, 10, '#FFFFFF'), color: isPreviewing ? readableTextColor(theme.tokens.primary) : brand.primary }}>
+          {isPreviewing ? 'Preview' : 'Prøv'}
+        </button>
+        <button type="button" onClick={onApply} className="rounded-xl py-2.5 text-xs font-medium" style={{ backgroundColor: theme.tokens.primary, color: readableTextColor(theme.tokens.primary) }}>
+          Bruk
+        </button>
       </div>
     </div>
   );
