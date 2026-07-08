@@ -71,6 +71,34 @@ body {
   color: var(--brand-secondary-text);
 }
 
+/* Theme bridge for older components that still use generic Tailwind surface classes. */
+.bg-white {
+  background-color: var(--brand-card) !important;
+  color: var(--brand-card-text);
+}
+
+.border,
+.border-2,
+.border-t,
+.border-b,
+.border-l,
+.border-r {
+  border-color: var(--brand-border);
+}
+
+input,
+textarea,
+select {
+  background-color: var(--brand-card);
+  color: var(--brand-text);
+  border-color: var(--brand-border);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--brand-muted-text);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
