@@ -132,6 +132,8 @@ function AppContent() {
     '--brand-card-text': contrastText(brandCard) === '#FFFFFF' ? '#FFFFFF' : brandText,
     '--brand-border': `color-mix(in srgb, ${brandPrimary} 20%, transparent)`,
     '--brand-muted-text': `color-mix(in srgb, ${brandText} 58%, transparent)`,
+    '--brand-soft-text': `color-mix(in srgb, ${brandText} 72%, transparent)`,
+    '--brand-subtle': `color-mix(in srgb, ${brandPrimary} 10%, ${brandCard})`,
     '--brand-surface': `color-mix(in srgb, ${brandBackground} 92%, #FFFFFF 8%)`,
   } as React.CSSProperties;
 
