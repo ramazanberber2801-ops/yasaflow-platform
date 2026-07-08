@@ -9,7 +9,6 @@ interface InstallButtonProps {
 
 const brand = {
   primary: 'var(--brand-primary)',
-  background: 'var(--brand-background)',
   text: 'var(--brand-text)',
 };
 
@@ -61,14 +60,11 @@ export function InstallButton({ onShowGuide }: InstallButtonProps) {
 
   return (
     <div className="fixed top-16 right-3 z-40">
-      <div
-        className="relative bg-white rounded-xl shadow-lg border-2 overflow-hidden"
-        style={{ borderColor: mix(brand.primary, 30) }}
-      >
+      <div className="relative theme-card rounded-xl shadow-lg border-2 overflow-hidden">
         <button
           onClick={handleInstall}
           disabled={installing}
-          className="flex items-center gap-2.5 pl-4 pr-7 py-2.5 transition-colors"
+          className="flex items-center gap-2.5 pl-4 pr-7 py-2.5 transition-colors disabled:opacity-60"
           style={{ color: brand.text }}
         >
           {installing ? (
@@ -86,7 +82,7 @@ export function InstallButton({ onShowGuide }: InstallButtonProps) {
         <button
           onClick={handleDismiss}
           className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-          style={{ backgroundColor: mix(brand.background, 0), color: mix(brand.text, 45) }}
+          style={{ backgroundColor: 'var(--brand-subtle)', color: mix(brand.text, 55) }}
           aria-label="Kapat"
         >
           <X size={12} />
