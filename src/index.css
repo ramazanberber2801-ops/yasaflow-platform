@@ -150,6 +150,22 @@ body {
   background-color: var(--brand-subtle) !important;
 }
 
+/* HomePage activity cards */
+.min-h-screen.pb-28 section .space-y-2\.5 > button.w-full.rounded-xl.border.flex.text-left.overflow-hidden {
+  background-color: var(--brand-card) !important;
+  color: var(--brand-card-text) !important;
+  border-color: var(--brand-border) !important;
+}
+
+.min-h-screen.pb-28 section .space-y-2\.5 > button.w-full.rounded-xl.border.flex.text-left.overflow-hidden h3 {
+  color: var(--brand-card-text) !important;
+}
+
+.min-h-screen.pb-28 section .space-y-2\.5 > button.w-full.rounded-xl.border.flex.text-left.overflow-hidden > .w-16 {
+  background-color: var(--brand-secondary) !important;
+  color: var(--brand-secondary-text) !important;
+}
+
 .opacity-40,
 .opacity-50,
 .opacity-60,
