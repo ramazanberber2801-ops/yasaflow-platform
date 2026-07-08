@@ -130,6 +130,26 @@ body {
   border-color: var(--brand-primary) !important;
 }
 
+/* HomePage news cards */
+.min-h-screen.pb-28 section .space-y-2\.5 > button.w-full.rounded-xl.border.flex.text-left.p-2 {
+  background-color: var(--brand-card) !important;
+  color: var(--brand-card-text) !important;
+  border-color: var(--brand-border) !important;
+}
+
+.min-h-screen.pb-28 section .space-y-2\.5 > button.w-full.rounded-xl.border.flex.text-left.p-2 h3 {
+  color: var(--brand-card-text) !important;
+}
+
+.min-h-screen.pb-28 section .space-y-2\.5 > button.w-full.rounded-xl.border.flex.text-left.p-2 span.inline-block {
+  background-color: var(--brand-subtle) !important;
+  color: var(--brand-primary) !important;
+}
+
+.min-h-screen.pb-28 section .space-y-2\.5 > button.w-full.rounded-xl.border.flex.text-left.p-2 .rounded-lg.flex.items-center.justify-center {
+  background-color: var(--brand-subtle) !important;
+}
+
 .opacity-40,
 .opacity-50,
 .opacity-60,
