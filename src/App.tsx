@@ -120,6 +120,7 @@ function AppContent() {
   const brandSecondary = safeColor(selectedTheme?.tokens.secondary || settings?.brandingSecondaryColor, '#2D2A26');
   const brandBackground = safeColor(selectedTheme?.tokens.background || settings?.brandingBackgroundColor, '#FAF6F0');
   const brandText = safeColor(selectedTheme?.tokens.text || settings?.brandingTextColor, '#2D2A26');
+  const brandCard = safeColor(selectedTheme?.tokens.card, '#FFFFFF');
   const brandVars = {
     '--brand-primary': brandPrimary,
     '--brand-secondary': brandSecondary,
@@ -127,6 +128,11 @@ function AppContent() {
     '--brand-text': brandText,
     '--brand-primary-text': contrastText(brandPrimary),
     '--brand-secondary-text': contrastText(brandSecondary),
+    '--brand-card': brandCard,
+    '--brand-card-text': contrastText(brandCard) === '#FFFFFF' ? '#FFFFFF' : brandText,
+    '--brand-border': `color-mix(in srgb, ${brandPrimary} 20%, transparent)`,
+    '--brand-muted-text': `color-mix(in srgb, ${brandText} 58%, transparent)`,
+    '--brand-surface': `color-mix(in srgb, ${brandBackground} 92%, #FFFFFF 8%)`,
   } as React.CSSProperties;
 
   const donationEnabled = enabled('donation');
