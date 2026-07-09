@@ -21,7 +21,7 @@ type PushMessage = {
   expires_at: string;
 };
 
-const BUILD_MARKER = 'Owner v2.1 admin invite';
+const BUILD_MARKER = 'Owner v2.2 active';
 
 function safeColor(value: unknown, fallback: string) {
   const color = String(value || '').trim();
