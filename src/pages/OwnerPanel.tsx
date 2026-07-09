@@ -21,6 +21,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const brand = {
   primary: 'var(--brand-primary)',
@@ -123,7 +124,7 @@ const emptyOrganization: Organization = {
 };
 
 const roadmap = [
-  'Koble organisasjoner til Supabase',
+  'Hente organisasjoner fra Supabase',
   'Lagre moduler per organisasjon',
   'Velg branding per organisasjon',
   'Opprett første administrator automatisk',
@@ -213,6 +214,8 @@ export function OwnerPanel() {
   const [orgSearch, setOrgSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'Alle' | Organization['status']>('Alle');
   const [hostingFilter, setHostingFilter] = useState<'Alle' | Organization['hosting']>('Alle');
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
+  const [saveMessage, setSaveMessage] = useState('');
 
   const activeModules = useMemo(() => modules.filter((mod) => mod.enabled).length, [modules]);
   const totalAdmins = useMemo(() => organizations.reduce((sum, org) => sum + org.adminCount, 0), [organizations]);
@@ -244,6 +247,8 @@ export function OwnerPanel() {
   const selectOrganization = (org: Organization) => {
     setSelectedOrgId(org.id);
     setForm(org);
+    setSaveState('idle');
+    setSaveMessage('');
     setSelectorOpen(false);
     setOrgSearch('');
   };
@@ -259,16 +264,113 @@ export function OwnerPanel() {
     setOrganizations((prev) => [...prev, org]);
     setSelectedOrgId(id);
     setForm(org);
+    setSaveState('idle');
+    setSaveMessage('');
     setSelectorOpen(false);
   };
 
-  const saveOrganization = () => {
+  const saveOrganization = async () => {
     const cleanName = form.name.trim() || 'Uten navn';
     const cleanId = form.id || cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `org-${Date.now()}`;
     const cleanOrg = { ...form, id: cleanId, name: cleanName, adminCount: Math.max(1, form.adminCount || 1) };
-    setOrganizations((prev) => prev.map((org) => (org.id === selectedOrgId ? cleanOrg : org)));
-    setSelectedOrgId(cleanOrg.id);
-    setForm(cleanOrg);
+
+    const updateLocalState = () => {
+      setOrganizations((prev) => prev.map((org) => (org.id === selectedOrgId ? cleanOrg : org)));
+      setSelectedOrgId(cleanOrg.id);
+      setForm(cleanOrg);
+    };
+
+    setSaveState('saving');
+    setSaveMessage('Lagrer organisasjon...');
+
+    if (!supabase) {
+      updateLocalState();
+      setSaveState('success');
+      setSaveMessage('Lagret lokalt. Supabase er ikke konfigurert i miljøet.');
+      return;
+    }
+
+    try {
+      const organizationPayload = {
+        id: cleanOrg.id,
+        name: cleanOrg.name,
+        organization_type: cleanOrg.type,
+        country: cleanOrg.country,
+        language: cleanOrg.language,
+        status: cleanOrg.status,
+        hosting_mode: cleanOrg.hosting,
+        domain: cleanOrg.domain || null,
+        live_url: cleanOrg.liveUrl || null,
+        logo_url: cleanOrg.logoUrl || null,
+        theme_id: cleanOrg.themeId,
+        onboarding_step: cleanOrg.onboardingStep,
+        admin_name: cleanOrg.adminName || null,
+        admin_email: cleanOrg.adminEmail || null,
+        member_count: cleanOrg.memberCount || 0,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error: orgError } = await supabase
+        .from('organizations')
+        .upsert(organizationPayload, { onConflict: 'id' });
+
+      if (orgError) throw orgError;
+
+      const moduleRows = modules.map((mod) => ({
+        organization_id: cleanOrg.id,
+        module_id: mod.id,
+        enabled: Boolean(mod.enabled),
+        status: mod.status,
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: moduleError } = await supabase
+        .from('organization_modules')
+        .upsert(moduleRows, { onConflict: 'organization_id,module_id' });
+
+      if (moduleError) throw moduleError;
+
+      if (cleanOrg.adminEmail.trim()) {
+        const { error: adminError } = await supabase
+          .from('organization_admins')
+          .upsert({
+            organization_id: cleanOrg.id,
+            display_name: cleanOrg.adminName || cleanOrg.adminEmail,
+            email: cleanOrg.adminEmail.trim(),
+            role: 'admin',
+            invitation_status: 'pending',
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'organization_id,email' });
+
+        if (adminError) throw adminError;
+      }
+
+      const provisioningRows = [
+        { step_key: 'order_received', label: 'Bestilling mottatt', status: 'done' },
+        { step_key: 'organization_created', label: 'Organisasjon opprettet', status: 'done' },
+        { step_key: 'admin_ready', label: 'Admin klar', status: cleanOrg.adminEmail ? 'pending' : 'waiting' },
+        { step_key: 'theme_selected', label: 'Tema valgt', status: cleanOrg.themeId ? 'done' : 'pending' },
+        { step_key: 'published', label: 'Publisering', status: cleanOrg.onboardingStep === 'Klar' ? 'done' : 'pending' },
+      ].map((step) => ({
+        organization_id: cleanOrg.id,
+        ...step,
+        updated_at: new Date().toISOString(),
+      }));
+
+      const { error: provisioningError } = await supabase
+        .from('organization_provisioning_steps')
+        .upsert(provisioningRows, { onConflict: 'organization_id,step_key' });
+
+      if (provisioningError) throw provisioningError;
+
+      updateLocalState();
+      setSaveState('success');
+      setSaveMessage('Lagret i Supabase. Neste steg er admin-invitasjon.');
+    } catch (err) {
+      console.error('Kunne ikke lagre organisasjon:', err);
+      setSaveState('error');
+      setSaveMessage(err instanceof Error ? err.message : 'Kunne ikke lagre organisasjonen.');
+    }
   };
 
   const quickLinks = [
@@ -518,10 +620,11 @@ export function OwnerPanel() {
             </div>
           </div>
 
-          <button type="button" onClick={saveOrganization} className="w-full py-3 rounded-xl text-sm font-medium" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
-            Lagre organisasjon
+          <button type="button" disabled={saveState === 'saving'} onClick={saveOrganization} className="w-full py-3 rounded-xl text-sm font-medium disabled:opacity-60" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
+            {saveState === 'saving' ? 'Lagrer...' : 'Lagre organisasjon'}
           </button>
-          <p className="text-xs opacity-50">Denne versjonen lagres lokalt i Owner-panelet. Neste steg er Supabase-tabell og automatisk admin-opprettelse.</p>
+          {saveMessage && <p className={`text-xs ${saveState === 'error' ? 'text-red-600' : 'opacity-60'}`}>{saveMessage}</p>}
+          <p className="text-xs opacity-50">Lagrer organisasjon, moduler og onboarding-status i Supabase. Admin-invitasjon kommer i neste steg.</p>
         </div>
       </SectionCard>
 
@@ -580,7 +683,7 @@ export function OwnerPanel() {
             </div>
           ))}
         </div>
-        <p className="text-xs opacity-50 mt-3">Neste steg er å lagre modulene per valgt organisasjon i Supabase.</p>
+        <p className="text-xs opacity-50 mt-3">Modulene lagres per organisasjon i Supabase når organisasjonen lagres.</p>
       </SectionCard>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
