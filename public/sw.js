@@ -1,8 +1,6 @@
-// DTIM Service Worker — offline caching + push notifications
-const CACHE_NAME = 'dtim-v16';
+// Yasaflow Service Worker — push notifications + safe update caching
+const CACHE_NAME = 'yasaflow-v18';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/favicon.svg',
   '/images/dtim-logo.svg',
@@ -20,9 +18,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((names) =>
-      Promise.all(
-        names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
-      )
+      Promise.all(names.map((name) => caches.delete(name)))
     )
   );
   self.clients.claim();
@@ -32,32 +28,39 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-
-  if (url.origin === location.origin) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => {
-        return cached || fetch(event.request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) =>
-            cache.put(event.request, clone).catch(() => {})
-          );
-          return response;
-        }).catch(() => cached);
-      })
-    );
-  } else {
-    event.respondWith(
-      fetch(event.request).catch(() =>
-        caches.match(event.request).then((c) => c || new Response('', { status: 504 }))
-      )
-    );
+  if (url.origin !== location.origin) {
+    event.respondWith(fetch(event.request));
+    return;
   }
+
+  const request = event.request;
+  const isAppShell = request.mode === 'navigate' || url.pathname === '/' || url.pathname.endsWith('.html');
+  const isBuildAsset = url.pathname.startsWith('/assets/') || url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
+
+  if (isAppShell || isBuildAsset) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then((response) => response)
+        .catch(() => caches.match(request).then((cached) => cached || new Response('', { status: 504 })))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      return cached || fetch(request).then((response) => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone).catch(() => {}));
+        return response;
+      });
+    })
+  );
 });
 
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
 
-  const title = data.title || 'DTIM';
+  const title = data.title || 'Yasaflow';
   const options = {
     body: data.body || 'Yeni bildirim var.',
     icon: '/images/dtim-logo.svg',
@@ -75,12 +78,17 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const url = event.notification.data?.url || '/';
-
   event.waitUntil(clients.openWindow(url));
 });
 
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+
+  if (event.data && event.data.type === 'CLEAR_CACHES') {
+    event.waitUntil(
+      caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name))))
+    );
   }
 });
