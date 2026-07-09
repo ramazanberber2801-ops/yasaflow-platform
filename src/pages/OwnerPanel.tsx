@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import {
   Building2,
   Boxes,
   Brush,
   ChevronDown,
-  Cloud,
   CreditCard,
   ExternalLink,
   Github,
+  Image as ImageIcon,
   LayoutDashboard,
+  Mail,
   Palette,
   Plus,
   Rocket,
@@ -16,15 +17,14 @@ import {
   Server,
   ShieldCheck,
   Sparkles,
-  Users,
   UserCog,
+  Users,
   X,
 } from 'lucide-react';
 
 const brand = {
   primary: 'var(--brand-primary)',
   secondary: 'var(--brand-secondary)',
-  background: 'var(--brand-background)',
   text: 'var(--brand-text)',
   primaryText: 'var(--brand-primary-text)',
   secondaryText: 'var(--brand-secondary-text)',
@@ -33,14 +33,21 @@ const brand = {
 const mix = (color: string, amount: number, fallback = 'transparent') =>
   `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
+const moduleTemplates = {
+  standard: ['news', 'activities', 'contact', 'push'],
+  mosque: ['news', 'activities', 'contact', 'push', 'donation', 'prayer', 'ayet-hadis'],
+  association: ['news', 'activities', 'contact', 'push', 'donation', 'members'],
+} as const;
+
 const defaultModules = [
   { id: 'news', name: 'Nyheter', type: 'Core', status: 'Inkludert', enabled: true, locked: true },
-  { id: 'events', name: 'Aktiviteter', type: 'Core', status: 'Inkludert', enabled: true, locked: true },
+  { id: 'activities', name: 'Aktiviteter', type: 'Core', status: 'Inkludert', enabled: true, locked: true },
   { id: 'contact', name: 'Kontakt', type: 'Core', status: 'Inkludert', enabled: true, locked: true },
   { id: 'donation', name: 'Donasjon', type: 'Tillegg', status: 'Aktiv', enabled: true, locked: false },
   { id: 'push', name: 'Push-varsler', type: 'Tillegg', status: 'Aktiv', enabled: true, locked: false },
   { id: 'members', name: 'Medlemsregister', type: 'Premium', status: 'Planlagt', enabled: false, locked: false },
   { id: 'prayer', name: 'Bønnetider', type: 'Religiøs', status: 'Av', enabled: false, locked: false },
+  { id: 'ayet-hadis', name: 'Ayet / Hadis', type: 'Religiøs', status: 'Av', enabled: false, locked: false },
   { id: 'member-card', name: 'Digitalt medlemskort', type: 'Fremtidig', status: 'Planlagt', enabled: false, locked: false },
 ];
 
@@ -49,6 +56,7 @@ type Organization = {
   name: string;
   type: 'Moské' | 'Forening' | 'Kirke' | 'Idrettslag' | 'Kultur' | 'Annen';
   country: string;
+  language: 'Norsk' | 'Tyrkisk' | 'Engelsk' | 'Arabisk';
   status: 'Aktiv' | 'Prøve' | 'Frosset';
   hosting: 'Managed' | 'Self Hosted';
   domain: string;
@@ -56,8 +64,13 @@ type Organization = {
   vercelUrl: string;
   supabaseUrl: string;
   githubUrl: string;
+  adminName: string;
+  adminEmail: string;
   adminCount: number;
   memberCount: number;
+  logoUrl: string;
+  themeId: string;
+  modulePreset: keyof typeof moduleTemplates;
   onboardingStep: 'Bestilling' | 'Oppsett' | 'Testing' | 'Klar';
 };
 
@@ -67,6 +80,7 @@ const defaultOrganizations: Organization[] = [
     name: 'Yasaflow Demo',
     type: 'Moské',
     country: 'Norge',
+    language: 'Tyrkisk',
     status: 'Aktiv',
     hosting: 'Managed',
     domain: 'yasaflow.vercel.app',
@@ -74,8 +88,13 @@ const defaultOrganizations: Organization[] = [
     vercelUrl: '',
     supabaseUrl: '',
     githubUrl: 'https://github.com/ramazanberber2801-ops/dtim',
+    adminName: 'Owner Admin',
+    adminEmail: '',
     adminCount: 1,
     memberCount: 0,
+    logoUrl: '',
+    themeId: 'classic-mosque',
+    modulePreset: 'mosque',
     onboardingStep: 'Testing',
   },
 ];
@@ -85,6 +104,7 @@ const emptyOrganization: Organization = {
   name: '',
   type: 'Forening',
   country: 'Norge',
+  language: 'Norsk',
   status: 'Prøve',
   hosting: 'Managed',
   domain: '',
@@ -92,8 +112,13 @@ const emptyOrganization: Organization = {
   vercelUrl: '',
   supabaseUrl: '',
   githubUrl: '',
+  adminName: '',
+  adminEmail: '',
   adminCount: 1,
   memberCount: 0,
+  logoUrl: '',
+  themeId: 'modern-community',
+  modulePreset: 'standard',
   onboardingStep: 'Bestilling',
 };
 
@@ -123,7 +148,7 @@ function OwnerCard({ title, value, icon: Icon, note }: any) {
   );
 }
 
-function SectionCard({ title, icon: Icon, children }: any) {
+function SectionCard({ title, icon: Icon, children }: { title: string; icon: any; children: ReactNode }) {
   return (
     <section className="rounded-2xl border-2 bg-white p-4 shadow-sm" style={{ borderColor: mix(brand.primary, 22), color: brand.text }}>
       <div className="flex items-center gap-2 mb-4">
@@ -150,10 +175,10 @@ function OwnerInput({ value, onChange, placeholder, type = 'text' }: { value: st
   );
 }
 
-function OwnerSelect({ value, onChange, children }: { value: string; onChange: (value: string) => void; children: React.ReactNode }) {
+function OwnerSelect({ value, onChange, children }: { value: string; onChange: (value: string) => void; children: ReactNode }) {
   return (
     <select
-      className="px-4 py-3 rounded-xl border bg-white text-sm"
+      className="w-full px-4 py-3 rounded-xl border bg-white text-sm"
       style={{ borderColor: mix(brand.primary, 22), color: brand.text }}
       value={value}
       onChange={(e) => onChange(e.target.value)}
@@ -175,6 +200,10 @@ function StatusPill({ label }: { label: string }) {
   );
 }
 
+function FieldLabel({ children }: { children: ReactNode }) {
+  return <p className="text-[10px] uppercase tracking-wide opacity-45 mb-1">{children}</p>;
+}
+
 export function OwnerPanel() {
   const [modules, setModules] = useState(defaultModules);
   const [organizations, setOrganizations] = useState<Organization[]>(defaultOrganizations);
@@ -189,11 +218,12 @@ export function OwnerPanel() {
   const totalAdmins = useMemo(() => organizations.reduce((sum, org) => sum + org.adminCount, 0), [organizations]);
   const totalMembers = useMemo(() => organizations.reduce((sum, org) => sum + org.memberCount, 0), [organizations]);
   const selectedOrg = organizations.find((org) => org.id === selectedOrgId) || organizations[0];
+  const presetModules = moduleTemplates[form.modulePreset];
 
   const filteredOrganizations = useMemo(() => {
     const query = orgSearch.trim().toLowerCase();
     return organizations.filter((org) => {
-      const haystack = [org.name, org.domain, org.type, org.country, org.hosting, org.status, org.onboardingStep].join(' ').toLowerCase();
+      const haystack = [org.name, org.domain, org.type, org.country, org.language, org.hosting, org.status, org.onboardingStep, org.adminEmail].join(' ').toLowerCase();
       const matchesSearch = !query || haystack.includes(query);
       const matchesStatus = statusFilter === 'Alle' || org.status === statusFilter;
       const matchesHosting = hostingFilter === 'Alle' || org.hosting === hostingFilter;
@@ -218,6 +248,11 @@ export function OwnerPanel() {
     setOrgSearch('');
   };
 
+  const applyPreset = (preset: keyof typeof moduleTemplates) => {
+    setForm((prev) => ({ ...prev, modulePreset: preset }));
+    setModules((prev) => prev.map((mod) => ({ ...mod, enabled: mod.locked || moduleTemplates[preset].includes(mod.id as any), status: mod.locked || moduleTemplates[preset].includes(mod.id as any) ? (mod.locked ? 'Inkludert' : 'Aktiv') : 'Av' })));
+  };
+
   const newOrganization = () => {
     const id = `org-${Date.now()}`;
     const org = { ...emptyOrganization, id, name: 'Ny organisasjon' };
@@ -230,7 +265,7 @@ export function OwnerPanel() {
   const saveOrganization = () => {
     const cleanName = form.name.trim() || 'Uten navn';
     const cleanId = form.id || cleanName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `org-${Date.now()}`;
-    const cleanOrg = { ...form, id: cleanId, name: cleanName };
+    const cleanOrg = { ...form, id: cleanId, name: cleanName, adminCount: Math.max(1, form.adminCount || 1) };
     setOrganizations((prev) => prev.map((org) => (org.id === selectedOrgId ? cleanOrg : org)));
     setSelectedOrgId(cleanOrg.id);
     setForm(cleanOrg);
@@ -295,7 +330,7 @@ export function OwnerPanel() {
                   onChange={(e) => setOrgSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 rounded-xl border text-sm"
                   style={{ borderColor: mix(brand.primary, 22), color: brand.text }}
-                  placeholder="Søk navn, type, land, domene eller status..."
+                  placeholder="Søk navn, type, land, admin eller status..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -331,7 +366,7 @@ export function OwnerPanel() {
                         <div className="min-w-0">
                           <p className="font-serif text-base truncate">{org.name}</p>
                           <p className="text-xs opacity-50 truncate">{org.type} · {org.country} · {org.domain || 'Ingen domene'}</p>
-                          <p className="text-[11px] opacity-45 mt-1">{org.adminCount} admin · {org.memberCount} medlemmer · {org.onboardingStep}</p>
+                          <p className="text-[11px] opacity-45 mt-1">{org.adminEmail || 'Ingen admin e-post'} · {org.onboardingStep}</p>
                         </div>
                         <StatusPill label={org.status} />
                       </div>
@@ -352,58 +387,152 @@ export function OwnerPanel() {
 
       <div className="grid grid-cols-2 gap-3">
         <OwnerCard title="Organisasjoner" value={organizations.length} icon={Building2} note={`Valgt: ${selectedOrg?.name || 'Ingen'}`} />
-        <OwnerCard title="Administratorer" value={totalAdmins} icon={UserCog} note="Første admin opprettes senere automatisk." />
+        <OwnerCard title="Administratorer" value={totalAdmins} icon={UserCog} note="Første admin ligger i oppsettet." />
         <OwnerCard title="Medlemmer" value={totalMembers} icon={Users} note="Kobles til medlemsmodul senere." />
         <OwnerCard title="Aktive moduler" value={activeModules} icon={Boxes} note="Core + valgte tillegg." />
       </div>
 
-      <SectionCard title="Rediger organisasjon" icon={Building2}>
-        <div className="space-y-3">
-          <OwnerInput value={form.name} onChange={(value) => setForm((prev) => ({ ...prev, name: value }))} placeholder="Organisasjonsnavn" />
-          <div className="grid grid-cols-2 gap-3">
-            <OwnerSelect value={form.type} onChange={(value) => setForm((prev) => ({ ...prev, type: value as Organization['type'] }))}>
-              <option>Moské</option>
-              <option>Forening</option>
-              <option>Kirke</option>
-              <option>Idrettslag</option>
-              <option>Kultur</option>
-              <option>Annen</option>
-            </OwnerSelect>
-            <OwnerInput value={form.country} onChange={(value) => setForm((prev) => ({ ...prev, country: value }))} placeholder="Land" />
+      <SectionCard title="Opprett / rediger organisasjon" icon={Building2}>
+        <div className="space-y-4">
+          <div>
+            <FieldLabel>Organisasjon</FieldLabel>
+            <OwnerInput value={form.name} onChange={(value) => setForm((prev) => ({ ...prev, name: value }))} placeholder="Organisasjonsnavn" />
           </div>
-          <OwnerInput value={form.domain} onChange={(value) => setForm((prev) => ({ ...prev, domain: value }))} placeholder="Domene eller subdomene" />
-          <OwnerInput value={form.liveUrl} onChange={(value) => setForm((prev) => ({ ...prev, liveUrl: value }))} placeholder="Live app URL" />
-          <OwnerInput value={form.vercelUrl} onChange={(value) => setForm((prev) => ({ ...prev, vercelUrl: value }))} placeholder="Vercel project URL" />
-          <OwnerInput value={form.supabaseUrl} onChange={(value) => setForm((prev) => ({ ...prev, supabaseUrl: value }))} placeholder="Supabase project URL" />
-          <OwnerInput value={form.githubUrl} onChange={(value) => setForm((prev) => ({ ...prev, githubUrl: value }))} placeholder="GitHub repo URL" />
 
           <div className="grid grid-cols-2 gap-3">
-            <OwnerSelect value={form.hosting} onChange={(value) => setForm((prev) => ({ ...prev, hosting: value as Organization['hosting'] }))}>
-              <option>Managed</option>
-              <option>Self Hosted</option>
+            <div>
+              <FieldLabel>Type</FieldLabel>
+              <OwnerSelect value={form.type} onChange={(value) => setForm((prev) => ({ ...prev, type: value as Organization['type'] }))}>
+                <option>Moské</option>
+                <option>Forening</option>
+                <option>Kirke</option>
+                <option>Idrettslag</option>
+                <option>Kultur</option>
+                <option>Annen</option>
+              </OwnerSelect>
+            </div>
+            <div>
+              <FieldLabel>Land</FieldLabel>
+              <OwnerInput value={form.country} onChange={(value) => setForm((prev) => ({ ...prev, country: value }))} placeholder="Land" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>Språk</FieldLabel>
+              <OwnerSelect value={form.language} onChange={(value) => setForm((prev) => ({ ...prev, language: value as Organization['language'] }))}>
+                <option>Norsk</option>
+                <option>Tyrkisk</option>
+                <option>Engelsk</option>
+                <option>Arabisk</option>
+              </OwnerSelect>
+            </div>
+            <div>
+              <FieldLabel>Standardtema</FieldLabel>
+              <OwnerSelect value={form.themeId} onChange={(value) => setForm((prev) => ({ ...prev, themeId: value }))}>
+                <option value="classic-mosque">Classic Mosque</option>
+                <option value="modern-community">Modern Community</option>
+                <option value="green-trust">Green Trust</option>
+                <option value="blue-civic">Blue Civic</option>
+              </OwnerSelect>
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Logo</FieldLabel>
+            <div className="grid grid-cols-[54px_1fr] gap-3 items-center">
+              <div className="w-14 h-14 rounded-2xl border flex items-center justify-center overflow-hidden" style={{ borderColor: mix(brand.primary, 22), backgroundColor: mix(brand.primary, 6, '#FFFFFF') }}>
+                {form.logoUrl ? <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover" /> : <ImageIcon size={20} style={{ color: brand.primary }} />}
+              </div>
+              <OwnerInput value={form.logoUrl} onChange={(value) => setForm((prev) => ({ ...prev, logoUrl: value }))} placeholder="Logo URL eller base64 senere" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>Admin navn</FieldLabel>
+              <OwnerInput value={form.adminName} onChange={(value) => setForm((prev) => ({ ...prev, adminName: value }))} placeholder="Første administrator" />
+            </div>
+            <div>
+              <FieldLabel>Admin e-post</FieldLabel>
+              <OwnerInput type="email" value={form.adminEmail} onChange={(value) => setForm((prev) => ({ ...prev, adminEmail: value }))} placeholder="admin@organisasjon.no" />
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Standardmoduler</FieldLabel>
+            <OwnerSelect value={form.modulePreset} onChange={(value) => applyPreset(value as keyof typeof moduleTemplates)}>
+              <option value="standard">Standard</option>
+              <option value="mosque">Moské</option>
+              <option value="association">Forening</option>
             </OwnerSelect>
-            <OwnerSelect value={form.status} onChange={(value) => setForm((prev) => ({ ...prev, status: value as Organization['status'] }))}>
-              <option>Aktiv</option>
-              <option>Prøve</option>
-              <option>Frosset</option>
-            </OwnerSelect>
+            <p className="text-xs opacity-50 mt-2">Aktiverer: {presetModules.join(', ')}</p>
+          </div>
+
+          <div>
+            <FieldLabel>Lenker</FieldLabel>
+            <div className="space-y-3">
+              <OwnerInput value={form.domain} onChange={(value) => setForm((prev) => ({ ...prev, domain: value }))} placeholder="Domene eller subdomene" />
+              <OwnerInput value={form.liveUrl} onChange={(value) => setForm((prev) => ({ ...prev, liveUrl: value }))} placeholder="Live app URL" />
+              <OwnerInput value={form.vercelUrl} onChange={(value) => setForm((prev) => ({ ...prev, vercelUrl: value }))} placeholder="Vercel project URL" />
+              <OwnerInput value={form.supabaseUrl} onChange={(value) => setForm((prev) => ({ ...prev, supabaseUrl: value }))} placeholder="Supabase project URL" />
+              <OwnerInput value={form.githubUrl} onChange={(value) => setForm((prev) => ({ ...prev, githubUrl: value }))} placeholder="GitHub repo URL" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>Hosting</FieldLabel>
+              <OwnerSelect value={form.hosting} onChange={(value) => setForm((prev) => ({ ...prev, hosting: value as Organization['hosting'] }))}>
+                <option>Managed</option>
+                <option>Self Hosted</option>
+              </OwnerSelect>
+            </div>
+            <div>
+              <FieldLabel>Status</FieldLabel>
+              <OwnerSelect value={form.status} onChange={(value) => setForm((prev) => ({ ...prev, status: value as Organization['status'] }))}>
+                <option>Aktiv</option>
+                <option>Prøve</option>
+                <option>Frosset</option>
+              </OwnerSelect>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <OwnerInput type="number" value={form.adminCount} onChange={(value) => setForm((prev) => ({ ...prev, adminCount: Number(value) || 0 }))} placeholder="Admin" />
-            <OwnerInput type="number" value={form.memberCount} onChange={(value) => setForm((prev) => ({ ...prev, memberCount: Number(value) || 0 }))} placeholder="Medlemmer" />
-            <OwnerSelect value={form.onboardingStep} onChange={(value) => setForm((prev) => ({ ...prev, onboardingStep: value as Organization['onboardingStep'] }))}>
-              <option>Bestilling</option>
-              <option>Oppsett</option>
-              <option>Testing</option>
-              <option>Klar</option>
-            </OwnerSelect>
+            <div>
+              <FieldLabel>Admin</FieldLabel>
+              <OwnerInput type="number" value={form.adminCount} onChange={(value) => setForm((prev) => ({ ...prev, adminCount: Number(value) || 0 }))} placeholder="Admin" />
+            </div>
+            <div>
+              <FieldLabel>Medlemmer</FieldLabel>
+              <OwnerInput type="number" value={form.memberCount} onChange={(value) => setForm((prev) => ({ ...prev, memberCount: Number(value) || 0 }))} placeholder="Medlemmer" />
+            </div>
+            <div>
+              <FieldLabel>Onboarding</FieldLabel>
+              <OwnerSelect value={form.onboardingStep} onChange={(value) => setForm((prev) => ({ ...prev, onboardingStep: value as Organization['onboardingStep'] }))}>
+                <option>Bestilling</option>
+                <option>Oppsett</option>
+                <option>Testing</option>
+                <option>Klar</option>
+              </OwnerSelect>
+            </div>
           </div>
 
           <button type="button" onClick={saveOrganization} className="w-full py-3 rounded-xl text-sm font-medium" style={{ backgroundColor: brand.primary, color: brand.primaryText }}>
             Lagre organisasjon
           </button>
-          <p className="text-xs opacity-50">Denne versjonen lagres lokalt i Owner-panelet. Neste steg er Supabase-tabell.</p>
+          <p className="text-xs opacity-50">Denne versjonen lagres lokalt i Owner-panelet. Neste steg er Supabase-tabell og automatisk admin-opprettelse.</p>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Onboarding-status" icon={Mail}>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {['Bestilling mottatt', 'Betaling senere', 'Organisasjon opprettet', 'Admin klar', 'Tema valgt', 'Publisering'].map((item, index) => (
+            <div key={item} className="rounded-xl border px-3 py-2 flex items-center gap-2" style={{ borderColor: mix(brand.primary, 18), backgroundColor: index < 3 ? mix(brand.primary, 5, '#FFFFFF') : '#FFFFFF' }}>
+              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px]" style={{ backgroundColor: index < 3 ? brand.primary : mix(brand.text, 12), color: index < 3 ? brand.primaryText : mix(brand.text, 65) }}>{index + 1}</span>
+              {item}
+            </div>
+          ))}
         </div>
       </SectionCard>
 
@@ -458,14 +587,14 @@ export function OwnerPanel() {
         <SectionCard title="Branding" icon={Palette}>
           <p className="text-sm opacity-65 mb-3">Logo, farger, splash og app-ikon per organisasjon.</p>
           <div className="flex gap-2">
-            {[brand.primary, brand.secondary, brand.background, brand.text].map((color, index) => (
+            {[brand.primary, brand.secondary, 'var(--brand-background)', brand.text].map((color, index) => (
               <div key={index} className="w-9 h-9 rounded-full border" style={{ backgroundColor: color, borderColor: mix(brand.primary, 25) }} />
             ))}
           </div>
         </SectionCard>
 
         <SectionCard title="Themes & Layouts" icon={Brush}>
-          <p className="text-sm opacity-65 mb-3">Arkitektur for Standard, Modern, Tech, Classic og Dashboard-layout.</p>
+          <p className="text-sm opacity-65 mb-3">Tema valgt for aktiv organisasjon: {form.themeId}</p>
           <div className="grid grid-cols-2 gap-2 text-xs">
             {['Standard', 'Modern', 'Tech', 'Dashboard'].map((item) => (
               <span key={item} className="rounded-lg border px-3 py-2" style={{ borderColor: mix(brand.primary, 18) }}>{item}</span>
