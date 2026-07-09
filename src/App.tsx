@@ -21,6 +21,8 @@ type PushMessage = {
   expires_at: string;
 };
 
+const BUILD_MARKER = 'Owner v2.1 admin invite';
+
 function safeColor(value: unknown, fallback: string) {
   const color = String(value || '').trim();
   return /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
@@ -267,6 +269,12 @@ function AppContent() {
 
   return (
     <div className="min-h-screen" style={{ ...brandVars, backgroundColor: 'var(--brand-background)', color: 'var(--brand-text)' }}>
+      {isAdmin && (
+        <div className="fixed left-2 bottom-2 z-[250] rounded-full px-3 py-1 text-[10px] shadow-lg" style={{ backgroundColor: brandSecondary, color: contrastText(brandSecondary) }}>
+          {BUILD_MARKER}
+        </div>
+      )}
+
       {page === 'home' && <HomePage />}
       {page === 'contact' && contactEnabled && <ContactPage />}
 
