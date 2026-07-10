@@ -4,7 +4,7 @@ Last updated: July 10, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. Organization creation, deployment links, categorized module library, hosting and status settings are complete. The platform architecture explicitly separates Owner, Administrator and Member roles.
+Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. Organization creation, deployment links, categorized module library, hosting/status settings and provisioning timeline are complete. The platform architecture explicitly separates Owner, Administrator and Member roles.
 
 ## Current phase
 
@@ -12,9 +12,8 @@ Owner-created onboarding in Owner Dashboard V2.
 
 Current priority order:
 
-1. Add provisioning timeline.
-2. Complete remaining Owner Dashboard V2 overview work.
-3. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
+1. Complete remaining Owner Dashboard V2 overview work.
+2. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
 
 ## User and role architecture
 
@@ -48,27 +47,26 @@ The Members module is organization-scoped and cannot be disabled.
 - Hosting supports `Managed` and `Self Hosted`.
 - Status supports `Prøve`, `Aktiv` and `Pause`.
 - The module library is divided into collapsible categories.
-- Only an opened category expands, keeping the page compact on mobile.
-- Core modules appear separately, are always enabled and cannot be switched off.
+- Core modules are collapsible, always enabled and cannot be switched off.
 - Optional modules can be enabled per organization.
 - Future modules are marked `Senere` and cannot be enabled yet.
 - Module selections save to `organization_modules` and load for the selected organization.
+- Provisioning Timeline loads organization-specific status from `organization_provisioning_steps`.
+- Missing provisioning rows fall back to the standard step order.
+- Saving an organization updates provisioning status for order, organization, administrator, domain, modules, testing, readiness and publication.
 
-## Module categories
+## Provisioning steps
 
-- Communication
-- Activities
-- Members
-- Finance
-- Organization
-- Education
-- Rooms
-- Information
-- Faith community
-- Administration
-- Integrations
-- Premium
-- AI
+- Bestilling mottatt
+- Organisasjon opprettet
+- Administrator
+- Domene konfigurert
+- Moduler konfigurert
+- Testing
+- Klar for publisering
+- Publisert
+
+Status values are displayed as Fullført, Pågår, Venter or Ikke startet.
 
 ## Database status
 
@@ -94,11 +92,7 @@ The working flow must not be broken:
 
 ## Remaining Owner Dashboard V2 work
 
-### Provisioning timeline
-
-Display onboarding and provisioning progress from `organization_provisioning_steps`.
-
-### Later owner overview
+### Owner overview
 
 Add overview cards after the core flows are complete.
 
