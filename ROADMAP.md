@@ -1,52 +1,121 @@
 # Yasaflow – Roadmap
 
-This roadmap contains future product phases and later work. Current implementation status belongs in `PROJECT_STATUS.md`, while `TODO.md` contains only the next concrete tasks.
+This roadmap contains product phases and later work. Current implementation status belongs in `PROJECT_STATUS.md`, while `TODO.md` contains only the next concrete tasks.
 
-## Owner-created onboarding — current phase
+## Completed: Owner Dashboard V2
 
-The owner creates and configures organizations from Owner Dashboard V2.
+The internal Yasaflow Owner experience is complete for the current phase.
 
-Current goals:
+Completed areas:
 
-- Complete the “Opprett organisasjon” flow.
-- Preserve organization editing and the admin invitation flow.
-- Configure deployment links, modules, hosting, status and provisioning state.
-- Keep all customers on the shared Yasaflow GitHub codebase.
+- Organization creation and selection.
+- Existing organization editing.
+- First administrator invitation.
+- Live App, Vercel and Supabase links.
+- Hosting and organization status.
+- Categorized module library.
+- Provisioning Timeline.
+- Owner Overview.
 
-Standard and sponsored organizations may have separate Vercel and Supabase projects when needed. They must not have customer-specific GitHub repositories.
+All organizations continue to use the shared Yasaflow GitHub codebase. Standard and sponsored organizations may have separate Vercel and Supabase projects when needed, but not customer-specific GitHub repositories.
+
+## Current phase: Customer Administrator Portal
+
+Each organization needs an organization-scoped admin experience for daily operations.
+
+Current milestone areas:
+
+- Administrator Portal review and navigation.
+- Members module.
+- News management.
+- Activities management.
+- Roles and access control.
+- Push notifications.
+- Organization settings and branding.
+- Operational statistics.
+
+The Administrator Portal must keep Owners, Administrators and Members strictly separated.
+
+## Members module
+
+The Members module is a locked core module.
+
+Planned capabilities:
+
+- Member profile.
+- Member number.
+- Name, email, phone and optional address.
+- Join date.
+- Active/inactive status.
+- Groups and internal roles.
+- Internal notes.
+- Search and filtering.
+
+Later extensions:
+
+- Family relationships.
+- QR membership card.
+- Attendance history.
+- Membership fee.
+- Tags, skills and volunteer status.
+- Import/export.
+
+## News and communication
+
+Planned areas:
+
+- News creation, editing and publishing.
+- Push notifications.
+- Announcements.
+- Targeted communication where supported.
+
+## Activities
+
+Planned areas:
+
+- Activities and events.
+- Calendar.
+- Registration and waiting list.
+- Volunteers and later QR check-in.
+
+## Roles and access control
+
+Planned areas:
+
+- Organization administrators.
+- Additional administrators where allowed.
+- Role-based permissions.
+- Clear separation between administrative access and membership records.
+
+## yasaflow.com public website — later phase
+
+Design and build the public Yasaflow website after the core product and Administrator Portal are mature.
+
+The website should later support:
+
+- Product information.
+- Module overview.
+- Customer examples.
+- Contact and sales entry points.
+- Package presentation.
+- Access to public onboarding.
 
 ## Public self-service onboarding — later phase
 
-After Owner Dashboard V2 is complete, organizations should be able to start onboarding through a public portal.
+Organizations should eventually be able to start onboarding from the public website.
 
-Later capabilities may include organization registration, admin onboarding, module and theme selection, deployment preferences and onboarding progress.
+Possible capabilities:
 
-## Owner Dashboard V2
+- Organization registration.
+- First administrator onboarding.
+- Module and theme selection.
+- Package selection.
+- Deployment preferences.
+- Onboarding progress.
 
-Planned completion areas:
+## Payments and packages — later phase
 
-- Organization creation and selection.
-- Deployment links for Live App, Vercel and Supabase.
-- Complete module library.
-- Hosting mode and organization status.
-- Provisioning timeline.
-- Improved owner overview after the core flows are stable.
-
-## yasaflow.com public website
-
-Design and build the public Yasaflow website after Owner Dashboard V2 is complete.
-
-The website should later support product information, customer examples, module overview, contact or sales entry points and access to public onboarding.
-
-## Customer admin portal
-
-Each organization should have an admin experience for managing its own content and operations.
-
-Planned areas include news, activities, push notifications, members, donations, calendar, chat, branding and settings.
-
-## Payments and packages
-
-Payments and package definitions are postponed until the core platform is stable.
+Payments and package definitions remain postponed until the core product is stable.
 
 Possible providers to evaluate later:
 
@@ -54,16 +123,7 @@ Possible providers to evaluate later:
 - Paddle.
 - Stripe.
 
-Possible package concepts:
-
-- Free.
-- Basic.
-- Pro.
-- Enterprise.
-
-No provider or package structure is final.
-
-## Automated provisioning
+## Automated provisioning — later phase
 
 Later automation may include:
 
@@ -76,5 +136,3 @@ Later automation may include:
 ## Future modules and ideas
 
 Potential future modules and ideas should remain here until they become concrete near-term tasks.
-
-Examples include additional membership features, communication tools, integrations, reporting and organization-specific extensions.
