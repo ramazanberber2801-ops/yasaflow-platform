@@ -4,7 +4,7 @@ Last updated: July 10, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. Organization creation, deployment links, module library, hosting and status settings are complete. The admin invitation flow works and must be preserved.
+Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. Organization creation, deployment links, module library, hosting and status settings are complete. The platform architecture now explicitly separates Owner, Administrator and Member roles.
 
 ## Current phase
 
@@ -12,9 +12,74 @@ Owner-created onboarding in Owner Dashboard V2.
 
 Current priority order:
 
-1. Add provisioning timeline.
-2. Complete remaining Owner Dashboard V2 overview work.
-3. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
+1. Complete the categorized and collapsible module library.
+2. Add provisioning timeline.
+3. Complete remaining Owner Dashboard V2 overview work.
+4. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
+
+## User and role architecture
+
+Yasaflow has three separate user types. They must never be mixed.
+
+### Owner
+
+- Belongs to Yasaflow, not to an organization.
+- Manages the platform.
+- Can create organizations, invite the first administrator, manage modules, subscriptions, deployments and organization status.
+- Can view all organizations.
+
+### Administrator
+
+- Belongs to one organization.
+- Manages that organization.
+- Can manage members, content, activities, notifications, volunteers and statistics.
+- Is not automatically a Member.
+- May also be registered as a Member, but that is a separate relationship.
+
+### Member
+
+- Represents a person connected to an organization.
+- Is not a Yasaflow Owner.
+- Is not automatically an Administrator.
+- Examples include congregation members, association members, players, parents, volunteers, employees or board members.
+
+A person may have independent memberships in multiple organizations. Each organization owns its own membership data.
+
+## Core modules
+
+The following modules are always enabled:
+
+- News
+- Activities
+- Members
+- Administration
+- Settings
+
+The Members module is a core module and cannot be disabled.
+
+## Members module architecture
+
+- There is exactly one Members module per organization.
+- Members are organization-specific records, not global Yasaflow users.
+- Administrators are managed separately.
+- A person may be both an Administrator and a Member, but those records and permissions remain separate.
+- A person can belong to several organizations through independent membership records.
+
+Typical member data:
+
+- Member number
+- Name
+- Email
+- Phone
+- Profile image
+- Address
+- Join date
+- Active/inactive status
+- Group
+- Internal role
+- Internal notes
+
+Future member features may include QR membership cards, family relationships, membership fees, attendance history, tags, skills, volunteer status and import/export.
 
 ## Hosting and repository strategy
 
@@ -37,7 +102,6 @@ Current priority order:
 - `Inviter administrator` is preserved.
 - Live App, Vercel Project and Supabase Project URLs are editable and saved.
 - GitHub is not shown as a per-customer setting.
-- The module library includes Nyheter, Aktiviteter, Kontakt, Kalender, Push-varsler, Donasjon, Medlemmer, Chat, Bønnetider, Ayet/Hadis and Digitalt medlemskort.
 - Module selections save to `organization_modules`.
 - Saved module selections load when an existing organization is selected.
 - New organizations start with the default module configuration.
@@ -54,6 +118,8 @@ Supabase onboarding foundation:
 - `organization_admins`
 - `organization_modules`
 - `organization_provisioning_steps`
+
+Membership data must be modeled as organization-owned memberships, not as one global Members table tied directly to Yasaflow users.
 
 Migrations:
 
@@ -77,11 +143,11 @@ The working flow must not be broken:
 5. Admin receives the email and sets a password.
 6. Admin logs in.
 
-## Important solved issue
-
-A previous stale Owner UI was caused by PWA service-worker caching. `public/sw.js` uses network-first behavior for the app shell, JavaScript and CSS. Do not restore cache-first handling for these assets.
-
 ## Remaining Owner Dashboard V2 work
+
+### Categorized module library
+
+The module library must be organized into collapsible categories. Core modules remain always enabled and locked. Optional modules may be activated per organization.
 
 ### Provisioning timeline
 
@@ -97,15 +163,6 @@ Add overview cards after the core flows are complete:
 - Active modules
 - Pending admin invitations
 
-## Later phases
-
-- Public self-service onboarding
-- Automated Vercel and Supabase provisioning
-- Environment variables and domain automation
-- Payments and packages
-- Public `yasaflow.com` website
-- Customer admin portal improvements
-
 ## Architecture guidance
 
-Keep changes small and focused. Do not make a large component refactor while completing active product flows. Later, Owner Dashboard V2 may be split into focused components.
+Keep changes small and focused. Never mix Owner, Administrator and Member concepts. Future database, UI and permission work must follow the role and membership model described in `DEVELOPMENT_RULES.md`, `DATABASE_GUIDE.md` and `UI_COMPONENTS.md`.
