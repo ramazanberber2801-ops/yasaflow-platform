@@ -4,7 +4,7 @@ Last updated: July 10, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is complete. The organization Administrator Portal now resolves an authenticated Supabase user to `organization_admins` and the correct organization before displaying organization data. The invitation Edge Function deployment remains deferred until after July 29, 2026.
+Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is complete. The organization Administrator Portal resolves administrators to the correct organization. The Members database foundation is now implemented in GitHub and awaits execution in Supabase before the Members UI can be activated. The invitation Edge Function deployment remains deferred until after July 29, 2026.
 
 ## Current phase
 
@@ -12,7 +12,7 @@ Customer Administrator Portal.
 
 Current priority order:
 
-1. Add the Members database foundation.
+1. Run the Members migration in Supabase.
 2. Build the first Members list and create/edit flow.
 3. Complete organization-scoped News.
 4. Complete organization-scoped Activities.
@@ -35,18 +35,33 @@ Completed:
 - Separate non-Owner Administrator Portal shell.
 - Responsive dashboard and core module navigation.
 - Supabase authenticated user lookup.
-- Resolution by `organization_admins.user_id`.
-- Temporary fallback resolution by normalized administrator email.
-- Organization identity, logo and status loaded from `organizations`.
-- Organization access is refused when no valid organization administrator record is found.
-- Owner Dashboard V2 remains separate.
+- Resolution through `organization_admins`.
+- Organization identity, logo and status.
+- Refusal of organization data access when no valid administrator relationship exists.
 
 Current limitations:
 
-- `AppContext.login` still begins with the legacy `admins` profile lookup. Full login migration is postponed to a separate focused task.
-- The email fallback should be removed after all invitation records reliably receive `user_id`.
-- No Members, News or Activities data is loaded by the new portal yet.
-- `invite-organization-admin` exists in GitHub but is not deployed in Supabase.
+- `AppContext.login` still begins with the legacy `admins` profile lookup.
+- The invitation Edge Function is not yet deployed.
+- Members, News and Activities UI are not yet operational.
+
+## Members database foundation
+
+Implemented in:
+
+- `supabase/migrations/20260710_members_foundation.sql`
+- `MEMBERS_FOUNDATION.md`
+
+The foundation contains:
+
+- `people`
+- `organization_memberships`
+- organization-scoped member-number uniqueness
+- active/inactive membership status
+- organization administrator RLS policies
+- strict separation between members and administrators
+
+The migration has not been run automatically. It must be executed in Supabase SQL Editor before the Members UI can use these tables.
 
 ## Deferred task — after July 29, 2026
 
@@ -57,7 +72,7 @@ Current limitations:
 
 ## Active implementation target
 
-Add the organization-owned Members database foundation with migration and RLS. Members must remain separate from Administrators and all records must include `organization_id`.
+After the migration is applied, build the first organization-scoped Members list and create/edit flow.
 
 ## Database status
 
@@ -68,8 +83,11 @@ Current onboarding tables:
 - `organization_modules`
 - `organization_provisioning_steps`
 
-The next migration adds the Members foundation.
+Members foundation prepared:
+
+- `people`
+- `organization_memberships`
 
 ## Architecture guidance
 
-Keep changes small and focused. Never mix Owner, Administrator and Member concepts. Future work must follow `DEVELOPMENT_RULES.md`, `DATABASE_GUIDE.md`, `UI_COMPONENTS.md` and `ADMIN_PORTAL_REVIEW.md`.
+Keep changes small and focused. Never mix Owner, Administrator and Member concepts. Future work must follow `DEVELOPMENT_RULES.md`, `DATABASE_GUIDE.md`, `UI_COMPONENTS.md`, `ADMIN_PORTAL_REVIEW.md` and `MEMBERS_FOUNDATION.md`.
