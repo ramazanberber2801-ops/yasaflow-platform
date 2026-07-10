@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Building2, Boxes, Crown, ExternalLink, Github, Mail, Plus, Rocket, Save, Search, Send, Server, ShieldCheck, X } from 'lucide-react';
+import { Building2, Boxes, Crown, ExternalLink, Mail, Plus, Rocket, Save, Search, Send, Server, ShieldCheck, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 const brand = {
@@ -25,7 +25,6 @@ type Organization = {
   liveUrl: string;
   vercelUrl: string;
   supabaseUrl: string;
-  githubUrl: string;
   adminName: string;
   adminEmail: string;
   memberCount: number;
@@ -53,7 +52,6 @@ const defaultOrganization: Organization = {
   liveUrl: '/',
   vercelUrl: '',
   supabaseUrl: '',
-  githubUrl: 'https://github.com/ramazanberber2801-ops/dtim',
   adminName: '',
   adminEmail: '',
   memberCount: 0,
@@ -87,7 +85,6 @@ function normalizeOrganization(row: any): Organization {
     liveUrl: row.live_url || row.liveUrl || '/',
     vercelUrl: row.vercel_url || row.vercelUrl || '',
     supabaseUrl: row.supabase_url || row.supabaseUrl || '',
-    githubUrl: row.github_url || row.githubUrl || defaultOrganization.githubUrl,
     adminName: row.admin_name || row.adminName || '',
     adminEmail: row.admin_email || row.adminEmail || '',
     memberCount: Number(row.member_count || row.memberCount || 0),
@@ -194,7 +191,7 @@ export function OwnerPanelV2() {
     setSaveMessage('');
     setInviteState('idle');
     setInviteMessage('');
-    setOrganization({ ...defaultOrganization, id: `org-${Date.now()}`, name: '', type: 'Forening', country: 'Norge', language: 'Norsk', status: 'Prøve', adminName: '', adminEmail: '', domain: '', liveUrl: '', vercelUrl: '', supabaseUrl: '', githubUrl: '', memberCount: 0, onboardingStep: 'Bestilling' });
+    setOrganization({ ...defaultOrganization, id: `org-${Date.now()}`, name: '', type: 'Forening', country: 'Norge', language: 'Norsk', status: 'Prøve', adminName: '', adminEmail: '', domain: '', liveUrl: '', vercelUrl: '', supabaseUrl: '', memberCount: 0, onboardingStep: 'Bestilling' });
   };
 
   const cancelCreate = () => {
@@ -226,6 +223,8 @@ export function OwnerPanelV2() {
       hosting_mode: org.hosting,
       domain: org.domain || null,
       live_url: org.liveUrl || null,
+      vercel_url: org.vercelUrl || null,
+      supabase_url: org.supabaseUrl || null,
       theme_id: org.themeId,
       onboarding_step: org.onboardingStep,
       admin_name: org.adminName || null,
@@ -344,9 +343,9 @@ export function OwnerPanelV2() {
 
       <Card title="Admin-invitasjon" icon={Mail}><div className="space-y-3"><div><FieldLabel>Admin navn</FieldLabel><TextInput value={organization.adminName} onChange={(value) => setOrgField('adminName', value)} placeholder="Første administrator" /></div><div><FieldLabel>Admin e-post</FieldLabel><TextInput type="email" value={organization.adminEmail} onChange={(value) => { setOrgField('adminEmail', value); setInviteState('idle'); setInviteMessage(''); }} placeholder="admin@organisasjon.no" /></div><button type="button" disabled={inviteState === 'sending' || !organization.adminEmail.trim()} onClick={inviteAdministrator} className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60" style={{ backgroundColor: brand.secondary, color: brand.secondaryText }}><Send size={16} /> {inviteState === 'sending' ? 'Sender invitasjon...' : inviteState === 'sent' ? 'Invitasjon sendt' : 'Inviter administrator'}</button><StatusMessage state={inviteState} text={inviteMessage} /></div></Card>
 
-      <Card title="Organisasjon" icon={Building2}><div className="space-y-3"><div><FieldLabel>Organisasjonsnavn</FieldLabel><TextInput value={organization.name} onChange={(value) => setOrgField('name', value)} placeholder="Organisasjonsnavn" /></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Type</FieldLabel><SelectInput value={organization.type} onChange={(value) => setOrgField('type', value)}><option>Moské</option><option>Forening</option><option>Kirke</option><option>Idrettslag</option><option>Kultur</option><option>Annen</option></SelectInput></div><div><FieldLabel>Status</FieldLabel><SelectInput value={organization.status} onChange={(value) => setOrgField('status', value)}><option>Aktiv</option><option>Prøve</option><option>Frosset</option></SelectInput></div></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Hosting</FieldLabel><SelectInput value={organization.hosting} onChange={(value) => setOrgField('hosting', value)}><option>Managed</option><option>Self Hosted</option></SelectInput></div><div><FieldLabel>Medlemmer</FieldLabel><TextInput type="number" value={organization.memberCount} onChange={(value) => setOrgField('memberCount', Number(value) || 0)} placeholder="0" /></div></div><div><FieldLabel>Domene</FieldLabel><TextInput value={organization.domain} onChange={(value) => setOrgField('domain', value)} placeholder="Domene" /></div><div><FieldLabel>Live URL</FieldLabel><TextInput value={organization.liveUrl} onChange={(value) => setOrgField('liveUrl', value)} placeholder="Live URL" /></div><div className="flex gap-2"><button type="button" disabled={saveState === 'saving'} onClick={saveOrganization} className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Save size={16} /> {saveState === 'saving' ? (isCreating ? 'Oppretter...' : 'Lagrer...') : (isCreating ? 'Opprett organisasjon' : 'Lagre endringer')}</button>{isCreating && <button type="button" onClick={cancelCreate} className="px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 bg-white border" style={{ borderColor: mix(brand.primary, 25), color: brand.text }}><X size={16} /> Avbryt</button>}</div><StatusMessage state={saveState} text={saveMessage} /></div></Card>
+      <Card title="Organisasjon" icon={Building2}><div className="space-y-3"><div><FieldLabel>Organisasjonsnavn</FieldLabel><TextInput value={organization.name} onChange={(value) => setOrgField('name', value)} placeholder="Organisasjonsnavn" /></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Type</FieldLabel><SelectInput value={organization.type} onChange={(value) => setOrgField('type', value)}><option>Moské</option><option>Forening</option><option>Kirke</option><option>Idrettslag</option><option>Kultur</option><option>Annen</option></SelectInput></div><div><FieldLabel>Status</FieldLabel><SelectInput value={organization.status} onChange={(value) => setOrgField('status', value)}><option>Aktiv</option><option>Prøve</option><option>Frosset</option></SelectInput></div></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Hosting</FieldLabel><SelectInput value={organization.hosting} onChange={(value) => setOrgField('hosting', value)}><option>Managed</option><option>Self Hosted</option></SelectInput></div><div><FieldLabel>Medlemmer</FieldLabel><TextInput type="number" value={organization.memberCount} onChange={(value) => setOrgField('memberCount', Number(value) || 0)} placeholder="0" /></div></div><div><FieldLabel>Domene</FieldLabel><TextInput value={organization.domain} onChange={(value) => setOrgField('domain', value)} placeholder="Domene" /></div><div className="flex gap-2"><button type="button" disabled={saveState === 'saving'} onClick={saveOrganization} className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Save size={16} /> {saveState === 'saving' ? (isCreating ? 'Oppretter...' : 'Lagrer...') : (isCreating ? 'Opprett organisasjon' : 'Lagre endringer')}</button>{isCreating && <button type="button" onClick={cancelCreate} className="px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 bg-white border" style={{ borderColor: mix(brand.primary, 25), color: brand.text }}><X size={16} /> Avbryt</button>}</div><StatusMessage state={saveState} text={saveMessage} /></div></Card>
 
-      <Card title="Drift-lenker" icon={ExternalLink}><div className="space-y-3"><div><FieldLabel>Vercel project URL</FieldLabel><TextInput value={organization.vercelUrl} onChange={(value) => setOrgField('vercelUrl', value)} placeholder="https://vercel.com/..." /></div><div><FieldLabel>Supabase project URL</FieldLabel><TextInput value={organization.supabaseUrl} onChange={(value) => setOrgField('supabaseUrl', value)} placeholder="https://supabase.com/dashboard/project/..." /></div><div><FieldLabel>GitHub repo URL</FieldLabel><TextInput value={organization.githubUrl} onChange={(value) => setOrgField('githubUrl', value)} placeholder="https://github.com/..." /></div><div className="space-y-2 pt-2"><LinkRow label="Live app" value={organization.liveUrl} icon={ExternalLink} /><LinkRow label="GitHub repo" value={organization.githubUrl} icon={Github} /><LinkRow label="Vercel project" value={organization.vercelUrl} icon={Rocket} /><LinkRow label="Supabase project" value={organization.supabaseUrl} icon={Server} /></div></div></Card>
+      <Card title="Drift-lenker" icon={ExternalLink}><div className="space-y-3"><div><FieldLabel>Live App URL</FieldLabel><TextInput value={organization.liveUrl} onChange={(value) => setOrgField('liveUrl', value)} placeholder="https://app.organisasjon.no" /></div><div><FieldLabel>Vercel Project URL</FieldLabel><TextInput value={organization.vercelUrl} onChange={(value) => setOrgField('vercelUrl', value)} placeholder="https://vercel.com/..." /></div><div><FieldLabel>Supabase Project URL</FieldLabel><TextInput value={organization.supabaseUrl} onChange={(value) => setOrgField('supabaseUrl', value)} placeholder="https://supabase.com/dashboard/project/..." /></div><p className="text-[11px] opacity-55">GitHub-kodebasen deles av alle organisasjoner og konfigureres ikke per kunde.</p><div className="space-y-2 pt-2"><LinkRow label="Live App" value={organization.liveUrl} icon={ExternalLink} /><LinkRow label="Vercel Project" value={organization.vercelUrl} icon={Rocket} /><LinkRow label="Supabase Project" value={organization.supabaseUrl} icon={Server} /></div></div></Card>
 
       <Card title="Modulbibliotek" icon={Boxes}><div className="space-y-2">{modules.map((mod) => <button key={mod.id} type="button" disabled={mod.locked} onClick={() => toggleModule(mod.id)} className="w-full rounded-xl border p-3 flex items-center justify-between text-left disabled:cursor-not-allowed" style={{ borderColor: mix(brand.primary, 16), backgroundColor: mod.enabled ? mix(brand.primary, 5, '#FFFFFF') : '#FFFFFF' }}><div><p className="text-sm font-medium">{mod.name}</p><p className="text-[11px] opacity-50">{mod.locked ? 'Core · låst' : mod.enabled ? 'Aktiv' : 'Av'} · {mod.status}</p></div><span className="relative inline-flex h-6 w-11 items-center rounded-full transition" style={{ backgroundColor: mod.enabled ? brand.primary : mix(brand.text, 18) }}><span className="inline-block h-5 w-5 transform rounded-full bg-white transition" style={{ transform: mod.enabled ? 'translateX(22px)' : 'translateX(2px)' }} /></span></button>)}</div></Card>
 

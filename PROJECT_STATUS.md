@@ -1,233 +1,90 @@
 # Yasaflow – Project Status
 
-Last updated: July 2026
+Last updated: July 10, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is now the main owner panel. Admin invitation now renders correctly and must be preserved.
+Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. The organization creation flow and deployment links are complete. The admin invitation flow works and must be preserved.
 
----
+## Current phase
 
-## Product vision
+Owner-created onboarding in Owner Dashboard V2.
 
-Yasaflow should become a complete app/admin platform for organizations.
+Current priority order:
 
-Target customers:
+1. Restore and complete the module library.
+2. Complete hosting and status settings.
+3. Add provisioning timeline.
+4. Complete remaining Owner Dashboard V2 overview work.
+5. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
 
-- Mosques
-- Associations
-- Churches
-- Sports clubs
-- Cultural organizations
-- Other membership/community organizations
+## Hosting and repository strategy
 
-Each organization should be able to get:
+- All standard and sponsored organizations use the shared Yasaflow GitHub codebase.
+- GitHub is not a customer-specific setting.
+- Standard and sponsored organizations may have their own Vercel and Supabase projects when required.
+- Do not create one GitHub repository per organization.
 
-- its own app experience
-- its own admin panel
-- configurable modules
-- push notifications
-- news
-- activities/events
-- donations
-- member management
-- calendar
-- chat
-- organization-specific theme/branding
+## Owner Dashboard V2 – working now
 
----
-
-## Hosting strategy
-
-### Standard customers
-
-Standard customers use the shared Yasaflow codebase.
-
-For each customer we may create/configure:
-
-- Vercel project
-- Supabase project
-
-Important: do not create one GitHub repository per customer. GitHub is Yasaflow's shared codebase.
-
-### Sponsored organizations
-
-The owner may sponsor 1–2 organizations.
-
-Sponsored organizations may get:
-
-- their own Vercel project
-- their own Supabase project
-
-They should not get their own GitHub repository. They use the same Yasaflow codebase.
-
----
-
-## Current technical direction
-
-Use Owner Dashboard V2 as the main owner panel going forward.
-
-Old OwnerPanel caused confusion because the app showed old UI due to service worker caching and duplicated/old owner code. The project now uses OwnerPanelV2 through the OwnerPanel wrapper.
-
-Do not reintroduce the old Owner UI as the main flow.
-
----
-
-## Important bug that was solved
-
-### Problem
-
-On the Owner page, these fields did not show:
-
-- Admin navn
-- Admin e-post
-- Inviter administrator
-
-### Investigation
-
-We verified:
-
-- Vercel deployed new commits.
-- App.tsx marker changed, proving production was updated.
-- Supabase tables existed.
-- OwnerPanel.tsx was changed to point to OwnerPanelV2.
-- The visible old UI still appeared.
-
-### Root cause
-
-The PWA service worker was caching GET requests cache-first, including JS/CSS bundles. Old AdminPanel/OwnerPanel bundles could stay visible even when App.tsx appeared updated.
-
-### Fix
-
-`public/sw.js` was changed to safer network-first behavior for app shell, JS and CSS.
-
-Commit: `bb0f785`
-
-Current behavior:
-
-- New deploys should show properly.
-- JS/CSS should be network-first.
-- Old caches are deleted on activate.
-
----
+- Owner Dashboard V2 renders as the main owner panel.
+- Organizations load from Supabase.
+- Search filters by name, type, domain, country, status, hosting and admin email.
+- Existing organizations can be selected and loaded into the editor.
+- Existing organizations show `Lagre endringer`.
+- `Opprett organisasjon` starts a clean creation mode.
+- Creation mode shows `Opprett organisasjon` and `Avbryt`.
+- `Avbryt` restores the previously selected organization.
+- Admin name and admin email are visible.
+- `Inviter administrator` is preserved.
+- Live App, Vercel Project and Supabase Project URLs are editable.
+- Live App, Vercel Project and Supabase Project URLs save to the `organizations` table.
+- Deployment links can be opened directly when configured.
+- GitHub is no longer shown or stored as a per-customer setting in Owner Dashboard V2.
+- Existing module toggles remain available.
+- Service worker uses network-first behavior for the app shell, JavaScript and CSS.
 
 ## Database status
 
-Supabase has the onboarding foundation:
+Supabase onboarding foundation:
 
 - `organizations`
 - `organization_admins`
 - `organization_modules`
 - `organization_provisioning_steps`
 
-A migration was added for this foundation:
+Migrations:
 
 - `supabase/migrations/20260709_owner_onboarding.sql`
+- `supabase/migrations/20260710_organization_deployment_links.sql`
 
-The SQL was run manually in Supabase and the tables were confirmed in Table Editor.
+The deployment migration adds:
 
----
+- `vercel_url`
+- `supabase_url`
+
+The migration must be applied in Supabase before Vercel and Supabase project URLs can be saved successfully.
 
 ## Admin invitation flow
 
-Current intended flow:
+The working flow must not be broken:
 
-1. Owner creates or edits organization.
-2. Owner fills in admin name and admin email.
+1. Owner creates or edits an organization.
+2. Owner enters admin name and admin email.
 3. Owner clicks `Inviter administrator`.
 4. Edge Function `invite-organization-admin` sends the invitation.
-5. Admin receives email.
-6. Admin sets password.
-7. Admin logs in.
-8. Organization becomes ready/active.
+5. Admin receives the email and sets a password.
+6. Admin logs in.
 
-This flow is a major milestone and must not be broken while rebuilding Owner Dashboard V2.
+## Important solved issue
 
----
+A previous stale Owner UI was caused by PWA service-worker caching. `public/sw.js` was changed to network-first behavior for the app shell, JavaScript and CSS. Do not restore cache-first handling for these assets.
 
-## Owner Dashboard V2 – current state
+## Remaining Owner Dashboard V2 work
 
-Working now:
+### Module library
 
-- Owner Dashboard V2 renders.
-- Admin invitation form is visible.
-- Basic organization fields are visible.
-- Basic module count is visible.
-- Supabase tables exist.
-- Service worker cache issue has been addressed.
-
-Still missing or incomplete:
-
-- Organization search.
-- Organization list / selector.
-- Load existing organizations from Supabase.
-- Select existing organization.
-- New organization flow with clear Save and Cancel buttons.
-- Deployment links.
-- Vercel Project URL.
-- Supabase Project URL.
-- Live App URL.
-- Hosting mode controls.
-- Full module library from old Owner dashboard.
-- Better dashboard overview cards.
-- Provisioning timeline/status.
-
----
-
-## Immediate next tasks
-
-### 1. Organization search and selector
-
-Add a search field at the top of Owner Dashboard V2.
-
-Owner should be able to search organizations/associations by:
-
-- name
-- type
-- domain
-- country
-- status
-- admin email
-
-Add an organization list/selector so the owner can pick an existing organization without editing blindly.
-
-### 2. New organization UX
-
-When Owner clicks `Ny`, the UI must show:
-
-- Save/Lagre
-- Cancel/Avbryt
-
-The user should not need to use phone/browser back navigation to cancel creating a new organization.
-
-### 3. Deployment links
-
-Add these fields back to V2:
-
-- Live App URL
-- Vercel Project URL
-- Supabase Project URL
-
-Do not add GitHub Repo as a per-customer setting. All customers use the same Yasaflow codebase.
-
-### 4. Hosting settings
-
-Add back:
-
-- Managed
-- Self Hosted
-
-### 5. Status settings
-
-Add back:
-
-- Prøve
-- Aktiv
-- Pause
-
-### 6. Module library
-
-Move full module library into V2:
+Restore and complete:
 
 - Nyheter
 - Aktiviteter
@@ -238,103 +95,39 @@ Move full module library into V2:
 - Chat
 - Bønnetider
 - Ayet/Hadis where relevant
-- Future modules later
 
-All module choices should save to Supabase in `organization_modules`.
+Module selections must save to `organization_modules` and load for the selected organization.
 
-### 7. Better owner overview cards
+### Hosting and status
 
-Add dashboard cards for:
+Complete:
 
-- total organizations
-- active organizations
-- trial organizations
-- active modules
-- pending admin invitations
+- Hosting: Managed / Self Hosted
+- Status: Prøve / Aktiv / Pause
 
----
+### Provisioning timeline
 
-## Later tasks
+Display onboarding and provisioning progress from `organization_provisioning_steps`.
 
-### Self-service onboarding
+### Later owner overview
 
-Build a public customer signup/start page where a new organization can submit:
+Add overview cards after the core flows are complete:
 
-- organization name
-- organization type
-- admin name
-- admin email
-- language
-- theme
-- desired modules
+- Total organizations
+- Active organizations
+- Trial organizations
+- Active modules
+- Pending admin invitations
 
-The system should then:
+## Later phases
 
-- create organization
-- save modules
-- create admin record
-- send invitation
-- update provisioning status
+- Public self-service onboarding
+- Automated Vercel and Supabase provisioning
+- Environment variables and domain automation
+- Payments and packages
+- Public `yasaflow.com` website
+- Customer admin portal improvements
 
-### Automated provisioning
+## Architecture guidance
 
-Later, automate:
-
-- Vercel project setup where needed
-- Supabase project setup where needed
-- environment variables
-- domain/subdomain configuration
-- publish status
-
-### Payments
-
-Payments are postponed until the core platform is stable.
-
-Possible providers:
-
-- Lemon Squeezy
-- Paddle
-- Stripe
-
-No final decision yet.
-
-### Packages
-
-Packages will be defined later after the product is stable.
-
-Possible structure:
-
-- Free
-- Basic
-- Pro
-- Enterprise
-
----
-
-## Architecture recommendation
-
-Owner Dashboard V2 should be split into smaller components instead of one large file.
-
-Suggested components:
-
-- `OrganizationSelector`
-- `OrganizationSearch`
-- `OrganizationEditor`
-- `AdminInvitationCard`
-- `HostingSettings`
-- `ModuleLibrary`
-- `DeploymentLinks`
-- `ProvisioningTimeline`
-- `OwnerStatsCards`
-
-This will make the code easier to maintain as Yasaflow grows.
-
----
-
-## Important instruction for future chats
-
-When continuing work, start by reading this file and then continue with the immediate next tasks.
-
-Suggested new chat prompt:
-
-"Read PROJECT_STATUS.md in the GitHub repo and continue Yasaflow from the current status. Start with Owner Dashboard V2 organization search, organization selector, cancel button for new organization, and deployment links."
+Keep changes small and focused. Do not make a large component refactor while completing active product flows. Later, Owner Dashboard V2 may be split into focused components such as `OrganizationSelector`, `OrganizationEditor`, `AdminInvitationCard`, `DeploymentLinks`, `ModuleLibrary`, `HostingSettings` and `ProvisioningTimeline`.
