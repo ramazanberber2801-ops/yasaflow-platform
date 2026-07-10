@@ -157,7 +157,7 @@ export function OwnerPanelV2() {
   const filteredOrganizations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return organizations;
-    return organizations.filter((org) => [org.name, org.type, org.domain, org.adminEmail, org.status, org.hosting].join(' ').toLowerCase().includes(q));
+    return organizations.filter((org) => [org.name, org.type, org.domain, org.country, org.adminEmail, org.status, org.hosting].join(' ').toLowerCase().includes(q));
   }, [organizations, searchQuery]);
 
   useEffect(() => {
@@ -305,7 +305,7 @@ export function OwnerPanelV2() {
 
       <Card title="Søk organisasjon / forening" icon={Search}>
         <div className="space-y-3">
-          <TextInput value={searchQuery} onChange={setSearchQuery} placeholder="Søk navn, type, domene, admin eller status..." />
+          <TextInput value={searchQuery} onChange={setSearchQuery} placeholder="Søk organisasjon…" />
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {filteredOrganizations.map((org) => <button key={org.id} type="button" onClick={() => selectOrganization(org)} className="w-full rounded-xl border p-3 text-left" style={{ borderColor: org.id === organization.id ? brand.primary : mix(brand.primary, 16), backgroundColor: org.id === organization.id ? mix(brand.primary, 7, '#FFFFFF') : '#FFFFFF' }}><p className="font-serif text-base">{org.name}</p><p className="text-[11px] opacity-50">{org.type} · {org.status} · {org.adminEmail || 'ingen admin e-post'}</p></button>)}
           </div>
