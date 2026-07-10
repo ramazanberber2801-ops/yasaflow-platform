@@ -116,6 +116,7 @@ function AppContent() {
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [pushMessage, setPushMessage] = useState<PushMessage | null>(null);
   const [themeId, setThemeId] = useState('classic-mosque');
+  const [themeLoaded, setThemeLoaded] = useState(false);
 
   const selectedTheme = getTheme(themeId);
   const brandPrimary = safeColor(selectedTheme?.tokens.primary || settings?.brandingPrimaryColor, '#C5A880');
@@ -151,8 +152,14 @@ function AppContent() {
   }, [isInitialized, isAdmin]);
 
   useEffect(() => {
-    if (!isInitialized || !supabase) return;
+    if (!isInitialized) return;
 
+    if (!supabase) {
+      setThemeLoaded(true);
+      return;
+    }
+
+    setThemeLoaded(false);
     supabase
       .from('organizations')
       .select('theme_id')
@@ -167,7 +174,8 @@ function AppContent() {
         if (data?.theme_id) {
           setThemeId(data.theme_id);
         }
-      });
+      })
+      .finally(() => setThemeLoaded(true));
   }, [isInitialized]);
 
   useEffect(() => {
@@ -256,11 +264,11 @@ function AppContent() {
     setShowInstallGuide(true);
   };
 
-  if (!isInitialized) {
+  if (!isInitialized || !themeLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: brandBackground, color: brandText }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF6F0', color: '#2D2A26' }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: brandPrimary, borderTopColor: 'transparent' }}></div>
+          <div className="w-10 h-10 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#C5A880', borderTopColor: 'transparent' }}></div>
           <p className="text-xs opacity-50 font-medium">Yükleniyor...</p>
         </div>
       </div>
