@@ -1,5 +1,6 @@
 import { X, LogOut, ShieldCheck, Crown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { OwnerOverview } from '../components/OwnerOverview';
 import { OwnerPanelV2 } from './OwnerPanelV2';
 
 const brand = {
@@ -61,7 +62,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        {canAccessOwner ? <OwnerPanelV2 /> : <div className="p-4 text-sm opacity-60">Kun Owner har tilgang til Owner V2.</div>}
+        {canAccessOwner ? <><OwnerOverview /><OwnerPanelV2 /></> : <div className="p-4 text-sm opacity-60">Kun Owner har tilgang til Owner V2.</div>}
       </main>
     </div>
   );
