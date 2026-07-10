@@ -63,9 +63,11 @@ const defaultModules: ModuleItem[] = [
   { id: 'news', name: 'Nyheter', status: 'Inkludert', enabled: true, locked: true },
   { id: 'activities', name: 'Aktiviteter', status: 'Inkludert', enabled: true, locked: true },
   { id: 'contact', name: 'Kontakt', status: 'Inkludert', enabled: true, locked: true },
+  { id: 'calendar', name: 'Kalender', status: 'Av', enabled: false, locked: false },
   { id: 'push', name: 'Push-varsler', status: 'Aktiv', enabled: true, locked: false },
   { id: 'donation', name: 'Donasjon', status: 'Aktiv', enabled: true, locked: false },
-  { id: 'members', name: 'Medlemsregister', status: 'Av', enabled: false, locked: false },
+  { id: 'members', name: 'Medlemmer', status: 'Av', enabled: false, locked: false },
+  { id: 'chat', name: 'Chat', status: 'Av', enabled: false, locked: false },
   { id: 'prayer', name: 'Bønnetider', status: 'Av', enabled: false, locked: false },
   { id: 'ayet-hadis', name: 'Ayet / Hadis', status: 'Av', enabled: false, locked: false },
   { id: 'member-card', name: 'Digitalt medlemskort', status: 'Planlagt', enabled: false, locked: false },
@@ -168,6 +170,35 @@ export function OwnerPanelV2() {
     });
   }, []);
 
+  useEffect(() => {
+    if (isCreating) {
+      setModules(defaultModules.map((mod) => ({ ...mod })));
+      return;
+    }
+
+    setModules(defaultModules.map((mod) => ({ ...mod })));
+    if (!supabase || !organization.id) return;
+
+    let cancelled = false;
+    supabase
+      .from('organization_modules')
+      .select('module_id, enabled, status')
+      .eq('organization_id', organization.id)
+      .then(({ data, error }) => {
+        if (cancelled || error || !data) return;
+        const savedModules = new Map(data.map((row) => [row.module_id, row]));
+        setModules(defaultModules.map((mod) => {
+          const saved = savedModules.get(mod.id);
+          if (!saved) return { ...mod };
+          return { ...mod, enabled: Boolean(saved.enabled), status: saved.status || (saved.enabled ? 'Aktiv' : 'Av') };
+        }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [organization.id, isCreating]);
+
   const setOrgField = (key: keyof Organization, value: string | number) => setOrganization((prev) => ({ ...prev, [key]: value }));
 
   const selectOrganization = (org: Organization) => {
@@ -191,6 +222,7 @@ export function OwnerPanelV2() {
     setSaveMessage('');
     setInviteState('idle');
     setInviteMessage('');
+    setModules(defaultModules.map((mod) => ({ ...mod })));
     setOrganization({ ...defaultOrganization, id: `org-${Date.now()}`, name: '', type: 'Forening', country: 'Norge', language: 'Norsk', status: 'Prøve', adminName: '', adminEmail: '', domain: '', liveUrl: '', vercelUrl: '', supabaseUrl: '', memberCount: 0, onboardingStep: 'Bestilling' });
   };
 
