@@ -1,6 +1,7 @@
-import { X, LogOut, ShieldCheck, Crown } from 'lucide-react';
+import { X, LogOut, ShieldCheck, Crown, Building2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OwnerOverview } from '../components/OwnerOverview';
+import { OrganizationAdminPortal } from './OrganizationAdminPortal';
 import { OwnerPanelV2 } from './OwnerPanelV2';
 
 const brand = {
@@ -38,7 +39,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
           <div>
             <h1 className="font-serif text-lg">Yönetim Paneli V2</h1>
             <p className="text-[10px] opacity-55">
-              {currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Admin'} · {canAccessOwner ? 'Owner' : 'Admin'}
+              {currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Admin'} · {canAccessOwner ? 'Owner' : 'Administrator'}
             </p>
           </div>
         </div>
@@ -54,15 +55,15 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
       </header>
 
       <div className="flex border-b-2 bg-white shrink-0 overflow-x-auto" style={{ borderColor: mix(brand.primary, 20) }}>
-        <button className="flex-1 min-w-[78px] flex items-center justify-center gap-1.5 py-3 text-xs font-medium relative" style={{ color: brand.primary }}>
-          <Crown size={15} />
-          <span>Owner V2</span>
+        <div className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 py-3 text-xs font-medium relative" style={{ color: brand.primary }}>
+          {canAccessOwner ? <Crown size={15} /> : <Building2 size={15} />}
+          <span>{canAccessOwner ? 'Owner V2' : 'Administratorportal'}</span>
           <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: brand.primary }} />
-        </button>
+        </div>
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        {canAccessOwner ? <><OwnerOverview /><OwnerPanelV2 /></> : <div className="p-4 text-sm opacity-60">Kun Owner har tilgang til Owner V2.</div>}
+        {canAccessOwner ? <><OwnerOverview /><OwnerPanelV2 /></> : <OrganizationAdminPortal />}
       </main>
     </div>
   );
