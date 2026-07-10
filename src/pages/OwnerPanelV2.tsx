@@ -186,21 +186,27 @@ export function OwnerPanelV2() {
   };
 
   const startNewOrganization = () => {
-    setPreviousOrganization(organization);
+    if (!isCreating) setPreviousOrganization(organization);
     setIsCreating(true);
     setSelectorOpen(false);
     setSearchQuery('');
     setSaveState('idle');
     setSaveMessage('');
-    setOrganization({ ...defaultOrganization, id: `org-${Date.now()}`, name: 'Ny organisasjon', type: 'Forening', language: 'Norsk', status: 'Prøve', adminName: '', adminEmail: '', domain: '', liveUrl: '', vercelUrl: '', supabaseUrl: '', githubUrl: '', memberCount: 0, onboardingStep: 'Bestilling' });
+    setInviteState('idle');
+    setInviteMessage('');
+    setOrganization({ ...defaultOrganization, id: `org-${Date.now()}`, name: '', type: 'Forening', country: 'Norge', language: 'Norsk', status: 'Prøve', adminName: '', adminEmail: '', domain: '', liveUrl: '', vercelUrl: '', supabaseUrl: '', githubUrl: '', memberCount: 0, onboardingStep: 'Bestilling' });
   };
 
   const cancelCreate = () => {
     if (previousOrganization) setOrganization(previousOrganization);
     setIsCreating(false);
     setPreviousOrganization(null);
+    setSelectorOpen(false);
+    setSearchQuery('');
     setSaveState('idle');
     setSaveMessage('Opprettelse avbrutt.');
+    setInviteState('idle');
+    setInviteMessage('');
   };
 
   const persistOrganization = async () => {
@@ -309,7 +315,7 @@ export function OwnerPanelV2() {
 
       <Card title="Organisasjon" icon={Search}>
         <div className="flex gap-2 items-start">
-          <div className="relative flex-1 min-w-0">
+          <div className="relative flex-[1_1_auto] min-w-0">
             <button type="button" onClick={() => setSelectorOpen((open) => !open)} className="w-full min-h-12 px-4 py-2.5 rounded-xl border bg-white text-left flex items-center justify-between gap-3" style={{ borderColor: mix(brand.primary, 22), color: brand.text }}>
               <span className="min-w-0"><span className="block text-sm font-medium truncate">{isCreating ? 'Ny organisasjon' : organization.name}</span><span className="block text-[11px] opacity-50 truncate">{isCreating ? 'Opprett ny organisasjon' : `${organization.type} · ${organization.status}`}</span></span>
               <span className="text-xs opacity-50 shrink-0">▾</span>
@@ -330,15 +336,15 @@ export function OwnerPanelV2() {
             )}
           </div>
 
-          <button type="button" onClick={startNewOrganization} className="min-h-12 px-3 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 shrink-0" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Plus size={14} /> Opprett organisasjon</button>
+          <button type="button" onClick={startNewOrganization} className="min-h-12 max-w-[8.5rem] px-2.5 sm:px-3 rounded-xl text-[11px] sm:text-xs leading-tight font-medium flex items-center justify-center gap-1 shrink-0 whitespace-normal" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Plus size={14} className="shrink-0" /> <span>Opprett organisasjon</span></button>
         </div>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3"><div className="rounded-2xl border bg-white p-4" style={{ borderColor: mix(brand.primary, 18) }}><p className="text-[10px] uppercase opacity-45">Organisasjon</p><p className="font-serif text-xl">{organization.name}</p></div><div className="rounded-2xl border bg-white p-4" style={{ borderColor: mix(brand.primary, 18) }}><p className="text-[10px] uppercase opacity-45">Aktive moduler</p><p className="font-serif text-xl">{activeModules}</p></div></div>
+      <div className="grid grid-cols-2 gap-3"><div className="rounded-2xl border bg-white p-4" style={{ borderColor: mix(brand.primary, 18) }}><p className="text-[10px] uppercase opacity-45">Organisasjon</p><p className="font-serif text-xl">{organization.name || 'Ny organisasjon'}</p></div><div className="rounded-2xl border bg-white p-4" style={{ borderColor: mix(brand.primary, 18) }}><p className="text-[10px] uppercase opacity-45">Aktive moduler</p><p className="font-serif text-xl">{activeModules}</p></div></div>
 
       <Card title="Admin-invitasjon" icon={Mail}><div className="space-y-3"><div><FieldLabel>Admin navn</FieldLabel><TextInput value={organization.adminName} onChange={(value) => setOrgField('adminName', value)} placeholder="Første administrator" /></div><div><FieldLabel>Admin e-post</FieldLabel><TextInput type="email" value={organization.adminEmail} onChange={(value) => { setOrgField('adminEmail', value); setInviteState('idle'); setInviteMessage(''); }} placeholder="admin@organisasjon.no" /></div><button type="button" disabled={inviteState === 'sending' || !organization.adminEmail.trim()} onClick={inviteAdministrator} className="w-full py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60" style={{ backgroundColor: brand.secondary, color: brand.secondaryText }}><Send size={16} /> {inviteState === 'sending' ? 'Sender invitasjon...' : inviteState === 'sent' ? 'Invitasjon sendt' : 'Inviter administrator'}</button><StatusMessage state={inviteState} text={inviteMessage} /></div></Card>
 
-      <Card title="Organisasjon" icon={Building2}><div className="space-y-3"><div><FieldLabel>Organisasjonsnavn</FieldLabel><TextInput value={organization.name} onChange={(value) => setOrgField('name', value)} placeholder="Organisasjonsnavn" /></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Type</FieldLabel><SelectInput value={organization.type} onChange={(value) => setOrgField('type', value)}><option>Moské</option><option>Forening</option><option>Kirke</option><option>Idrettslag</option><option>Kultur</option><option>Annen</option></SelectInput></div><div><FieldLabel>Status</FieldLabel><SelectInput value={organization.status} onChange={(value) => setOrgField('status', value)}><option>Aktiv</option><option>Prøve</option><option>Frosset</option></SelectInput></div></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Hosting</FieldLabel><SelectInput value={organization.hosting} onChange={(value) => setOrgField('hosting', value)}><option>Managed</option><option>Self Hosted</option></SelectInput></div><div><FieldLabel>Medlemmer</FieldLabel><TextInput type="number" value={organization.memberCount} onChange={(value) => setOrgField('memberCount', Number(value) || 0)} placeholder="0" /></div></div><div><FieldLabel>Domene</FieldLabel><TextInput value={organization.domain} onChange={(value) => setOrgField('domain', value)} placeholder="Domene" /></div><div><FieldLabel>Live URL</FieldLabel><TextInput value={organization.liveUrl} onChange={(value) => setOrgField('liveUrl', value)} placeholder="Live URL" /></div><div className="flex gap-2"><button type="button" disabled={saveState === 'saving'} onClick={saveOrganization} className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Save size={16} /> {saveState === 'saving' ? (isCreating ? 'Oppretter...' : 'Lagrer...') : (isCreating ? 'Opprett' : 'Lagre organisasjon')}</button>{isCreating && <button type="button" onClick={cancelCreate} className="px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 bg-white border" style={{ borderColor: mix(brand.primary, 25), color: brand.text }}><X size={16} /> Avbryt</button>}</div><StatusMessage state={saveState} text={saveMessage} /></div></Card>
+      <Card title="Organisasjon" icon={Building2}><div className="space-y-3"><div><FieldLabel>Organisasjonsnavn</FieldLabel><TextInput value={organization.name} onChange={(value) => setOrgField('name', value)} placeholder="Organisasjonsnavn" /></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Type</FieldLabel><SelectInput value={organization.type} onChange={(value) => setOrgField('type', value)}><option>Moské</option><option>Forening</option><option>Kirke</option><option>Idrettslag</option><option>Kultur</option><option>Annen</option></SelectInput></div><div><FieldLabel>Status</FieldLabel><SelectInput value={organization.status} onChange={(value) => setOrgField('status', value)}><option>Aktiv</option><option>Prøve</option><option>Frosset</option></SelectInput></div></div><div className="grid grid-cols-2 gap-3"><div><FieldLabel>Hosting</FieldLabel><SelectInput value={organization.hosting} onChange={(value) => setOrgField('hosting', value)}><option>Managed</option><option>Self Hosted</option></SelectInput></div><div><FieldLabel>Medlemmer</FieldLabel><TextInput type="number" value={organization.memberCount} onChange={(value) => setOrgField('memberCount', Number(value) || 0)} placeholder="0" /></div></div><div><FieldLabel>Domene</FieldLabel><TextInput value={organization.domain} onChange={(value) => setOrgField('domain', value)} placeholder="Domene" /></div><div><FieldLabel>Live URL</FieldLabel><TextInput value={organization.liveUrl} onChange={(value) => setOrgField('liveUrl', value)} placeholder="Live URL" /></div><div className="flex gap-2"><button type="button" disabled={saveState === 'saving'} onClick={saveOrganization} className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-60" style={{ backgroundColor: brand.primary, color: brand.primaryText }}><Save size={16} /> {saveState === 'saving' ? (isCreating ? 'Oppretter...' : 'Lagrer...') : (isCreating ? 'Opprett organisasjon' : 'Lagre endringer')}</button>{isCreating && <button type="button" onClick={cancelCreate} className="px-4 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 bg-white border" style={{ borderColor: mix(brand.primary, 25), color: brand.text }}><X size={16} /> Avbryt</button>}</div><StatusMessage state={saveState} text={saveMessage} /></div></Card>
 
       <Card title="Drift-lenker" icon={ExternalLink}><div className="space-y-3"><div><FieldLabel>Vercel project URL</FieldLabel><TextInput value={organization.vercelUrl} onChange={(value) => setOrgField('vercelUrl', value)} placeholder="https://vercel.com/..." /></div><div><FieldLabel>Supabase project URL</FieldLabel><TextInput value={organization.supabaseUrl} onChange={(value) => setOrgField('supabaseUrl', value)} placeholder="https://supabase.com/dashboard/project/..." /></div><div><FieldLabel>GitHub repo URL</FieldLabel><TextInput value={organization.githubUrl} onChange={(value) => setOrgField('githubUrl', value)} placeholder="https://github.com/..." /></div><div className="space-y-2 pt-2"><LinkRow label="Live app" value={organization.liveUrl} icon={ExternalLink} /><LinkRow label="GitHub repo" value={organization.githubUrl} icon={Github} /><LinkRow label="Vercel project" value={organization.vercelUrl} icon={Rocket} /><LinkRow label="Supabase project" value={organization.supabaseUrl} icon={Server} /></div></div></Card>
 
