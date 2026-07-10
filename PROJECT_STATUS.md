@@ -4,7 +4,7 @@ Last updated: July 10, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. The organization creation flow and deployment links are complete. The admin invitation flow works and must be preserved.
+Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is the active owner panel. Organization creation, deployment links and the module library are complete. The admin invitation flow works and must be preserved.
 
 ## Current phase
 
@@ -12,11 +12,10 @@ Owner-created onboarding in Owner Dashboard V2.
 
 Current priority order:
 
-1. Restore and complete the module library.
-2. Complete hosting and status settings.
-3. Add provisioning timeline.
-4. Complete remaining Owner Dashboard V2 overview work.
-5. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
+1. Complete hosting and status settings.
+2. Add provisioning timeline.
+3. Complete remaining Owner Dashboard V2 overview work.
+4. Start design and development of `yasaflow.com` and the public onboarding portal after Owner Dashboard V2 is complete.
 
 ## Hosting and repository strategy
 
@@ -37,11 +36,12 @@ Current priority order:
 - `Avbryt` restores the previously selected organization.
 - Admin name and admin email are visible.
 - `Inviter administrator` is preserved.
-- Live App, Vercel Project and Supabase Project URLs are editable.
-- Live App, Vercel Project and Supabase Project URLs save to the `organizations` table.
-- Deployment links can be opened directly when configured.
-- GitHub is no longer shown or stored as a per-customer setting in Owner Dashboard V2.
-- Existing module toggles remain available.
+- Live App, Vercel Project and Supabase Project URLs are editable and saved.
+- GitHub is not shown as a per-customer setting.
+- The module library includes Nyheter, Aktiviteter, Kontakt, Kalender, Push-varsler, Donasjon, Medlemmer, Chat, Bønnetider, Ayet/Hadis and Digitalt medlemskort.
+- Module selections save to `organization_modules`.
+- Saved module selections load when an existing organization is selected.
+- New organizations start with the default module configuration.
 - Service worker uses network-first behavior for the app shell, JavaScript and CSS.
 
 ## Database status
@@ -58,12 +58,11 @@ Migrations:
 - `supabase/migrations/20260709_owner_onboarding.sql`
 - `supabase/migrations/20260710_organization_deployment_links.sql`
 
-The deployment migration adds:
+Required unique keys for upserts:
 
-- `vercel_url`
-- `supabase_url`
-
-The migration must be applied in Supabase before Vercel and Supabase project URLs can be saved successfully.
+- `organization_modules (organization_id, module_id)`
+- `organization_admins (organization_id, email)`
+- `organization_provisioning_steps (organization_id, step_key)`
 
 ## Admin invitation flow
 
@@ -78,25 +77,9 @@ The working flow must not be broken:
 
 ## Important solved issue
 
-A previous stale Owner UI was caused by PWA service-worker caching. `public/sw.js` was changed to network-first behavior for the app shell, JavaScript and CSS. Do not restore cache-first handling for these assets.
+A previous stale Owner UI was caused by PWA service-worker caching. `public/sw.js` uses network-first behavior for the app shell, JavaScript and CSS. Do not restore cache-first handling for these assets.
 
 ## Remaining Owner Dashboard V2 work
-
-### Module library
-
-Restore and complete:
-
-- Nyheter
-- Aktiviteter
-- Kalender
-- Push-varsler
-- Donasjon
-- Medlemmer
-- Chat
-- Bønnetider
-- Ayet/Hadis where relevant
-
-Module selections must save to `organization_modules` and load for the selected organization.
 
 ### Hosting and status
 
@@ -130,4 +113,4 @@ Add overview cards after the core flows are complete:
 
 ## Architecture guidance
 
-Keep changes small and focused. Do not make a large component refactor while completing active product flows. Later, Owner Dashboard V2 may be split into focused components such as `OrganizationSelector`, `OrganizationEditor`, `AdminInvitationCard`, `DeploymentLinks`, `ModuleLibrary`, `HostingSettings` and `ProvisioningTimeline`.
+Keep changes small and focused. Do not make a large component refactor while completing active product flows. Later, Owner Dashboard V2 may be split into focused components.
