@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Activity, AlertCircle, BellRing, Building2, LayoutDashboard, Loader2, Newspaper, Settings, ShieldCheck, Users } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { ActivitiesModule } from '../components/ActivitiesModule';
 import { MembersModule } from '../components/MembersModule';
 import { NewsModule } from '../components/NewsModule';
 import { resolveOrganizationAdminSession, type OrganizationAdminSession } from '../lib/organizationAdminSession';
@@ -19,8 +20,7 @@ const sections = [
   { id: 'settings' as const, label: 'Innstillinger', icon: Settings },
 ];
 
-const sectionDescriptions: Record<Exclude<PortalSection, 'dashboard' | 'members' | 'news'>, string> = {
-  activities: 'Aktiviteter, påmelding og kalender kommer som egen modul.',
+const sectionDescriptions: Record<Exclude<PortalSection, 'dashboard' | 'members' | 'news' | 'activities'>, string> = {
   administration: 'Administratorer, roller og tilgang bygges som en separat sikkerhetsfunksjon.',
   settings: 'Organisasjonsinnstillinger og profil kobles til denne organisasjonen.',
 };
@@ -57,10 +57,10 @@ export function OrganizationAdminPortal() {
 
         <main>
           {activeSection === 'dashboard' ? (
-            <div className="space-y-4"><section className="rounded-3xl border p-5 shadow-sm sm:p-6" style={{ backgroundColor: brand.card, borderColor: mix(brand.primary, 16) }}><div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}><LayoutDashboard size={20} /></div><div><h3 className="font-serif text-xl">Velkommen til {session.organizationName}</h3><p className="mt-1 max-w-2xl text-sm leading-6 opacity-65">Portalen er koblet til organisasjon <strong>{session.organizationId}</strong>. Medlemmer og Nyheter er operative moduler.</p></div></div></section><section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{[
+            <div className="space-y-4"><section className="rounded-3xl border p-5 shadow-sm sm:p-6" style={{ backgroundColor: brand.card, borderColor: mix(brand.primary, 16) }}><div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}><LayoutDashboard size={20} /></div><div><h3 className="font-serif text-xl">Velkommen til {session.organizationName}</h3><p className="mt-1 max-w-2xl text-sm leading-6 opacity-65">Portalen er koblet til organisasjon <strong>{session.organizationId}</strong>. Medlemmer, Nyheter og Aktiviteter er operative moduler.</p></div></div></section><section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{[
               ['Medlemmer', 'Medlemsliste og opprett/rediger er tilgjengelig.', Users],
               ['Nyheter', 'Opprett, rediger og publiser organisasjonens nyheter.', Newspaper],
-              ['Aktiviteter', 'Administrer aktiviteter og senere påmelding.', Activity],
+              ['Aktiviteter', 'Opprett, rediger og publiser aktiviteter.', Activity],
               ['Varslinger', 'Push-varsler kobles til aktive moduler.', BellRing],
               ['Administrasjon', 'Roller og tilgang håndteres separat.', ShieldCheck],
               ['Innstillinger', 'Profil og organisasjonsvalg samles her.', Settings],
@@ -69,8 +69,10 @@ export function OrganizationAdminPortal() {
             <MembersModule organizationId={session.organizationId} />
           ) : activeSection === 'news' ? (
             <NewsModule organizationId={session.organizationId} />
+          ) : activeSection === 'activities' ? (
+            <ActivitiesModule organizationId={session.organizationId} />
           ) : (
-            <section className="rounded-3xl border p-6 shadow-sm" style={{ backgroundColor: brand.card, borderColor: mix(brand.primary, 16) }}>{(() => { const current = sections.find((section) => section.id === activeSection); const Icon = current?.icon || LayoutDashboard; return <div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}><Icon size={20} /></div><div><h3 className="font-serif text-xl">{current?.label}</h3><p className="mt-1 text-sm leading-6 opacity-65">{sectionDescriptions[activeSection as Exclude<PortalSection, 'dashboard' | 'members' | 'news'>]}</p></div></div>; })()}</section>
+            <section className="rounded-3xl border p-6 shadow-sm" style={{ backgroundColor: brand.card, borderColor: mix(brand.primary, 16) }}>{(() => { const current = sections.find((section) => section.id === activeSection); const Icon = current?.icon || LayoutDashboard; return <div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}><Icon size={20} /></div><div><h3 className="font-serif text-xl">{current?.label}</h3><p className="mt-1 text-sm leading-6 opacity-65">{sectionDescriptions[activeSection as Exclude<PortalSection, 'dashboard' | 'members' | 'news' | 'activities'>]}</p></div></div>; })()}</section>
           )}
         </main>
       </div>
