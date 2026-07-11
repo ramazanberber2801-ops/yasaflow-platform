@@ -1,6 +1,7 @@
 import { X, LogOut, ShieldCheck, Crown, Building2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { OwnerOverview } from '../components/OwnerOverview';
+import { OwnerThemeManager } from '../components/OwnerThemeManager';
 import { OrganizationAdminPortal } from './OrganizationAdminPortal';
 import { OwnerPanelV2 } from './OwnerPanelV2';
 
@@ -63,7 +64,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        {canAccessOwner ? <><OwnerOverview /><OwnerPanelV2 /></> : <OrganizationAdminPortal />}
+        {canAccessOwner ? <><OwnerOverview /><OwnerThemeManager /><OwnerPanelV2 /></> : <OrganizationAdminPortal />}
       </main>
     </div>
   );
