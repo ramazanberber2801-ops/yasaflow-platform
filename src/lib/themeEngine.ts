@@ -1,4 +1,5 @@
 export type ThemeId =
+  | 'yasaflow-standard'
   | 'classic-mosque'
   | 'modern-mosque'
   | 'nordic-mosque'
@@ -30,9 +31,24 @@ export type ThemeDefinition = {
   tokens: ThemeTokens;
 };
 
-export const DEFAULT_THEME_ID: ThemeId = 'classic-mosque';
+export const DEFAULT_THEME_ID: ThemeId = 'yasaflow-standard';
 
 export const themes: ThemeDefinition[] = [
+  {
+    id: 'yasaflow-standard',
+    name: 'Yasaflow Standard',
+    category: 'custom',
+    description: 'Yasaflows eget uttrykk inspirert av logoen: dyp marineblå, klar blå og frisk turkis på lyse, moderne flater.',
+    tokens: {
+      primary: '#0A8DFF',
+      secondary: '#071B53',
+      background: '#F4FAFF',
+      text: '#071B53',
+      card: '#FFFFFF',
+      borderRadius: 'soft',
+      density: 'comfortable',
+    },
+  },
   {
     id: 'classic-mosque',
     name: 'Classic Mosque',
