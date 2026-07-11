@@ -209,7 +209,7 @@ function AppContent() {
         }
       }
 
-      if (type === 'recovery' || code) {
+      if (type === 'recovery' || type === 'invite' || code) {
         openRecovery();
       }
     };
