@@ -12,10 +12,48 @@ type OrganizationOption = {
 const mix = (color: string, amount: number, fallback = 'transparent') =>
   `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
+const yasaflowStandard = {
+  id: 'yasaflow-standard',
+  name: 'Yasaflow Standard',
+  category: 'custom' as const,
+  description: 'Det opprinnelige Yasaflow-designet med varm gulltone, mørke flater og lys bakgrunn.',
+  tokens: {
+    primary: '#9B7722',
+    secondary: '#2D2A26',
+    background: '#FAF6F0',
+    text: '#2D2A26',
+    card: '#FFFFFF',
+    borderRadius: 'rounded' as const,
+    density: 'comfortable' as const,
+  },
+};
+
+const availableThemes = [yasaflowStandard, ...themes];
+
+function applyThemePreview(theme: (typeof availableThemes)[number]) {
+  const root = document.documentElement;
+  root.style.setProperty('--brand-primary', theme.tokens.primary);
+  root.style.setProperty('--brand-secondary', theme.tokens.secondary);
+  root.style.setProperty('--brand-background', theme.tokens.background);
+  root.style.setProperty('--brand-text', theme.tokens.text);
+  root.style.setProperty('--brand-card', theme.tokens.card);
+
+  const contrast = (hex: string) => {
+    const clean = hex.replace('#', '');
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 145 ? '#1F2937' : '#FFFFFF';
+  };
+
+  root.style.setProperty('--brand-primary-text', contrast(theme.tokens.primary));
+  root.style.setProperty('--brand-secondary-text', contrast(theme.tokens.secondary));
+}
+
 export function OwnerThemeManager() {
   const [organizations, setOrganizations] = useState<OrganizationOption[]>([]);
   const [organizationId, setOrganizationId] = useState('');
-  const [themeId, setThemeId] = useState('classic-mosque');
+  const [themeId, setThemeId] = useState('yasaflow-standard');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,17 +81,40 @@ export function OwnerThemeManager() {
         const rows = (data || []).map((row) => ({
           id: row.id,
           name: row.name || row.id,
-          themeId: row.theme_id || 'classic-mosque',
+          themeId: row.theme_id || 'yasaflow-standard',
         }));
 
         setOrganizations(rows);
-        if (rows.length) {
-          setOrganizationId(rows[0].id);
-          setThemeId(rows[0].themeId);
-        }
         setLoading(false);
       });
   }, []);
+
+  useEffect(() => {
+    if (!organizations.length) return;
+
+    const syncWithTopOrganization = () => {
+      const visibleText = Array.from(document.querySelectorAll('button'))
+        .map((button) => button.textContent?.replace(/\s+/g, ' ').trim() || '')
+        .filter(Boolean);
+
+      const match = [...organizations]
+        .sort((a, b) => b.name.length - a.name.length)
+        .find((organization) => visibleText.some((text) => text === organization.name || text.startsWith(`${organization.name} `)));
+
+      const selected = match || organizations[0];
+      if (selected.id !== organizationId) {
+        setOrganizationId(selected.id);
+        setThemeId(selected.themeId || 'yasaflow-standard');
+        setMessage('');
+        setError('');
+      }
+    };
+
+    syncWithTopOrganization();
+    const observer = new MutationObserver(syncWithTopOrganization);
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [organizations, organizationId]);
 
   const selectedOrganization = useMemo(
     () => organizations.find((organization) => organization.id === organizationId) || null,
@@ -61,16 +122,16 @@ export function OwnerThemeManager() {
   );
 
   const selectedTheme = useMemo(
-    () => themes.find((theme) => theme.id === themeId) || themes[0],
+    () => availableThemes.find((theme) => theme.id === themeId) || yasaflowStandard,
     [themeId],
   );
 
-  const selectOrganization = (id: string) => {
-    setOrganizationId(id);
-    const selected = organizations.find((organization) => organization.id === id);
-    setThemeId(selected?.themeId || 'classic-mosque');
+  const chooseTheme = (id: string) => {
+    setThemeId(id);
     setMessage('');
     setError('');
+    const theme = availableThemes.find((item) => item.id === id);
+    if (theme) applyThemePreview(theme);
   };
 
   const saveTheme = async () => {
@@ -95,26 +156,23 @@ export function OwnerThemeManager() {
         organization.id === organizationId ? { ...organization, themeId } : organization,
       ),
     );
-    setMessage('Temaet er lagret. Oppdater appen for å se endringen.');
+
+    applyThemePreview(selectedTheme);
+    localStorage.setItem(`yasaflow_theme_${organizationId}`, themeId);
+    setMessage(`Temaet er lagret for ${selectedOrganization?.name || 'organisasjonen'}.`);
     setSaving(false);
   };
 
   return (
     <section className="mx-4 mt-4 overflow-hidden rounded-2xl border-2 bg-white shadow-sm" style={{ borderColor: mix('var(--brand-primary)', 22), color: 'var(--brand-text)' }}>
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-full items-center justify-between gap-3 p-4 text-left"
-      >
+      <button type="button" onClick={() => setOpen((current) => !current)} className="flex w-full items-center justify-between gap-3 p-4 text-left">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: mix('var(--brand-primary)', 12), color: 'var(--brand-primary)' }}>
             <Palette size={18} />
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium">Tema og design</p>
-            <p className="truncate text-[11px] opacity-50">
-              {selectedOrganization?.name || 'Velg organisasjon'} · {selectedTheme?.name || 'Tema'}
-            </p>
+            <p className="truncate text-[11px] opacity-50">{selectedOrganization?.name || 'Valgt organisasjon'} · {selectedTheme.name}</p>
           </div>
         </div>
         <ChevronDown size={18} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -126,24 +184,17 @@ export function OwnerThemeManager() {
             <div className="flex items-center justify-center gap-2 py-8 text-sm opacity-60"><Loader2 size={17} className="animate-spin" /> Henter temaer...</div>
           ) : (
             <div className="space-y-4">
-              <div>
-                <label className="text-xs font-medium">Organisasjon</label>
-                <select className="mt-1 w-full rounded-xl border bg-white px-3 py-3 text-sm" value={organizationId} onChange={(event) => selectOrganization(event.target.value)}>
-                  {organizations.map((organization) => <option key={organization.id} value={organization.id}>{organization.name}</option>)}
-                </select>
+              <div className="rounded-xl border px-3 py-2" style={{ borderColor: mix('var(--brand-primary)', 16), backgroundColor: mix('var(--brand-primary)', 5, '#FFFFFF') }}>
+                <p className="text-[10px] uppercase tracking-wide opacity-45">Tema endres for</p>
+                <p className="text-sm font-semibold">{selectedOrganization?.name || 'Ingen organisasjon valgt'}</p>
+                <p className="mt-0.5 text-[11px] opacity-50">Følger organisasjonen som er valgt øverst i Owner Panel.</p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {themes.map((theme) => {
+                {availableThemes.map((theme) => {
                   const active = themeId === theme.id;
                   return (
-                    <button
-                      key={theme.id}
-                      type="button"
-                      onClick={() => { setThemeId(theme.id); setMessage(''); setError(''); }}
-                      className="rounded-2xl border-2 p-3 text-left transition"
-                      style={{ borderColor: active ? theme.tokens.primary : mix('var(--brand-primary)', 16), backgroundColor: active ? mix(theme.tokens.primary, 7, '#FFFFFF') : '#FFFFFF' }}
-                    >
+                    <button key={theme.id} type="button" onClick={() => chooseTheme(theme.id)} className="rounded-2xl border-2 p-3 text-left transition" style={{ borderColor: active ? theme.tokens.primary : mix('var(--brand-primary)', 16), backgroundColor: active ? mix(theme.tokens.primary, 7, '#FFFFFF') : '#FFFFFF' }}>
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex gap-1.5">
                           {[theme.tokens.primary, theme.tokens.secondary, theme.tokens.background, theme.tokens.card].map((color) => <span key={color} className="h-6 w-6 rounded-full border" style={{ backgroundColor: color }} />)}
