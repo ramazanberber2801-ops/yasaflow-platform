@@ -12,6 +12,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { WhatsAppButton } from '../components/WhatsAppButton';
 import { subscribeToPushNotifications } from '../lib/pushNotifications';
+import { getNotificationTranslations, isRtlNotificationLanguage } from '../lib/notificationTranslations';
 import { supabase } from '../lib/supabase';
 import { trackEvent } from '../lib/analytics';
 
@@ -31,6 +32,9 @@ export function ContactPage() {
   const { staff, settings } = useApp();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [notificationLoading, setNotificationLoading] = useState(false);
+  const notificationLanguage = settings?.language || settings?.locale || null;
+  const notificationText = getNotificationTranslations(notificationLanguage);
+  const notificationDirection = isRtlNotificationLanguage(notificationLanguage) ? 'rtl' : 'ltr';
 
   useEffect(() => {
     trackEvent('contact_click', 'page', 'İletişim Sayfası');
@@ -77,9 +81,9 @@ export function ContactPage() {
       }
 
       setNotificationsEnabled(false);
-      alert('Bildirimler kapatıldı.');
+      alert(notificationText.disabledSuccess);
     } catch {
-      alert('Bildirimler kapatılamadı.');
+      alert(notificationText.disabledError);
     } finally {
       setNotificationLoading(false);
     }
@@ -153,10 +157,10 @@ export function ContactPage() {
       </section>
 
       <section className="px-4 mt-5">
-        <div className="rounded-xl border-2 shadow-md p-5" style={lightCardStyle}>
-          <div className="flex items-center gap-3 mb-3">
+        <div className="rounded-xl border-2 shadow-md p-5" style={lightCardStyle} dir={notificationDirection}>
+          <div className="flex items-start gap-3 mb-4">
             <div
-              className="w-11 h-11 rounded-full flex items-center justify-center"
+              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
               style={{ backgroundColor: 'var(--brand-subtle)' }}
             >
               {notificationsEnabled ? (
@@ -165,9 +169,9 @@ export function ContactPage() {
                 <BellOff size={22} style={{ color: brand.primary }} />
               )}
             </div>
-            <div>
-              <h2 className="font-serif text-lg">Bildirimler</h2>
-              <p className="text-xs opacity-50">Duyuru ve sohbetlerden anında haberdar olun</p>
+            <div className="min-w-0 flex-1">
+              <h2 className="font-serif text-lg">{notificationText.title}</h2>
+              <p className="text-sm leading-6 opacity-60 mt-1">{notificationText.description}</p>
             </div>
           </div>
 
@@ -182,10 +186,10 @@ export function ContactPage() {
           >
             {notificationsEnabled ? <BellOff size={17} /> : <Bell size={17} />}
             {notificationLoading
-              ? 'İşleniyor...'
+              ? notificationText.processing
               : notificationsEnabled
-                ? 'Bildirimleri Kapat'
-                : 'Bildirimleri Aç'}
+                ? notificationText.disableButton
+                : notificationText.enableButton}
           </button>
         </div>
       </section>
