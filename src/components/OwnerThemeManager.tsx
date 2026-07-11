@@ -12,23 +12,7 @@ type OrganizationOption = {
 const mix = (color: string, amount: number, fallback = 'transparent') =>
   `color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
-const yasaflowStandard = {
-  id: 'yasaflow-standard',
-  name: 'Yasaflow Standard',
-  category: 'custom' as const,
-  description: 'Det opprinnelige Yasaflow-designet med varm gulltone, mørke flater og lys bakgrunn.',
-  tokens: {
-    primary: '#9B7722',
-    secondary: '#2D2A26',
-    background: '#FAF6F0',
-    text: '#2D2A26',
-    card: '#FFFFFF',
-    borderRadius: 'rounded' as const,
-    density: 'comfortable' as const,
-  },
-};
-
-const availableThemes = [yasaflowStandard, ...themes];
+const availableThemes = themes;
 
 function applyThemePreview(theme: (typeof availableThemes)[number]) {
   const root = document.documentElement;
@@ -122,7 +106,7 @@ export function OwnerThemeManager() {
   );
 
   const selectedTheme = useMemo(
-    () => availableThemes.find((theme) => theme.id === themeId) || yasaflowStandard,
+    () => availableThemes.find((theme) => theme.id === themeId) || availableThemes[0],
     [themeId],
   );
 
