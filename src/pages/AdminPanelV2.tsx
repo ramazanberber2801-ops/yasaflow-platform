@@ -64,7 +64,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
       </div>
 
       <main className="flex-1 overflow-y-auto">
-        {canAccessOwner ? <><OwnerOverview /><OwnerThemeManager /><OwnerPanelV2 /></> : <OrganizationAdminPortal />}
+        {canAccessOwner ? <><OwnerOverview /><OwnerPanelV2 /><OwnerThemeManager /></> : <OrganizationAdminPortal />}
       </main>
     </div>
   );
