@@ -4,7 +4,7 @@ Last updated: July 11, 2026
 
 ## One-line summary
 
-Yasaflow is a SaaS platform for mosques, associations, churches, sports clubs and other organizations. Owner Dashboard V2 is complete. Administrator Portal is organization-scoped, and Members V1 now provides the first operational organization module with list, search, status filtering and create/edit.
+Yasaflow now has organization-scoped Administrator Portal modules for Members V1 and News V1. Owner Dashboard V2 remains complete. Real administrator invitation and end-to-end testing remain deferred until the Supabase Edge Function is deployed after July 29, 2026.
 
 ## Current phase
 
@@ -12,58 +12,51 @@ Customer Administrator Portal.
 
 Current priority order:
 
-1. Run the Members migration in Supabase if it has not already been applied.
-2. Test Members V1 with real organization data.
-3. Migrate News to organization-scoped data.
-4. Migrate Activities to organization-scoped data.
+1. Run pending Members and News migrations in Supabase.
+2. Build organization-scoped Activities V1.
+3. Build organization Settings.
+4. Build roles and access control.
 5. After July 29, deploy and verify the administrator invitation Edge Function.
 
-## Completed phase: Owner Dashboard V2
+## Completed
 
-Owner Dashboard V2 is complete for the current product phase and should receive only focused bug fixes.
+- Owner Dashboard V2.
+- Organization Administrator Portal shell.
+- Administrator-to-organization resolution.
+- Members database foundation and Members V1 UI.
+- Organization News database foundation and News V1 UI.
 
-## Administrator Portal status
-
-Completed:
-
-- Separate non-Owner Administrator Portal.
-- Organization session resolution through `organization_admins`.
-- Organization identity, logo and status.
-- Responsive core navigation.
-- Members V1.
-
-## Members V1
+## News V1
 
 Implemented:
 
-- Organization-scoped loading from `organization_memberships`.
-- Related person data from `people`.
-- Search by name, member number, email and phone.
-- Active/inactive filtering.
-- Empty, loading and migration-error states.
-- Create member.
-- Edit member.
-- Member number uniqueness feedback.
-- Member fields: name, member number, email, phone, address, join date, status, internal role and notes.
+- Dedicated `organization_news` table, separate from the legacy global `news` table.
+- Organization-scoped RLS.
+- News list and search.
+- Draft/published filtering.
+- Create and edit news.
+- Title, summary, content, image URL and status.
+- Automatic `published_at` when publishing.
+- Clear migration error state.
 
 Current limitations:
 
-- The migration `supabase/migrations/20260710_members_foundation.sql` must be run in Supabase before the module can store data.
-- Create uses two database writes (`people`, then `organization_memberships`) rather than one database transaction.
-- No delete, QR card, family, group management, attendance, fees or import/export yet.
-- `AppContext.login` still starts with the legacy `admins` profile lookup.
-- `invite-organization-admin` is not deployed yet.
+- `supabase/migrations/20260711_organization_news.sql` must be run in Supabase before News V1 can store data.
+- No delete, scheduling, push notification, rich text editor or image upload yet.
+- The public application still reads the legacy global `news` table; public organization-news delivery is a later focused task.
+- Real administrator testing remains blocked until the invitation Edge Function is deployed.
 
 ## Deferred task — after July 29, 2026
 
 - Deploy `invite-organization-admin` to Supabase.
 - Verify invitation email, redirect and password setup.
 - Verify `organization_admins.user_id` and invitation status.
+- Test Members V1 and News V1 as a real organization administrator.
 
 ## Active implementation target
 
-After Members V1 is tested, migrate News to organization-scoped data and expose it in the Administrator Portal.
+Build Activities V1 using the same dedicated organization-scoped architecture.
 
 ## Architecture guidance
 
-Keep changes small and focused. Never mix Owner, Administrator and Member concepts. All customer data must be scoped by `organization_id` and protected by RLS.
+Keep changes small and focused. Do not modify the legacy global content tables while organization modules are being introduced. All customer data must be scoped by `organization_id` and protected by RLS.
