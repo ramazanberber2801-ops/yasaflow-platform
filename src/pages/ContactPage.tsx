@@ -125,16 +125,32 @@ export function ContactPage() {
       <section className="px-4 mt-5">
         <div
           className="rounded-xl border-2 shadow-md p-5"
-          style={{ backgroundColor: '#FFFFFF', color: '#2D2A26', borderColor: mix(brand.primary, 22) }}
+          style={{
+            backgroundColor: brand.secondary,
+            color: brand.secondaryText,
+            borderColor: mix(brand.primary, 28),
+          }}
           dir={notificationDirection}
         >
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: mix(brand.primary, 12) }}>
-              {notificationsEnabled ? <Bell size={22} style={{ color: brand.primary }} /> : <BellOff size={22} style={{ color: brand.primary }} />}
+            <div
+              className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+              style={{ backgroundColor: mix(brand.primary, 18) }}
+            >
+              {notificationsEnabled ? (
+                <Bell size={22} style={{ color: brand.primary }} />
+              ) : (
+                <BellOff size={22} style={{ color: brand.primary }} />
+              )}
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="font-serif text-lg" style={{ color: '#2D2A26' }}>{notificationText.title}</h2>
-              <p className="text-sm leading-6 mt-1" style={{ color: '#5F5A54' }}>
+              <h2 className="font-serif text-lg" style={{ color: brand.secondaryText }}>
+                {notificationText.title}
+              </h2>
+              <p
+                className="text-sm leading-6 mt-1"
+                style={{ color: mix(brand.secondaryText, 76) }}
+              >
                 {notificationText.description}
               </p>
             </div>
@@ -144,7 +160,11 @@ export function ContactPage() {
             onClick={notificationsEnabled ? disableNotifications : enableNotifications}
             disabled={notificationLoading}
             className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-colors shadow-sm disabled:opacity-60"
-            style={{ backgroundColor: notificationsEnabled ? brand.secondary : brand.primary, color: notificationsEnabled ? brand.secondaryText : brand.primaryText }}
+            style={{
+              backgroundColor: notificationsEnabled ? mix(brand.secondaryText, 12) : brand.primary,
+              color: notificationsEnabled ? brand.secondaryText : brand.primaryText,
+              border: notificationsEnabled ? `1px solid ${mix(brand.secondaryText, 24)}` : 'none',
+            }}
           >
             {notificationsEnabled ? <BellOff size={17} /> : <Bell size={17} />}
             {notificationLoading ? notificationText.processing : notificationsEnabled ? notificationText.disableButton : notificationText.enableButton}
