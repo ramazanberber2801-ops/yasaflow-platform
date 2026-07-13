@@ -3,12 +3,62 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import './owner-v2.css';
 import App from './App.tsx';
+import { writeStoredAdminSession } from './lib/organization';
+import { supabase } from './lib/supabase';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+async function restoreWebsiteOnboardingSession() {
+  const client = supabase;
+  if (!client) return;
+
+  const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  if (hash.get('onboarding') !== '1') return;
+
+  const accessToken = hash.get('access_token');
+  const refreshToken = hash.get('refresh_token');
+  if (!accessToken || !refreshToken) return;
+
+  const { data: sessionData, error: sessionError } = await client.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  if (sessionError || !sessionData.user) {
+    console.error('Kunne ikke overføre innlogging fra nettsiden:', sessionError?.message);
+    return;
+  }
+
+  const { data: admin, error: adminError } = await client
+    .from('organization_admins')
+    .select('id, organization_id, user_id, display_name, email, role, invitation_status')
+    .eq('user_id', sessionData.user.id)
+    .maybeSingle();
+
+  if (adminError || !admin) {
+    console.error('Kunne ikke hente organisasjonsadministrator:', adminError?.message);
+    return;
+  }
+
+  writeStoredAdminSession({
+    ...admin,
+    username: admin.email,
+    auth_user_id: admin.user_id,
+    displayName: admin.display_name || admin.email,
+  });
+
+  window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
+}
+
+async function start() {
+  await restoreWebsiteOnboardingSession();
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void start();
 
 // Register PWA service worker + update prompt
 if ('serviceWorker' in navigator) {
