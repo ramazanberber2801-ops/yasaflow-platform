@@ -38,7 +38,7 @@ function Dashboard({ organizationId, organizationName, enabled, onNavigate }:{ o
       setLoading(true);setError('');
       const today=new Date().toISOString().slice(0,10);
       const [membersResult,newsResult,activitiesResult,staffResult]=await Promise.all([
-        supabase.from('organization_members').select('*',{count:'exact',head:true}).eq('organization_id',organizationId),
+        supabase.from('organization_memberships').select('*',{count:'exact',head:true}).eq('organization_id',organizationId),
         supabase.from('organization_news').select('*',{count:'exact',head:true}).eq('organization_id',organizationId),
         supabase.from('organization_activities').select('*',{count:'exact',head:true}).eq('organization_id',organizationId).gte('activity_date',today),
         supabase.from('organization_staff').select('*',{count:'exact',head:true}).eq('organization_id',organizationId).eq('active',true),
