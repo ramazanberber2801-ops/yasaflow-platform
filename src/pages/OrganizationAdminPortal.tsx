@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, AlertCircle, BellRing, Building2, LayoutDashboard, Loader2, Newspaper, Settings, ShieldCheck, Users } from 'lucide-react';
+import { Activity, AlertCircle, BellRing, Building2, Clock3, LayoutDashboard, Loader2, Newspaper, Settings, ShieldCheck, Users } from 'lucide-react';
 import { ActivitiesModule } from '../components/ActivitiesModule';
 import { ManualPushModule } from '../components/ManualPushModule';
 import { MembersModule } from '../components/MembersModule';
@@ -26,7 +26,16 @@ const allSections = [
   { id: 'settings' as const, label: 'Innstillinger', icon: Settings, moduleId: 'settings' },
 ];
 
-function Dashboard({ organizationId, organizationName, enabled, onNavigate }:{ organizationId:string; organizationName:string; enabled:(moduleId:string,fallback?:boolean)=>boolean; onNavigate:(section:PortalSection)=>void }){
+function trialInfo(session: OrganizationAdminSession) {
+  const status = session.subscriptionStatus || 'trial';
+  const endsAt = session.trialEndsAt ? new Date(session.trialEndsAt) : null;
+  const remainingMs = endsAt ? endsAt.getTime() - Date.now() : 0;
+  const daysRemaining = endsAt ? Math.max(0, Math.ceil(remainingMs / 86400000)) : 0;
+  const expired = ['expired', 'cancelled', 'past_due'].includes(status) || (status === 'trial' && Boolean(endsAt) && remainingMs <= 0);
+  return { status, endsAt, daysRemaining, expired };
+}
+
+function Dashboard({ organizationId, organizationName, enabled, onNavigate, locked }:{ organizationId:string; organizationName:string; enabled:(moduleId:string,fallback?:boolean)=>boolean; onNavigate:(section:PortalSection)=>void; locked:boolean }){
   const [stats,setStats]=useState<DashboardStats>({members:0,news:0,activities:0,staff:0});
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
@@ -67,9 +76,9 @@ function Dashboard({ organizationId, organizationName, enabled, onNavigate }:{ o
     </section>
     {error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">Kunne ikke hente all statistikk: {error}</p>}
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map(({id,label,value,icon:Icon})=><button key={id} onClick={()=>onNavigate(id)} className="rounded-2xl border p-4 text-left shadow-sm transition hover:-translate-y-0.5" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}><div className="flex items-center justify-between"><div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:mix(brand.primary,12),color:brand.primary}}><Icon size={18}/></div>{loading?<Loader2 size={16} className="animate-spin opacity-50"/>:<span className="font-serif text-2xl">{value}</span>}</div><p className="mt-3 text-sm font-medium">{label}</p></button>)}
+      {cards.map(({id,label,value,icon:Icon})=><button key={id} disabled={locked} onClick={()=>onNavigate(id)} className="rounded-2xl border p-4 text-left shadow-sm transition enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}><div className="flex items-center justify-between"><div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{backgroundColor:mix(brand.primary,12),color:brand.primary}}><Icon size={18}/></div>{loading?<Loader2 size={16} className="animate-spin opacity-50"/>:<span className="font-serif text-2xl">{value}</span>}</div><p className="mt-3 text-sm font-medium">{label}</p></button>)}
     </section>
-    <section className="rounded-3xl border p-5 shadow-sm" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}>
+    {!locked&&<section className="rounded-3xl border p-5 shadow-sm" style={{backgroundColor:brand.card,borderColor:mix(brand.primary,16)}}>
       <h4 className="font-semibold">Hurtigvalg</h4>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {enabled('news',true)&&<button onClick={()=>onNavigate('news')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Opprett eller rediger nyhet</button>}
@@ -77,14 +86,18 @@ function Dashboard({ organizationId, organizationName, enabled, onNavigate }:{ o
         {enabled('push',true)&&<button onClick={()=>onNavigate('notifications')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Send push-varsel</button>}
         {enabled('settings',true)&&<button onClick={()=>onNavigate('settings')} className="rounded-xl border px-4 py-3 text-left text-sm" style={{borderColor:mix(brand.primary,16)}}>Oppdater organisasjonsinnstillinger</button>}
       </div>
-    </section>
+    </section>}
   </div>;
 }
 
 function PortalWithModules({ session, administratorName }: { session: OrganizationAdminSession; administratorName: string }) {
   const [activeSection, setActiveSection] = useState<PortalSection>('dashboard');
   const { enabled, loading } = useOrganizationModules(session.organizationId);
-  const sections = useMemo(() => allSections.filter((section) => !section.moduleId || enabled(section.moduleId, true)), [enabled]);
+  const trial = trialInfo(session);
+  const sections = useMemo(() => allSections.filter((section) => {
+    if (trial.expired && !['dashboard','settings'].includes(section.id)) return false;
+    return !section.moduleId || enabled(section.moduleId, true);
+  }), [enabled, trial.expired]);
 
   useEffect(() => {
     if (!sections.some((section) => section.id === activeSection)) setActiveSection('dashboard');
@@ -94,9 +107,13 @@ function PortalWithModules({ session, administratorName }: { session: Organizati
 
   return <div className="min-h-full" style={{ backgroundColor: brand.background, color: brand.text }}>
     <section className="border-b px-4 py-5 sm:px-6" style={{ borderColor: mix(brand.primary, 16) }}><div className="mx-auto flex max-w-6xl items-center gap-3"><div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl" style={{ backgroundColor: mix(brand.primary, 12), color: brand.primary }}>{session.organizationLogoUrl ? <img src={session.organizationLogoUrl} alt="" className="h-full w-full object-cover" /> : <Building2 size={22} />}</div><div className="min-w-0"><p className="text-xs font-medium uppercase tracking-[0.18em] opacity-45">Administratorportal</p><h2 className="truncate font-serif text-xl sm:text-2xl">{session.organizationName}</h2><p className="mt-0.5 text-xs opacity-55">Innlogget som {administratorName}{session.organizationStatus ? ` · ${session.organizationStatus}` : ''}</p></div></div></section>
+
+    {trial.status==='trial'&&!trial.expired&&<div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6"><div className="flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-blue-900"><Clock3 size={19} className="mt-0.5 shrink-0"/><div><p className="text-sm font-semibold">7 dagers gratis prøveperiode</p><p className="mt-1 text-xs leading-5">{trial.daysRemaining} {trial.daysRemaining===1?'dag':'dager'} igjen{trial.endsAt?` · utløper ${trial.endsAt.toLocaleDateString('nb-NO')}`:''}. Ingen betaling gjennomføres før betalingsløsningen er valgt og aktivert.</p></div></div></div>}
+    {trial.expired&&<div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6"><div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><AlertCircle size={19} className="mt-0.5 shrink-0"/><div><p className="text-sm font-semibold">Prøveperioden er utløpt</p><p className="mt-1 text-xs leading-5">Dataene er beholdt. Innholdsproduksjon og utsending er midlertidig låst til abonnementet aktiveres.</p></div></div></div>}
+
     <div className="mx-auto grid max-w-6xl gap-4 p-4 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
       <nav className="grid grid-cols-3 gap-2 rounded-2xl border bg-white p-2 shadow-sm sm:grid-cols-7 lg:flex lg:flex-col" style={{ borderColor: mix(brand.primary, 16) }}>{sections.map(({id,label,icon:Icon})=>{const active=activeSection===id;return <button key={id} onClick={()=>setActiveSection(id)} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-medium lg:min-h-0 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3 lg:text-xs" style={{backgroundColor:active?mix(brand.primary,12):'transparent',color:active?brand.primary:brand.text}}><Icon size={17}/><span>{label}</span></button>;})}</nav>
-      <main>{activeSection==='dashboard'?<Dashboard organizationId={session.organizationId} organizationName={session.organizationName} enabled={enabled} onNavigate={setActiveSection}/>:activeSection==='members'?<MembersModule organizationId={session.organizationId}/>:activeSection==='news'?<NewsModule organizationId={session.organizationId}/>:activeSection==='activities'?<ActivitiesModule organizationId={session.organizationId}/>:activeSection==='notifications'?<ManualPushModule organizationId={session.organizationId}/>:activeSection==='administration'?<OrganizationStaffModule organizationId={session.organizationId}/>:<OrganizationSettingsModule organizationId={session.organizationId}/>}</main>
+      <main>{activeSection==='dashboard'?<Dashboard organizationId={session.organizationId} organizationName={session.organizationName} enabled={enabled} onNavigate={setActiveSection} locked={trial.expired}/>:activeSection==='members'?<MembersModule organizationId={session.organizationId}/>:activeSection==='news'?<NewsModule organizationId={session.organizationId}/>:activeSection==='activities'?<ActivitiesModule organizationId={session.organizationId}/>:activeSection==='notifications'?<ManualPushModule organizationId={session.organizationId}/>:activeSection==='administration'?<OrganizationStaffModule organizationId={session.organizationId}/>:<OrganizationSettingsModule organizationId={session.organizationId}/>}</main>
     </div>
   </div>;
 }
