@@ -4,16 +4,34 @@ const METHOD = 13; // Diyanet İşleri Başkanlığı
 
 const adjustMinutes = (time: string, minutes: number) => {
   const [h, m] = time.split(':').map(Number);
-  const date = new Date();
-  date.setHours(h, m + minutes, 0, 0);
-
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  const total = ((h * 60 + m + minutes) % 1440 + 1440) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 };
 
 const cleanTime = (value: string) => {
   const match = value.match(/\d{1,2}:\d{2}/);
   return match ? match[0] : value;
 };
+
+function getZonedParts(timezone?: string) {
+  const now = new Date();
+  if (!timezone) return { hours: now.getHours(), minutes: now.getMinutes() };
+
+  try {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(now);
+    return {
+      hours: Number(parts.find((part) => part.type === 'hour')?.value || 0),
+      minutes: Number(parts.find((part) => part.type === 'minute')?.value || 0),
+    };
+  } catch {
+    return { hours: now.getHours(), minutes: now.getMinutes() };
+  }
+}
 
 export async function fetchPrayerTimes(
   lat: number,
@@ -22,7 +40,7 @@ export async function fetchPrayerTimes(
 ): Promise<PrayerData> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
     const url =
       `https://api.aladhan.com/v1/timings` +
@@ -30,10 +48,9 @@ export async function fetchPrayerTimes(
       `&longitude=${lng}` +
       `&method=${METHOD}` +
       `&school=0` +
-      `&latitudeAdjustmentMethod=3` +
-      `&timezonestring=Europe/Oslo`;
+      `&latitudeAdjustmentMethod=3`;
 
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
     clearTimeout(timeoutId);
 
     if (!response.ok) throw new Error('API response not OK');
@@ -44,7 +61,7 @@ export async function fetchPrayerTimes(
       const t = data.data.timings;
       const h = data.data.date.hijri;
       const g = data.data.date.gregorian;
-
+      const timezone = String(data.data.meta?.timezone || '');
       const isDrammen = cityName?.toLowerCase().includes('drammen');
 
       return {
@@ -58,6 +75,7 @@ export async function fetchPrayerTimes(
         },
         hijriDate: `${h.day} ${h.month.en} ${h.year} H`,
         gregorianDate: `${g.day} ${g.month.en} ${g.year}`,
+        timezone,
       };
     }
 
@@ -79,12 +97,13 @@ function getFallbackTimes(): PrayerData {
     },
     hijriDate: '15 Muharrem 1448 H',
     gregorianDate: '30 Haziran 2026',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   };
 }
 
-export function getNextPrayer(timings: PrayerTimings): { name: string; time: string } | null {
-  const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+export function getNextPrayer(timings: PrayerTimings, timezone?: string): { name: string; time: string } | null {
+  const now = getZonedParts(timezone);
+  const currentMinutes = now.hours * 60 + now.minutes;
 
   const prayers = [
     { name: 'Imsak', time: timings.Fajr },
@@ -95,32 +114,22 @@ export function getNextPrayer(timings: PrayerTimings): { name: string; time: str
     { name: 'Yatsı', time: timings.Isha },
   ];
 
-  for (const p of prayers) {
-    const [h, m] = cleanTime(p.time).split(':').map(Number);
-    const mins = h * 60 + m;
-
-    if (mins > currentMinutes) return p;
+  for (const prayer of prayers) {
+    const [h, m] = cleanTime(prayer.time).split(':').map(Number);
+    if (h * 60 + m > currentMinutes) return prayer;
   }
 
   return { name: 'Imsak', time: timings.Fajr };
 }
 
-export function getTimeUntil(timeStr: string): string {
-  const now = new Date();
-  const clean = cleanTime(timeStr);
-  const [h, m] = clean.split(':').map(Number);
+export function getTimeUntil(timeStr: string, timezone?: string): string {
+  const now = getZonedParts(timezone);
+  const [h, m] = cleanTime(timeStr).split(':').map(Number);
+  let diffMinutes = h * 60 + m - (now.hours * 60 + now.minutes);
+  if (diffMinutes < 0) diffMinutes += 1440;
 
-  const target = new Date();
-  target.setHours(h, m, 0, 0);
-
-  if (target.getTime() < now.getTime()) {
-    target.setDate(target.getDate() + 1);
-  }
-
-  const diff = target.getTime() - now.getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
+  const hours = Math.floor(diffMinutes / 60);
+  const minutes = diffMinutes % 60;
   if (hours > 0) return `${hours} sa ${minutes} dk`;
   return `${minutes} dk`;
 }
