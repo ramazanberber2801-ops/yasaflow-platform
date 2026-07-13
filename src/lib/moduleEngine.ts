@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from './supabase';
 import { DEFAULT_ORGANIZATION_ID } from './organization';
 
@@ -75,9 +75,20 @@ export async function loadOrganizationModules(organizationId = DEFAULT_ORGANIZAT
   return modules;
 }
 
+export function notifyOrganizationModulesChanged(organizationId: string) {
+  window.dispatchEvent(new CustomEvent('yasaflow-modules-changed', { detail: { organizationId } }));
+}
+
 export function useOrganizationModules(organizationId = DEFAULT_ORGANIZATION_ID) {
   const [modules, setModules] = useState<ModuleState>(DEFAULT_MODULES);
   const [loading, setLoading] = useState(true);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    const next = await loadOrganizationModules(organizationId);
+    setModules(next);
+    setLoading(false);
+  }, [organizationId]);
 
   useEffect(() => {
     let alive = true;
@@ -87,12 +98,23 @@ export function useOrganizationModules(organizationId = DEFAULT_ORGANIZATION_ID)
       setModules(next);
       setLoading(false);
     });
-    return () => { alive = false; };
-  }, [organizationId]);
+
+    const handleChanged = (event: Event) => {
+      const changedOrganizationId = (event as CustomEvent<{ organizationId?: string }>).detail?.organizationId;
+      if (!changedOrganizationId || changedOrganizationId === organizationId) void reload();
+    };
+
+    window.addEventListener('yasaflow-modules-changed', handleChanged);
+    return () => {
+      alive = false;
+      window.removeEventListener('yasaflow-modules-changed', handleChanged);
+    };
+  }, [organizationId, reload]);
 
   return useMemo(() => ({
     modules,
     loading,
+    reload,
     enabled: (moduleId: ModuleId, fallback = true) => isModuleEnabled(modules, moduleId, fallback),
-  }), [modules, loading]);
+  }), [modules, loading, reload]);
 }
