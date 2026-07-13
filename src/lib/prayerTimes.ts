@@ -1,6 +1,7 @@
 import type { PrayerData, PrayerTimings } from '../types';
 
 const METHOD = 13; // Diyanet İşleri Başkanlığı
+let activePrayerTimezone = '';
 
 const adjustMinutes = (time: string, minutes: number) => {
   const [h, m] = time.split(':').map(Number);
@@ -15,11 +16,12 @@ const cleanTime = (value: string) => {
 
 function getZonedParts(timezone?: string) {
   const now = new Date();
-  if (!timezone) return { hours: now.getHours(), minutes: now.getMinutes() };
+  const zone = timezone || activePrayerTimezone;
+  if (!zone) return { hours: now.getHours(), minutes: now.getMinutes() };
 
   try {
     const parts = new Intl.DateTimeFormat('en-GB', {
-      timeZone: timezone,
+      timeZone: zone,
       hour: '2-digit',
       minute: '2-digit',
       hourCycle: 'h23',
@@ -62,6 +64,7 @@ export async function fetchPrayerTimes(
       const h = data.data.date.hijri;
       const g = data.data.date.gregorian;
       const timezone = String(data.data.meta?.timezone || '');
+      activePrayerTimezone = timezone;
       const isDrammen = cityName?.toLowerCase().includes('drammen');
 
       return {
@@ -86,6 +89,8 @@ export async function fetchPrayerTimes(
 }
 
 function getFallbackTimes(): PrayerData {
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  activePrayerTimezone = timezone;
   return {
     timings: {
       Fajr: '02:55',
@@ -97,7 +102,7 @@ function getFallbackTimes(): PrayerData {
     },
     hijriDate: '15 Muharrem 1448 H',
     gregorianDate: '30 Haziran 2026',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone,
   };
 }
 
