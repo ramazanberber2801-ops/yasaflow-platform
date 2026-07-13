@@ -5,6 +5,10 @@ export type OrganizationAdminSession = {
   organizationName: string;
   organizationLogoUrl: string;
   organizationStatus: string;
+  subscriptionStatus: string;
+  subscriptionPlan: string;
+  trialStartedAt: string;
+  trialEndsAt: string;
   adminDisplayName: string;
   adminEmail: string;
   adminRole: string;
@@ -27,7 +31,7 @@ export async function resolveOrganizationAdminSession(): Promise<OrganizationAdm
     throw new Error('Fant ingen aktiv innlogging. Logg inn på nytt.');
   }
 
-  const columns = 'organization_id, display_name, email, role, invitation_status, organizations(id, name, logo_url, status)';
+  const columns = 'organization_id, display_name, email, role, invitation_status, organizations(id, name, logo_url, status, subscription_status, subscription_plan, trial_started_at, trial_ends_at)';
 
   let { data: adminRow, error: adminError } = await supabase
     .from('organization_admins')
@@ -65,6 +69,10 @@ export async function resolveOrganizationAdminSession(): Promise<OrganizationAdm
     organizationName: String(organization.name || 'Din organisasjon'),
     organizationLogoUrl: String(organization.logo_url || ''),
     organizationStatus: String(organization.status || ''),
+    subscriptionStatus: String(organization.subscription_status || 'trial'),
+    subscriptionPlan: String(organization.subscription_plan || 'core'),
+    trialStartedAt: String(organization.trial_started_at || ''),
+    trialEndsAt: String(organization.trial_ends_at || ''),
     adminDisplayName: String(adminRow.display_name || user.email || 'Administrator'),
     adminEmail: String(adminRow.email || user.email || ''),
     adminRole: String(adminRow.role || 'admin'),
