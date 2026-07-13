@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, X } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
-import { DEFAULT_ORGANIZATION_ID } from '../lib/organization';
-import { supabase } from '../lib/supabase';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -18,37 +16,6 @@ export function InstallAppButton() {
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    let observer: MutationObserver | null = null;
-
-    const applyDailyInspirationVisibility = (enabled: boolean) => {
-      const headings = Array.from(document.querySelectorAll('h3'));
-      const dailyHeading = headings.find((heading) =>
-        ['Bugünün Ayeti', 'Bugünün Hadisi'].includes((heading.textContent || '').trim()),
-      );
-      const section = dailyHeading?.closest('section') as HTMLElement | null;
-      if (section) section.style.display = enabled ? '' : 'none';
-    };
-
-    const loadModule = async () => {
-      if (!supabase) return;
-      const { data } = await supabase
-        .from('organization_modules')
-        .select('enabled')
-        .eq('organization_id', DEFAULT_ORGANIZATION_ID)
-        .eq('module_id', 'daily_inspiration')
-        .maybeSingle();
-
-      const enabled = Boolean(data?.enabled);
-      applyDailyInspirationVisibility(enabled);
-      observer = new MutationObserver(() => applyDailyInspirationVisibility(enabled));
-      observer.observe(document.body, { childList: true, subtree: true });
-    };
-
-    void loadModule();
-    return () => observer?.disconnect();
-  }, []);
-
-  useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setInstalled(true);
       return;
@@ -61,11 +28,13 @@ export function InstallAppButton() {
         localStorage.setItem(INSTALL_DISMISSED_KEY, 'true');
         localStorage.removeItem(LEGACY_INSTALL_DISMISSED_KEY);
       }
-    } catch { /* ignore */ }
+    } catch {
+      // Ignore unavailable storage.
+    }
 
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    const handler = (event: Event) => {
+      event.preventDefault();
+      setDeferredPrompt(event as BeforeInstallPromptEvent);
     };
 
     const installedHandler = () => {
@@ -84,7 +53,7 @@ export function InstallAppButton() {
 
   const handleInstall = async () => {
     if (!deferredPrompt) return;
-    trackEvent('install_click');
+    void trackEvent('install_click');
     await deferredPrompt.prompt();
     const choice = await deferredPrompt.userChoice;
     if (choice.outcome === 'accepted') setInstalled(true);
@@ -93,23 +62,27 @@ export function InstallAppButton() {
 
   const handleDismiss = () => {
     setDismissed(true);
-    try { localStorage.setItem(INSTALL_DISMISSED_KEY, 'true'); } catch { /* ignore */ }
+    try {
+      localStorage.setItem(INSTALL_DISMISSED_KEY, 'true');
+    } catch {
+      // Ignore unavailable storage.
+    }
   };
 
   if (installed || dismissed || !deferredPrompt) return null;
 
   return (
-    <div className="px-4 mt-4">
-      <div className="rounded-xl border-2 shadow-md p-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg, var(--brand-secondary), color-mix(in srgb, var(--brand-secondary) 84%, var(--brand-primary) 16%))', borderColor: 'var(--brand-border)', color: 'var(--brand-secondary-text)' }}>
-        <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-primary) 22%, transparent)' }}>
+    <div className="mt-4 px-4">
+      <div className="flex items-center gap-3 rounded-xl border-2 p-4 shadow-md" style={{ background: 'linear-gradient(135deg, var(--brand-secondary), color-mix(in srgb, var(--brand-secondary) 84%, var(--brand-primary) 16%))', borderColor: 'var(--brand-border)', color: 'var(--brand-secondary-text)' }}>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-primary) 22%, transparent)' }}>
           <Download size={20} style={{ color: 'var(--brand-primary)' }} />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">Uygulamayı Yükle</p>
           <p className="text-[11px] opacity-60">Ana ekrana ekleyin, hızlı erişin</p>
         </div>
-        <button onClick={handleInstall} className="px-4 py-2 rounded-lg text-xs font-semibold transition-colors shrink-0" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-primary-text)' }}>Yükle</button>
-        <button onClick={handleDismiss} className="w-7 h-7 rounded-full flex items-center justify-center transition-colors shrink-0" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary-text) 8%, transparent)' }} aria-label="Kapat">
+        <button onClick={handleInstall} className="shrink-0 rounded-lg px-4 py-2 text-xs font-semibold" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-primary-text)' }}>Yükle</button>
+        <button onClick={handleDismiss} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary-text) 8%, transparent)' }} aria-label="Kapat">
           <X size={15} style={{ color: 'color-mix(in srgb, var(--brand-secondary-text) 55%, transparent)' }} />
         </button>
       </div>
