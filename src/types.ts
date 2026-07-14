@@ -14,6 +14,13 @@ export interface StaffMember {
   name: string;
   position: string;
   phone: string;
+  email?: string;
+  whatsapp?: string;
+  whatsappNumber?: string;
+  bio?: string;
+  description?: string;
+  imageUrl?: string;
+  photoUrl?: string;
 }
 
 export interface SohbetItem {
