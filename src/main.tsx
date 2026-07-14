@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import './owner-v2.css';
 import App from './App.tsx';
+import { OwnerLanguageSelectorEnhancer } from './components/OwnerLanguageSelectorEnhancer';
 import { AppI18nProvider } from './lib/appI18n';
 import { writeStoredAdminSession } from './lib/organization';
 import { supabase } from './lib/supabase';
@@ -38,7 +39,10 @@ async function start() {
   await restoreWebsiteOnboardingSession();
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <AppI18nProvider><App /></AppI18nProvider>
+      <AppI18nProvider>
+        <OwnerLanguageSelectorEnhancer />
+        <App />
+      </AppI18nProvider>
     </StrictMode>,
   );
 }
