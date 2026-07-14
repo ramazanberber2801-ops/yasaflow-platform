@@ -44,16 +44,16 @@ export const DEFAULT_MODULES: ModuleState = {
   contact: true,
   donation: true,
   push: true,
-  prayer: true,
-  sohbet: true,
-  ramadan: true,
-  kurban: true,
+  prayer: false,
+  sohbet: false,
+  ramadan: false,
+  kurban: false,
   daily_inspiration: false,
   ayet: false,
   hadis: false,
 };
 
-export function isModuleEnabled(modules: ModuleState, moduleId: ModuleId, fallback = true) {
+export function isModuleEnabled(modules: ModuleState, moduleId: ModuleId, fallback = false) {
   return modules[moduleId] ?? fallback;
 }
 
@@ -115,6 +115,6 @@ export function useOrganizationModules(organizationId = DEFAULT_ORGANIZATION_ID)
     modules,
     loading,
     reload,
-    enabled: (moduleId: ModuleId, fallback = true) => isModuleEnabled(modules, moduleId, fallback),
+    enabled: (moduleId: ModuleId, fallback = false) => isModuleEnabled(modules, moduleId, fallback),
   }), [modules, loading, reload]);
 }
