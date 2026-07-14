@@ -1,6 +1,5 @@
-import { X, Calendar, Clock, MapPin, User, MessageCircle, Bell } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, User, Bell } from 'lucide-react';
 import type { SohbetItem } from '../types';
-import { WhatsAppButton } from './WhatsAppButton';
 
 interface SohbetModalProps {
   item: (SohbetItem & { image_base64?: string }) | null;
@@ -36,19 +35,19 @@ function downloadCalendarFile(item: SohbetItem, withReminder: boolean) {
   const start = toIcsDate(item.date, item.time);
   const end = toIcsDate(item.date, item.time, 120);
   const title = escapeIcsText(item.title);
-  const description = escapeIcsText(`${item.description}\n\nKonuşmacı: ${item.speaker || ''}`);
+  const description = escapeIcsText(`${item.description}\n\nKontaktperson: ${item.speaker || ''}`);
   const location = escapeIcsText(item.location);
-  const fileName = `${item.title || 'sohbet-ders'}`
+  const fileName = `${item.title || 'aktivitet'}`
     .toLowerCase()
-    .replace(/[^a-z0-9ğüşöçıİĞÜŞÖÇ]+/gi, '-')
-    .replace(/^-+|-+$/g, '') || 'sohbet-ders';
+    .replace(/[^a-z0-9æøåäöüß]+/gi, '-')
+    .replace(/^-+|-+$/g, '') || 'aktivitet';
 
   const alarm = withReminder
     ? [
         'BEGIN:VALARM',
         'TRIGGER:-PT1H',
         'ACTION:DISPLAY',
-        `DESCRIPTION:${title} programı 1 saat içinde başlayacak.`,
+        `DESCRIPTION:${title} starter om 1 time.`,
         'END:VALARM',
       ]
     : [];
@@ -56,11 +55,11 @@ function downloadCalendarFile(item: SohbetItem, withReminder: boolean) {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//DTIM//Sohbet Ders//NO',
+    'PRODID:-//Yasaflow//Activity//NO',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${item.id || Date.now()}@dtim.no`,
+    `UID:${item.id || Date.now()}@yasaflow.app`,
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
     `DTSTART:${start}`,
     `DTEND:${end}`,
@@ -76,7 +75,7 @@ function downloadCalendarFile(item: SohbetItem, withReminder: boolean) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${fileName}${withReminder ? '-hatirlatma' : ''}.ics`;
+  link.download = `${fileName}${withReminder ? '-påminnelse' : ''}.ics`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -86,14 +85,13 @@ function downloadCalendarFile(item: SohbetItem, withReminder: boolean) {
 function openGoogleCalendar(item: SohbetItem, withReminder: boolean) {
   const start = toIcsDate(item.date, item.time).replace(/Z$/, 'Z');
   const end = toIcsDate(item.date, item.time, 120).replace(/Z$/, 'Z');
-
-  const details = `${item.description || ''}\n\nKonuşmacı: ${item.speaker || ''}${
-    withReminder ? '\n\nHatırlatma: Google Takvim üzerinden alarm ekleyebilirsiniz.' : ''
+  const details = `${item.description || ''}\n\nKontaktperson: ${item.speaker || ''}${
+    withReminder ? '\n\nDu kan legge til et varsel i Google Kalender.' : ''
   }`;
 
   const url =
     'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-    `&text=${encodeURIComponent(item.title || 'Sohbet / Ders')}` +
+    `&text=${encodeURIComponent(item.title || 'Aktivitet')}` +
     `&dates=${encodeURIComponent(`${start}/${end}`)}` +
     `&details=${encodeURIComponent(details)}` +
     `&location=${encodeURIComponent(item.location || '')}`;
@@ -106,127 +104,47 @@ function isAndroid() {
 }
 
 function addToCalendar(item: SohbetItem, withReminder: boolean) {
-  if (isAndroid()) {
-    openGoogleCalendar(item, withReminder);
-  } else {
-    downloadCalendarFile(item, withReminder);
-  }
+  if (isAndroid()) openGoogleCalendar(item, withReminder);
+  else downloadCalendarFile(item, withReminder);
 }
 
 export function SohbetModal({ item, onClose }: SohbetModalProps) {
   if (!item) return null;
 
-  const formattedDate = new Date(item.date).toLocaleDateString('tr-TR', {
+  const formattedDate = new Date(item.date).toLocaleDateString(undefined, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-
   const imageSrc = item.imageBase64 || item.image_base64;
 
   return (
     <div className="fixed inset-0 z-[90] flex items-start justify-center p-0 sm:p-4 sm:py-8">
-      <div
-        className="absolute inset-0 backdrop-blur-sm"
-        style={{ backgroundColor: mix(brand.secondary, 70) }}
-        onClick={onClose}
-      />
-
-      <div className="theme-surface relative w-full max-w-2xl rounded-none sm:rounded-2xl shadow-2xl border-2 overflow-hidden max-h-screen sm:max-h-[calc(100vh-4rem)] flex flex-col">
-        <div className="theme-surface flex items-center justify-between px-5 py-4 border-b-2 sticky top-0 z-10">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span
-              className="text-xs font-semibold uppercase tracking-wider px-2 py-1 rounded"
-              style={{ backgroundColor: 'var(--brand-subtle)', color: brand.primary }}
-            >
-              Sohbet / Ders
-            </span>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors shrink-0"
-            style={{ backgroundColor: 'var(--brand-subtle)', color: mix(brand.text, 65) }}
-            aria-label="Kapat"
-          >
-            <X size={20} />
-          </button>
+      <div className="absolute inset-0 backdrop-blur-sm" style={{ backgroundColor: mix(brand.secondary, 70) }} onClick={onClose} />
+      <div className="theme-surface relative flex max-h-screen w-full max-w-2xl flex-col overflow-hidden rounded-none border-2 shadow-2xl sm:max-h-[calc(100vh-4rem)] sm:rounded-2xl">
+        <div className="theme-surface sticky top-0 z-10 flex items-center justify-between border-b-2 px-5 py-4">
+          <span className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wider" style={{ backgroundColor: 'var(--brand-subtle)', color: brand.primary }}>Aktivitet</span>
+          <button onClick={onClose} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--brand-subtle)', color: mix(brand.text, 65) }} aria-label="Lukk"><X size={20} /></button>
         </div>
 
-        <div className="overflow-y-auto flex-1">
-          {imageSrc && (
-            <img
-              src={imageSrc}
-              alt={item.title}
-              className="w-full h-auto object-contain block"
-            />
-          )}
-
+        <div className="flex-1 overflow-y-auto">
+          {imageSrc && <img src={imageSrc} alt={item.title} className="block h-auto w-full object-contain" />}
           <div className="p-5 sm:p-6">
-            <h2 className="font-serif text-xl sm:text-2xl leading-tight mb-4">
-              {item.title}
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
-                <Calendar size={15} className="shrink-0" style={{ color: brand.primary }} />
-                <span className="capitalize">{formattedDate}</span>
-              </div>
-
-              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
-                <Clock size={15} className="shrink-0" style={{ color: brand.primary }} />
-                <span className="tabular-nums">{item.time}</span>
-              </div>
-
-              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
-                <MapPin size={15} className="shrink-0" style={{ color: brand.primary }} />
-                <span>{item.location}</span>
-              </div>
-
-              <div className="theme-card flex items-center gap-2 text-sm rounded-lg border px-3 py-2 theme-muted">
-                <User size={15} className="shrink-0" style={{ color: brand.primary }} />
-                <span>{item.speaker}</span>
-              </div>
+            <h2 className="mb-4 font-serif text-xl leading-tight sm:text-2xl">{item.title}</h2>
+            <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {item.date && <div className="theme-card theme-muted flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"><Calendar size={15} className="shrink-0" style={{ color: brand.primary }} /><span className="capitalize">{formattedDate}</span></div>}
+              {item.time && <div className="theme-card theme-muted flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"><Clock size={15} className="shrink-0" style={{ color: brand.primary }} /><span className="tabular-nums">{item.time}</span></div>}
+              {item.location && <div className="theme-card theme-muted flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"><MapPin size={15} className="shrink-0" style={{ color: brand.primary }} /><span>{item.location}</span></div>}
+              {item.speaker && <div className="theme-card theme-muted flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"><User size={15} className="shrink-0" style={{ color: brand.primary }} /><span>{item.speaker}</span></div>}
             </div>
 
-            <div className="prose prose-sm max-w-none mb-6">
-              <p className="leading-relaxed whitespace-pre-wrap opacity-80" style={{ color: brand.text }}>
-                {item.description}
-              </p>
+            {item.description && <div className="prose prose-sm mb-6 max-w-none"><p className="whitespace-pre-wrap leading-relaxed opacity-80" style={{ color: brand.text }}>{item.description}</p></div>}
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button type="button" onClick={() => addToCalendar(item, false)} className="theme-card flex w-full items-center justify-center gap-2 rounded-xl border-2 py-3.5 text-sm font-semibold shadow-sm"><Calendar size={18} style={{ color: brand.primary }} />Legg til i kalender</button>
+              <button type="button" onClick={() => addToCalendar(item, true)} className="theme-primary-button flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold shadow-sm"><Bell size={18} />Legg til påminnelse</button>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-              <button
-                type="button"
-                onClick={() => addToCalendar(item, false)}
-                className="theme-card w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 font-semibold text-sm transition-colors shadow-sm"
-              >
-                <Calendar size={18} style={{ color: brand.primary }} />
-                Takvime Ekle
-              </button>
-
-              <button
-                type="button"
-                onClick={() => addToCalendar(item, true)}
-                className="theme-primary-button w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-colors shadow-sm"
-              >
-                <Bell size={18} />
-                Hatırlat Bana
-              </button>
-            </div>
-
-            <p className="text-[10px] text-center mb-4 theme-muted">
-              Hatırlatma seçeneği takvime 1 saat önce alarm ekler.
-            </p>
-
-            <WhatsAppButton
-              message={`Merhaba Hocam, "${item.title}" programına katılmak istiyorum. Detayları öğrenebilir miyim?`}
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#25D366] text-white font-semibold text-sm hover:bg-[#1FB855] transition-colors shadow-sm"
-            >
-              <MessageCircle size={18} fill="white" />
-              Hocaya Sor
-            </WhatsAppButton>
           </div>
         </div>
       </div>
