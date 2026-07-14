@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Download, X } from 'lucide-react';
 import { trackEvent } from '../lib/analytics';
+import { useAppI18n } from '../lib/appI18n';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -11,6 +12,7 @@ const INSTALL_DISMISSED_KEY = 'yasaflow_install_dismissed';
 const LEGACY_INSTALL_DISMISSED_KEY = 'dtim_install_dismissed';
 
 export function InstallAppButton() {
+  const { t, direction } = useAppI18n();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -72,17 +74,17 @@ export function InstallAppButton() {
   if (installed || dismissed || !deferredPrompt) return null;
 
   return (
-    <div className="mt-4 px-4">
+    <div className="mt-4 px-4" dir={direction}>
       <div className="flex items-center gap-3 rounded-xl border-2 p-4 shadow-md" style={{ background: 'linear-gradient(135deg, var(--brand-secondary), color-mix(in srgb, var(--brand-secondary) 84%, var(--brand-primary) 16%))', borderColor: 'var(--brand-border)', color: 'var(--brand-secondary-text)' }}>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-primary) 22%, transparent)' }}>
           <Download size={20} style={{ color: 'var(--brand-primary)' }} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">Uygulamayı Yükle</p>
-          <p className="text-[11px] opacity-60">Ana ekrana ekleyin, hızlı erişin</p>
+          <p className="text-sm font-medium">{t('install.title')}</p>
+          <p className="text-[11px] opacity-60">{t('install.description')}</p>
         </div>
-        <button onClick={handleInstall} className="shrink-0 rounded-lg px-4 py-2 text-xs font-semibold" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-primary-text)' }}>Yükle</button>
-        <button onClick={handleDismiss} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary-text) 8%, transparent)' }} aria-label="Kapat">
+        <button onClick={handleInstall} className="shrink-0 rounded-lg px-4 py-2 text-xs font-semibold" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-primary-text)' }}>{t('install.button')}</button>
+        <button onClick={handleDismiss} className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary-text) 8%, transparent)' }} aria-label={t('install.close')}>
           <X size={15} style={{ color: 'color-mix(in srgb, var(--brand-secondary-text) 55%, transparent)' }} />
         </button>
       </div>
