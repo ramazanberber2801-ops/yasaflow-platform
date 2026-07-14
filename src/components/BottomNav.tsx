@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { Home, HandCoins, Phone } from 'lucide-react';
 import { SecretTapDetector } from './SecretTapDetector';
-import { supabase } from '../lib/supabase';
 import type { Page } from '../types';
 
 interface BottomNavProps {
@@ -13,76 +11,11 @@ interface BottomNavProps {
   showContact?: boolean;
 }
 
-function findHomeSections() {
-  return Array.from(document.querySelectorAll('div.min-h-screen.pb-28 > section')) as HTMLElement[];
-}
-
-function sectionIncludes(section: HTMLElement, text: string) {
-  return section.textContent?.toLowerCase().includes(text.toLowerCase()) || false;
-}
-
-function setSectionVisible(section: HTMLElement | undefined, visible: boolean) {
-  if (!section) return;
-  section.style.display = visible ? '' : 'none';
-}
-
-function setSectionsByText(texts: string[], visible: boolean) {
-  for (const section of findHomeSections()) {
-    if (texts.some((text) => sectionIncludes(section, text))) {
-      setSectionVisible(section, visible);
-    }
-  }
-}
-
-function applyHomeModuleVisibility(modules: Record<string, boolean>) {
-  const sections = findHomeSections();
-  setSectionVisible(sections[0], modules.prayer !== false);
-  setSectionsByText(['Yaklaşan Sohbet', 'Yaklaşan program'], modules.sohbet !== false);
-  setSectionsByText(['Duyurular ve Haberler', 'Henüz haber'], modules.news !== false);
-  setSectionsByText(['RAMAZAN', 'Ramazan'], modules.ramadan !== false);
-  setSectionsByText(['KURBAN BAYRAMI', 'Kurban Bayramı'], modules.kurban !== false);
-
-  if (modules.ayet === false && modules.hadis === false) {
-    setSectionsByText(['Bugünün Ayeti', 'Bugünün Hadisi'], false);
-  } else {
-    setSectionsByText(['Bugünün Ayeti', 'Bugünün Hadisi'], true);
-  }
-}
-
 export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, showDonation = true, showContact = true }: BottomNavProps) {
   const inactiveColor = 'color-mix(in srgb, var(--brand-text) 58%, transparent)';
   const activeColor = 'var(--brand-primary)';
   const navBackground = 'color-mix(in srgb, var(--brand-background) 96%, white 4%)';
   const navBorder = 'color-mix(in srgb, var(--brand-primary) 26%, var(--brand-text) 8%)';
-
-  useEffect(() => {
-    const client = supabase;
-    if (!client) return;
-
-    let alive = true;
-
-    const load = async () => {
-      const { data, error } = await client
-        .from('organization_modules')
-        .select('module_id, enabled')
-        .eq('organization_id', 'dtim');
-
-      if (!alive || error) return;
-
-      const modules: Record<string, boolean> = {};
-      for (const row of data || []) {
-        modules[row.module_id] = Boolean(row.enabled);
-      }
-
-      window.setTimeout(() => applyHomeModuleVisibility(modules), 80);
-    };
-
-    void load();
-
-    return () => {
-      alive = false;
-    };
-  }, [current]);
 
   const itemColor = (page: Page) => (current === page ? activeColor : inactiveColor);
 
