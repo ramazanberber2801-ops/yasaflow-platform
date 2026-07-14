@@ -3,7 +3,7 @@ import { Check, ChevronDown, Loader2, Palette, Save } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { applyThemeToDocument, themes } from '../lib/themeEngine';
 
-type OrganizationOption = { id:string; name:string; themeId:string };
+ type OrganizationOption = { id:string; name:string; themeId:string };
 const mix=(color:string,amount:number,fallback='transparent')=>`color-mix(in srgb, ${color} ${amount}%, ${fallback})`;
 
 export function OwnerThemeManager(){
@@ -48,14 +48,24 @@ export function OwnerThemeManager(){
   const saveTheme=async()=>{
     if(!supabase||!organizationId)return;
     setSaving(true);setMessage('');setError('');
-    const {error:saveError}=await supabase.from('organizations').update({theme_id:themeId,updated_at:new Date().toISOString()}).eq('id',organizationId);
+    const {data,error:saveError}=await supabase
+      .from('organizations')
+      .update({theme_id:themeId,updated_at:new Date().toISOString()})
+      .eq('id',organizationId)
+      .select('id,theme_id')
+      .single();
     if(saveError){setError(saveError.message);setSaving(false);return;}
+    if(!data||data.theme_id!==themeId){setError('Temaet ble ikke bekreftet lagret. Prøv igjen.');setSaving(false);return;}
     setOrganizations((current)=>current.map((item)=>item.id===organizationId?{...item,themeId}:item));
     localStorage.setItem(`yasaflow_theme_${organizationId}`,themeId);
     window.dispatchEvent(new CustomEvent('yasaflow-owner-theme-changed',{detail:{organizationId,themeId}}));
     applyThemeToDocument(selectedTheme);
     setMessage(`Temaet er lagret for ${selectedOrganization?.name||'organisasjonen'}.`);
     setSaving(false);
+
+    // Appens rotkomponent holder temafargene i React-state. En kontrollert reload
+    // gjør at det nylig lagrede temaet hentes og brukes i hele appen med én gang.
+    window.setTimeout(()=>window.location.reload(),350);
   };
 
   return <section className="mx-4 mt-4 overflow-hidden rounded-2xl border-2 bg-white shadow-sm" style={{borderColor:mix('var(--brand-primary)',22),color:'var(--brand-text)'}}>
