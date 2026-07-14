@@ -33,11 +33,12 @@ export async function subscribeToPushNotifications(organizationId?: string) {
   if (!supabase) { alert('Sistem bağlantısı yok.'); return false; }
 
   const subscriptionJson = subscription.toJSON();
-  const { error } = await supabase.from('push_subscriptions').upsert({
-    id: btoa(subscription.endpoint).slice(0, 120),
-    organization_id: resolveOrganizationId(organizationId),
-    endpoint: subscription.endpoint,
-    subscription: subscriptionJson,
+  const subscriptionId = btoa(subscription.endpoint).slice(0, 120);
+  const { error } = await supabase.rpc('register_push_subscription', {
+    subscription_id_input: subscriptionId,
+    organization_id_input: resolveOrganizationId(organizationId),
+    endpoint_input: subscription.endpoint,
+    subscription_input: subscriptionJson,
   });
 
   if (error) { alert('Bildirim kaydedilemedi: ' + error.message); return false; }
