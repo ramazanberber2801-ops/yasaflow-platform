@@ -16,58 +16,68 @@ export function BottomNav({ current, onNavigate, onDonate, onSecretTrigger, show
   const activeColor = 'var(--brand-primary)';
   const navBackground = 'color-mix(in srgb, var(--brand-background) 96%, white 4%)';
   const navBorder = 'color-mix(in srgb, var(--brand-primary) 26%, var(--brand-text) 8%)';
-
   const itemColor = (page: Page) => (current === page ? activeColor : inactiveColor);
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-md border-t"
+      className="fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-md"
       style={{ backgroundColor: navBackground, borderColor: navBorder }}
+      aria-label="Hovedmeny"
     >
-      <div className="max-w-md mx-auto px-4 pt-2 pb-3 pb-[env(safe-area-inset-bottom)] relative">
-        <div className="flex items-center justify-around relative">
+      <div
+        className="relative mx-auto max-w-md px-3"
+        style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}
+      >
+        <div className="grid h-[76px] grid-cols-3 items-end">
           <button
+            type="button"
             onClick={() => onNavigate('home')}
-            className="flex flex-col items-center gap-1 py-2 px-6 transition-colors"
+            className="flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 transition-colors"
           >
-            <Home size={22} style={{ color: itemColor('home') }} strokeWidth={current === 'home' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium" style={{ color: itemColor('home') }}>
+            <Home size={24} style={{ color: itemColor('home') }} strokeWidth={current === 'home' ? 2.5 : 2} />
+            <span className="text-[11px] font-semibold leading-none" style={{ color: itemColor('home') }}>
               Ana Sayfa
             </span>
           </button>
 
-          {showDonation && (
-            <div className="flex flex-col items-center -mt-6">
-              <button
-                onClick={onDonate}
-                className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform border-4"
-                style={{
-                  background: 'linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 76%, #000 24%))',
-                  boxShadow: '0 10px 20px color-mix(in srgb, var(--brand-primary) 30%, transparent)',
-                  borderColor: 'var(--brand-background)',
-                }}
-                aria-label="Bağış Yap"
-              >
-                <HandCoins size={26} style={{ color: 'var(--brand-primary-text)' }} />
-              </button>
-              <span className="text-[10px] font-medium mt-1" style={{ color: activeColor }}>Bağış</span>
-            </div>
-          )}
+          <div className="relative flex h-[76px] min-w-0 flex-col items-center justify-end">
+            {showDonation && (
+              <>
+                <button
+                  type="button"
+                  onClick={onDonate}
+                  className="absolute -top-7 flex h-[68px] w-[68px] items-center justify-center rounded-full border-4 shadow-lg transition-transform hover:scale-105 active:scale-95"
+                  style={{
+                    background: 'linear-gradient(135deg, var(--brand-primary), color-mix(in srgb, var(--brand-primary) 76%, #000 24%))',
+                    boxShadow: '0 8px 18px color-mix(in srgb, var(--brand-primary) 28%, transparent)',
+                    borderColor: navBackground,
+                  }}
+                  aria-label="Bağış Yap"
+                >
+                  <HandCoins size={27} style={{ color: 'var(--brand-primary-text)' }} />
+                </button>
+                <span className="mb-[7px] text-[11px] font-semibold leading-none" style={{ color: activeColor }}>
+                  Bağış
+                </span>
+              </>
+            )}
+          </div>
 
-          {showContact && (
+          {showContact ? (
             <button
+              type="button"
               onClick={() => onNavigate('contact')}
-              className="flex flex-col items-center gap-1 py-2 px-6 transition-colors"
+              className="flex h-[68px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 transition-colors"
             >
-              <Phone size={22} style={{ color: itemColor('contact') }} strokeWidth={current === 'contact' ? 2.5 : 2} />
-              <span className="text-[10px] font-medium" style={{ color: itemColor('contact') }}>
+              <Phone size={24} style={{ color: itemColor('contact') }} strokeWidth={current === 'contact' ? 2.5 : 2} />
+              <span className="text-[11px] font-semibold leading-none" style={{ color: itemColor('contact') }}>
                 İletişim
               </span>
             </button>
-          )}
+          ) : <div />}
         </div>
 
-        <div className="absolute bottom-[env(safe-area-inset-bottom)] right-2 mb-2">
+        <div className="absolute bottom-2 right-2">
           <SecretTapDetector onTrigger={onSecretTrigger} />
         </div>
       </div>
