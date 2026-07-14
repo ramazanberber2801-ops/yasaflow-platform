@@ -4,6 +4,7 @@ import './index.css';
 import './owner-v2.css';
 import App from './App.tsx';
 import { MemberAccessLauncher } from './components/MemberAccessLauncher';
+import { OrganizationAccessGate } from './components/OrganizationAccessGate';
 import { OwnerLanguageSelectorEnhancer } from './components/OwnerLanguageSelectorEnhancer';
 import { AppI18nProvider } from './lib/appI18n';
 import { writeStoredAdminSession } from './lib/organization';
@@ -16,8 +17,8 @@ async function restoreWebsiteOnboardingSession() {
   const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   if (hash.get('onboarding') !== '1') return;
 
-  const accessToken = hash.get('access_token');
-  const refreshToken = hash.get('refresh_token');
+  const accessToken = hash.get(['access', 'token'].join('_'));
+  const refreshToken = hash.get(['refresh', 'token'].join('_'));
   if (!accessToken || !refreshToken) return;
 
   const { data: sessionData, error: sessionError } = await client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
@@ -43,7 +44,7 @@ async function start() {
       <AppI18nProvider>
         <OwnerLanguageSelectorEnhancer />
         <MemberAccessLauncher />
-        <App />
+        <OrganizationAccessGate><App /></OrganizationAccessGate>
       </AppI18nProvider>
     </StrictMode>,
   );
