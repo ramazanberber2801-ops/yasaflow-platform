@@ -1,94 +1,40 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Check, Copy, KeyRound, Loader2, Plus, ShieldCheck, Trash2, Users } from 'lucide-react';
+import { ContentVisibilityManager } from './ContentVisibilityManager';
 import { supabase } from '../lib/supabase';
 
 type AccessMode = 'public' | 'mixed' | 'authenticated';
 type ApprovalMode = 'automatic' | 'manual';
-type Invite = {
-  id:string; code:string; label:string; role:string; approval_mode:string; max_uses:number|null;
-  use_count:number; expires_at:string|null; active:boolean;
-};
+type Invite = { id:string; code:string; label:string; role:string; approval_mode:string; max_uses:number|null; use_count:number; expires_at:string|null; active:boolean };
+const makeCode=()=>`YSF-${Math.random().toString(36).slice(2,6).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
 
-const makeCode = () => `YSF-${Math.random().toString(36).slice(2,6).toUpperCase()}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
-
-export function AccessMembershipModule({ organizationId }:{ organizationId:string }) {
+export function AccessMembershipModule({organizationId}:{organizationId:string}){
   const [accessMode,setAccessMode]=useState<AccessMode>('public');
   const [approvalMode,setApprovalMode]=useState<ApprovalMode>('automatic');
   const [invites,setInvites]=useState<Invite[]>([]);
-  const [loading,setLoading]=useState(true);
-  const [saving,setSaving]=useState(false);
-  const [error,setError]=useState('');
-  const [message,setMessage]=useState('');
-  const [showCreate,setShowCreate]=useState(false);
+  const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);const [error,setError]=useState('');const [message,setMessage]=useState('');const [showCreate,setShowCreate]=useState(false);
   const [form,setForm]=useState({code:makeCode(),label:'',role:'member',approval_mode:'inherit',max_uses:'',expires_at:''});
 
-  const load=async()=>{
-    if(!supabase)return;
-    setLoading(true);setError('');
-    const [orgResult,inviteResult]=await Promise.all([
-      supabase.from('organizations').select('app_access_mode,membership_approval_mode').eq('id',organizationId).maybeSingle(),
-      supabase.from('organization_invitation_codes').select('id,code,label,role,approval_mode,max_uses,use_count,expires_at,active').eq('organization_id',organizationId).order('created_at',{ascending:false}),
-    ]);
-    if(orgResult.error)setError(orgResult.error.message);
-    else { setAccessMode((orgResult.data?.app_access_mode||'public') as AccessMode); setApprovalMode((orgResult.data?.membership_approval_mode||'automatic') as ApprovalMode); }
-    if(inviteResult.error)setError(inviteResult.error.message); else setInvites((inviteResult.data||[]) as Invite[]);
-    setLoading(false);
-  };
-
+  const load=async()=>{if(!supabase)return;setLoading(true);setError('');const [orgResult,inviteResult]=await Promise.all([supabase.from('organizations').select('app_access_mode,membership_approval_mode').eq('id',organizationId).maybeSingle(),supabase.from('organization_invitation_codes').select('id,code,label,role,approval_mode,max_uses,use_count,expires_at,active').eq('organization_id',organizationId).order('created_at',{ascending:false})]);if(orgResult.error)setError(orgResult.error.message);else{setAccessMode((orgResult.data?.app_access_mode||'public') as AccessMode);setApprovalMode((orgResult.data?.membership_approval_mode||'automatic') as ApprovalMode);}if(inviteResult.error)setError(inviteResult.error.message);else setInvites((inviteResult.data||[]) as Invite[]);setLoading(false);};
   useEffect(()=>{void load();},[organizationId]);
 
-  const saveSettings=async()=>{
-    if(!supabase)return;
-    setSaving(true);setError('');setMessage('');
-    const {error}=await supabase.from('organizations').update({app_access_mode:accessMode,membership_approval_mode:approvalMode,updated_at:new Date().toISOString()}).eq('id',organizationId);
-    setSaving(false);
-    if(error)return setError(error.message);
-    setMessage('Tilgangsinnstillingene er lagret.');
-  };
-
-  const createInvite=async(e:FormEvent)=>{
-    e.preventDefault();if(!supabase)return;
-    setSaving(true);setError('');
-    const maxUses=form.max_uses.trim()?Number(form.max_uses):null;
-    const {error}=await supabase.from('organization_invitation_codes').insert({
-      organization_id:organizationId,code:form.code.trim().toUpperCase(),label:form.label.trim()||null,role:form.role,
-      approval_mode:form.approval_mode,max_uses:maxUses,expires_at:form.expires_at?new Date(form.expires_at).toISOString():null,active:true,
-    });
-    setSaving(false);
-    if(error)return setError(error.message);
-    setShowCreate(false);setForm({code:makeCode(),label:'',role:'member',approval_mode:'inherit',max_uses:'',expires_at:''});await load();
-  };
-
+  const saveSettings=async()=>{if(!supabase)return;setSaving(true);setError('');setMessage('');const {error}=await supabase.from('organizations').update({app_access_mode:accessMode,membership_approval_mode:approvalMode,updated_at:new Date().toISOString()}).eq('id',organizationId);setSaving(false);if(error)return setError(error.message);window.dispatchEvent(new Event('yasaflow-organization-settings-changed'));setMessage('Tilgangsinnstillingene er lagret.');};
+  const createInvite=async(e:FormEvent)=>{e.preventDefault();if(!supabase)return;setSaving(true);setError('');const maxUses=form.max_uses.trim()?Number(form.max_uses):null;const {error}=await supabase.from('organization_invitation_codes').insert({organization_id:organizationId,code:form.code.trim().toUpperCase(),label:form.label.trim()||null,role:form.role,approval_mode:form.approval_mode,max_uses:maxUses,expires_at:form.expires_at?new Date(form.expires_at).toISOString():null,active:true});setSaving(false);if(error)return setError(error.message);setShowCreate(false);setForm({code:makeCode(),label:'',role:'member',approval_mode:'inherit',max_uses:'',expires_at:''});await load();};
   const toggleInvite=async(invite:Invite)=>{if(!supabase)return;await supabase.from('organization_invitation_codes').update({active:!invite.active,updated_at:new Date().toISOString()}).eq('id',invite.id).eq('organization_id',organizationId);await load();};
   const removeInvite=async(invite:Invite)=>{if(!supabase||!confirm(`Slette invitasjonskoden ${invite.code}?`))return;await supabase.from('organization_invitation_codes').delete().eq('id',invite.id).eq('organization_id',organizationId);await load();};
   const copy=async(value:string)=>{await navigator.clipboard.writeText(value);setMessage('Kopiert.');};
   const activeCount=useMemo(()=>invites.filter(i=>i.active).length,[invites]);
-
   if(loading)return <div className="flex justify-center p-8"><Loader2 className="animate-spin"/></div>;
 
   return <div className="space-y-4">
     <section className="rounded-3xl border bg-white p-5 shadow-sm"><div className="flex items-start gap-3"><ShieldCheck style={{color:'var(--brand-primary)'}}/><div><h3 className="font-serif text-2xl">Tilgang og medlemskap</h3><p className="mt-1 text-sm opacity-55">Bestem hvem som kan se appen, og hvordan brukere blir medlemmer.</p></div></div></section>
+    <section className="rounded-3xl border bg-white p-5 shadow-sm"><h4 className="font-semibold">Tilgang til app</h4><div className="mt-4 grid gap-3">{[['public','Offentlig','Nyheter, aktiviteter og kontakt kan ses uten innlogging.'],['mixed','Offentlig med private områder','Noe er offentlig, mens internt innhold krever innlogging.'],['authenticated','Kun for innloggede brukere','Brukeren må logge inn før innhold vises.']].map(([value,title,description])=><label key={value} className="flex cursor-pointer items-start gap-3 rounded-2xl border p-4"><input type="radio" name="access" className="mt-1" checked={accessMode===value} onChange={()=>setAccessMode(value as AccessMode)}/><span><span className="block text-sm font-semibold">{title}</span><span className="mt-1 block text-xs leading-5 opacity-55">{description}</span></span></label>)}</div><div className="mt-5"><label className="text-sm font-semibold">Godkjenning av nye brukere</label><select value={approvalMode} onChange={e=>setApprovalMode(e.target.value as ApprovalMode)} className="mt-2 w-full rounded-xl border p-3 text-sm"><option value="automatic">Godkjennes automatisk med gyldig kode</option><option value="manual">Må godkjennes av administrator</option></select></div><button onClick={saveSettings} disabled={saving} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:<Check size={16}/>}Lagre tilgang</button></section>
 
-    <section className="rounded-3xl border bg-white p-5 shadow-sm">
-      <h4 className="font-semibold">Tilgang til app</h4>
-      <div className="mt-4 grid gap-3">
-        {[
-          ['public','Offentlig','Nyheter, aktiviteter og kontakt kan ses uten innlogging.'],
-          ['mixed','Offentlig med private områder','Noe er offentlig, mens internt innhold krever innlogging.'],
-          ['authenticated','Kun for innloggede brukere','Brukeren må logge inn før innhold vises.'],
-        ].map(([value,title,description])=><label key={value} className="flex cursor-pointer items-start gap-3 rounded-2xl border p-4"><input type="radio" name="access" className="mt-1" checked={accessMode===value} onChange={()=>setAccessMode(value as AccessMode)}/><span><span className="block text-sm font-semibold">{title}</span><span className="mt-1 block text-xs leading-5 opacity-55">{description}</span></span></label>)}
-      </div>
-      <div className="mt-5"><label className="text-sm font-semibold">Godkjenning av nye brukere</label><select value={approvalMode} onChange={e=>setApprovalMode(e.target.value as ApprovalMode)} className="mt-2 w-full rounded-xl border p-3 text-sm"><option value="automatic">Godkjennes automatisk med gyldig kode</option><option value="manual">Må godkjennes av administrator</option></select></div>
-      <button onClick={saveSettings} disabled={saving} className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:<Check size={16}/>}Lagre tilgang</button>
-    </section>
+    <ContentVisibilityManager organizationId={organizationId}/>
 
-    <section className="rounded-3xl border bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between gap-3"><div><h4 className="font-semibold">Invitasjonskoder</h4><p className="mt-1 text-xs opacity-55">{activeCount} aktive koder</p></div><button onClick={()=>setShowCreate(true)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}><Plus size={15}/>Ny kode</button></div>
-      <div className="mt-4 space-y-2">{invites.length===0?<p className="rounded-xl border p-5 text-center text-sm opacity-50">Ingen invitasjonskoder ennå.</p>:invites.map(invite=><div key={invite.id} className="rounded-2xl border p-4"><div className="flex items-start gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{background:'var(--brand-subtle)',color:'var(--brand-primary)'}}><KeyRound size={17}/></div><div className="min-w-0 flex-1"><p className="font-mono text-sm font-semibold">{invite.code}</p><p className="mt-1 text-xs opacity-50">{invite.label||invite.role} · brukt {invite.use_count}{invite.max_uses?` av ${invite.max_uses}`:''}{invite.expires_at?` · utløper ${new Date(invite.expires_at).toLocaleDateString('nb-NO')}`:''}</p></div><span className={`rounded-full px-2 py-1 text-[10px] ${invite.active?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600'}`}>{invite.active?'Aktiv':'Av'}</span></div><div className="mt-3 grid grid-cols-3 gap-2"><button onClick={()=>void copy(invite.code)} className="flex items-center justify-center gap-1 rounded-lg bg-black/5 py-2 text-xs"><Copy size={13}/>Kopier</button><button onClick={()=>void toggleInvite(invite)} className="rounded-lg bg-black/5 py-2 text-xs">{invite.active?'Deaktiver':'Aktiver'}</button><button onClick={()=>void removeInvite(invite)} className="flex items-center justify-center gap-1 rounded-lg bg-red-50 py-2 text-xs text-red-700"><Trash2 size={13}/>Slett</button></div></div>)}</div>
-    </section>
+    <section className="rounded-3xl border bg-white p-5 shadow-sm"><div className="flex items-center justify-between gap-3"><div><h4 className="font-semibold">Invitasjonskoder</h4><p className="mt-1 text-xs opacity-55">{activeCount} aktive koder</p></div><button onClick={()=>setShowCreate(true)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}><Plus size={15}/>Ny kode</button></div><div className="mt-4 space-y-2">{invites.length===0?<p className="rounded-xl border p-5 text-center text-sm opacity-50">Ingen invitasjonskoder ennå.</p>:invites.map(invite=><div key={invite.id} className="rounded-2xl border p-4"><div className="flex items-start gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{background:'var(--brand-subtle)',color:'var(--brand-primary)'}}><KeyRound size={17}/></div><div className="min-w-0 flex-1"><p className="font-mono text-sm font-semibold">{invite.code}</p><p className="mt-1 text-xs opacity-50">{invite.label||invite.role} · brukt {invite.use_count}{invite.max_uses?` av ${invite.max_uses}`:''}{invite.expires_at?` · utløper ${new Date(invite.expires_at).toLocaleDateString('nb-NO')}`:''}</p></div><span className={`rounded-full px-2 py-1 text-[10px] ${invite.active?'bg-green-100 text-green-700':'bg-gray-100 text-gray-600'}`}>{invite.active?'Aktiv':'Av'}</span></div><div className="mt-3 grid grid-cols-3 gap-2"><button onClick={()=>void copy(invite.code)} className="flex items-center justify-center gap-1 rounded-lg bg-black/5 py-2 text-xs"><Copy size={13}/>Kopier</button><button onClick={()=>void toggleInvite(invite)} className="rounded-lg bg-black/5 py-2 text-xs">{invite.active?'Deaktiver':'Aktiver'}</button><button onClick={()=>void removeInvite(invite)} className="flex items-center justify-center gap-1 rounded-lg bg-red-50 py-2 text-xs text-red-700"><Trash2 size={13}/>Slett</button></div></div>)}</div></section>
 
     {error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}{message&&<p className="rounded-xl bg-green-50 p-3 text-xs text-green-700">{message}</p>}
-
     {showCreate&&<div className="fixed inset-0 z-[140] flex items-end bg-black/45 sm:items-center sm:justify-center sm:p-4"><form onSubmit={createInvite} className="w-full max-w-lg rounded-t-3xl bg-white p-5 sm:rounded-3xl"><h3 className="font-serif text-xl">Ny invitasjonskode</h3><div className="mt-4 space-y-3"><input required className="w-full rounded-xl border p-3 font-mono text-sm uppercase" value={form.code} onChange={e=>setForm({...form,code:e.target.value})}/><input className="w-full rounded-xl border p-3 text-sm" placeholder="Navn på koden, f.eks. Beboere" value={form.label} onChange={e=>setForm({...form,label:e.target.value})}/><select className="w-full rounded-xl border p-3 text-sm" value={form.role} onChange={e=>setForm({...form,role:e.target.value})}><option value="member">Medlem</option><option value="resident">Beboer</option><option value="volunteer">Frivillig</option><option value="staff">Ansatt</option><option value="board">Styremedlem</option></select><select className="w-full rounded-xl border p-3 text-sm" value={form.approval_mode} onChange={e=>setForm({...form,approval_mode:e.target.value})}><option value="inherit">Bruk organisasjonens innstilling</option><option value="automatic">Automatisk godkjenning</option><option value="manual">Manuell godkjenning</option></select><div className="grid grid-cols-2 gap-3"><input type="number" min="1" className="w-full rounded-xl border p-3 text-sm" placeholder="Maks bruk (valgfritt)" value={form.max_uses} onChange={e=>setForm({...form,max_uses:e.target.value})}/><input type="date" className="w-full rounded-xl border p-3 text-sm" value={form.expires_at} onChange={e=>setForm({...form,expires_at:e.target.value})}/></div><div className="grid grid-cols-2 gap-3"><button type="button" onClick={()=>setShowCreate(false)} className="rounded-xl border py-3 text-sm">Avbryt</button><button disabled={saving} className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:<Users size={16}/>}Opprett kode</button></div></div></form></div>}
   </div>;
 }
