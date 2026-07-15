@@ -5,6 +5,7 @@ import './owner-v2.css';
 import App from './App.tsx';
 import { MemberAccessLauncher } from './components/MemberAccessLauncher';
 import { OrganizationAccessGate } from './components/OrganizationAccessGate';
+import { OrganizationSwitcher } from './components/OrganizationSwitcher';
 import { OwnerLanguageSelectorEnhancer } from './components/OwnerLanguageSelectorEnhancer';
 import { AppI18nProvider } from './lib/appI18n';
 import { writeStoredAdminSession } from './lib/organization';
@@ -43,6 +44,7 @@ async function start() {
     <StrictMode>
       <AppI18nProvider>
         <OwnerLanguageSelectorEnhancer />
+        <OrganizationSwitcher />
         <MemberAccessLauncher />
         <OrganizationAccessGate><App /></OrganizationAccessGate>
       </AppI18nProvider>
