@@ -12,8 +12,10 @@ const nb: Dictionary = {
   'install.title':'Installer appen','install.description':'Legg den til på startskjermen for rask tilgang','install.button':'Installer','install.close':'Lukk',
   'common.loading':'Laster...','common.close':'Lukk','common.save':'Lagre','common.saving':'Lagrer...',
   'recovery.title':'Velg nytt passord','recovery.password':'Nytt passord','recovery.repeat':'Gjenta nytt passord','recovery.show':'Vis passord','recovery.tooShort':'Passordet må ha minst 6 tegn.','recovery.noMatch':'Passordene er ikke like.','recovery.noConnection':'Ingen forbindelse til systemet.','recovery.failed':'Passordet kunne ikke lagres: ','recovery.success':'Passordet er lagret. Du kan nå logge inn med det nye passordet.',
-  'activity.label':'Aktivitet','activity.contact':'Kontaktperson','activity.addCalendar':'Legg til i kalender','activity.addReminder':'Legg til påminnelse','activity.call':'Ring','activity.sms':'SMS','activity.whatsapp':'WhatsApp','activity.email':'E-post'
+  'activity.label':'Aktivitet','activity.contact':'Kontaktperson','activity.addCalendar':'Legg til i kalender','activity.addReminder':'Legg til påminnelse','activity.call':'Ring','activity.sms':'SMS','activity.whatsapp':'WhatsApp','activity.email':'E-post',
+  'donation.title':'Støtt arbeidet vårt','donation.subtitle':'Bidraget ditt støtter organisasjonens aktiviteter og arbeid.','donation.copyNumber':'Kopier nummer','donation.copied':'Kopiert','donation.openVipps':'Åpne i Vipps','donation.openingVipps':'Åpner Vipps...','donation.vippsDisabled':'Vipps-lenken er deaktivert. Du kan kopiere nummeret for å bidra.','donation.note':'Alle bidrag brukes til organisasjonens aktiviteter, tilbud og samfunnsnyttige arbeid.'
 };
+
 const en: Dictionary = {
   'nav.home':'Home','nav.donation':'Donate','nav.contact':'Contact',
   'contact.title':'Contact','contact.subtitle':'Get in touch with us','contact.location':'PHYSICAL LOCATION','contact.address':'Organization address','contact.directions':'GET DIRECTIONS','contact.askTitle':'Ask a question','contact.askSubtitle':'Send your question via WhatsApp','contact.askBody':'Do you have a question? Contact the organization through WhatsApp and we will help as soon as possible.','contact.askButton':'ASK ON WHATSAPP','contact.staff':'Our contacts','contact.noStaff':'No contacts have been registered yet.','contact.call':'Call',
@@ -21,8 +23,10 @@ const en: Dictionary = {
   'install.title':'Install the app','install.description':'Add it to your home screen for quick access','install.button':'Install','install.close':'Close',
   'common.loading':'Loading...','common.close':'Close','common.save':'Save','common.saving':'Saving...',
   'recovery.title':'Choose a new password','recovery.password':'New password','recovery.repeat':'Repeat new password','recovery.show':'Show password','recovery.tooShort':'The password must contain at least 6 characters.','recovery.noMatch':'The passwords do not match.','recovery.noConnection':'No connection to the system.','recovery.failed':'The password could not be saved: ','recovery.success':'The password has been saved. You can now sign in with the new password.',
-  'activity.label':'Activity','activity.contact':'Contact person','activity.addCalendar':'Add to calendar','activity.addReminder':'Add reminder','activity.call':'Call','activity.sms':'SMS','activity.whatsapp':'WhatsApp','activity.email':'Email'
+  'activity.label':'Activity','activity.contact':'Contact person','activity.addCalendar':'Add to calendar','activity.addReminder':'Add reminder','activity.call':'Call','activity.sms':'SMS','activity.whatsapp':'WhatsApp','activity.email':'Email',
+  'donation.title':'Support our work','donation.subtitle':'Your contribution supports the organization’s activities and work.','donation.copyNumber':'Copy number','donation.copied':'Copied','donation.openVipps':'Open in Vipps','donation.openingVipps':'Opening Vipps...','donation.vippsDisabled':'The Vipps link is disabled. You can copy the number to contribute.','donation.note':'All contributions support the organization’s activities, services and community work.'
 };
+
 const tr: Dictionary = {
   'nav.home':'Ana Sayfa','nav.donation':'Bağış','nav.contact':'İletişim',
   'contact.title':'İletişim','contact.subtitle':'Bizimle iletişime geçin','contact.location':'FİZİKSEL KONUM','contact.address':'Dernek adresi','contact.directions':'YOL TARİFİ','contact.askTitle':'Soru Sor','contact.askSubtitle':'Sorunuzu WhatsApp üzerinden iletin','contact.askBody':'Sorunuz mu var? WhatsApp üzerinden kuruluşla iletişime geçebilirsiniz.','contact.askButton':'WHATSAPP İLE SOR','contact.staff':'İletişim kişilerimiz','contact.noStaff':'Henüz kayıtlı kişi yok.','contact.call':'Ara',
@@ -30,8 +34,10 @@ const tr: Dictionary = {
   'install.title':'Uygulamayı Yükle','install.description':'Ana ekrana ekleyin, hızlı erişin','install.button':'Yükle','install.close':'Kapat',
   'common.loading':'Yükleniyor...','common.close':'Kapat','common.save':'Kaydet','common.saving':'Kaydediliyor...',
   'recovery.title':'Yeni şifre belirle','recovery.password':'Yeni şifre','recovery.repeat':'Yeni şifre tekrar','recovery.show':'Şifreyi göster','recovery.tooShort':'Şifre en az 6 karakter olmalıdır.','recovery.noMatch':'Şifreler aynı değil.','recovery.noConnection':'Sistem bağlantısı yok.','recovery.failed':'Şifre kaydedilemedi: ','recovery.success':'Şifre kaydedildi. Yeni şifrenizle giriş yapabilirsiniz.',
-  'activity.label':'Aktivite','activity.contact':'İletişim kişisi','activity.addCalendar':'Takvime ekle','activity.addReminder':'Hatırlatıcı ekle','activity.call':'Ara','activity.sms':'SMS','activity.whatsapp':'WhatsApp','activity.email':'E-posta'
+  'activity.label':'Aktivite','activity.contact':'İletişim kişisi','activity.addCalendar':'Takvime ekle','activity.addReminder':'Hatırlatıcı ekle','activity.call':'Ara','activity.sms':'SMS','activity.whatsapp':'WhatsApp','activity.email':'E-posta',
+  'donation.title':'Çalışmalarımızı Destekleyin','donation.subtitle':'Katkınız kuruluşun faaliyetlerini ve çalışmalarını destekler.','donation.copyNumber':'Numarayı Kopyala','donation.copied':'Kopyalandı','donation.openVipps':'Vipps’te Aç','donation.openingVipps':'Vipps Açılıyor...','donation.vippsDisabled':'Vipps bağlantısı kapalı. Katkıda bulunmak için numarayı kopyalayabilirsiniz.','donation.note':'Tüm katkılar kuruluşun faaliyetleri, hizmetleri ve toplum yararına çalışmaları için kullanılır.'
 };
+
 const ar: Dictionary = {
   'nav.home':'الرئيسية','nav.donation':'تبرع','nav.contact':'اتصل بنا',
   'contact.title':'اتصل بنا','contact.subtitle':'تواصل معنا','contact.location':'الموقع','contact.address':'عنوان المؤسسة','contact.directions':'الاتجاهات','contact.askTitle':'اطرح سؤالاً','contact.askSubtitle':'أرسل سؤالك عبر واتساب','contact.askBody':'هل لديك سؤال؟ تواصل مع المؤسسة عبر واتساب وسنساعدك في أقرب وقت.','contact.askButton':'اسأل عبر واتساب','contact.staff':'جهات الاتصال','contact.noStaff':'لا توجد جهات اتصال مسجلة بعد.','contact.call':'اتصال',
@@ -39,8 +45,10 @@ const ar: Dictionary = {
   'install.title':'ثبّت التطبيق','install.description':'أضفه إلى الشاشة الرئيسية للوصول السريع','install.button':'تثبيت','install.close':'إغلاق',
   'common.loading':'جارٍ التحميل...','common.close':'إغلاق','common.save':'حفظ','common.saving':'جارٍ الحفظ...',
   'recovery.title':'اختر كلمة مرور جديدة','recovery.password':'كلمة المرور الجديدة','recovery.repeat':'أعد كتابة كلمة المرور','recovery.show':'إظهار كلمة المرور','recovery.tooShort':'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.','recovery.noMatch':'كلمتا المرور غير متطابقتين.','recovery.noConnection':'لا يوجد اتصال بالنظام.','recovery.failed':'تعذر حفظ كلمة المرور: ','recovery.success':'تم حفظ كلمة المرور. يمكنك الآن تسجيل الدخول باستخدامها.',
-  'activity.label':'نشاط','activity.contact':'جهة الاتصال','activity.addCalendar':'إضافة إلى التقويم','activity.addReminder':'إضافة تذكير','activity.call':'اتصال','activity.sms':'رسالة نصية','activity.whatsapp':'واتساب','activity.email':'بريد إلكتروني'
+  'activity.label':'نشاط','activity.contact':'جهة الاتصال','activity.addCalendar':'إضافة إلى التقويم','activity.addReminder':'إضافة تذكير','activity.call':'اتصال','activity.sms':'رسالة نصية','activity.whatsapp':'واتساب','activity.email':'بريد إلكتروني',
+  'donation.title':'ادعم عملنا','donation.subtitle':'تساهم مساهمتك في دعم أنشطة المؤسسة وعملها.','donation.copyNumber':'نسخ الرقم','donation.copied':'تم النسخ','donation.openVipps':'فتح في Vipps','donation.openingVipps':'جارٍ فتح Vipps...','donation.vippsDisabled':'رابط Vipps غير مفعّل. يمكنك نسخ الرقم للمساهمة.','donation.note':'تُستخدم جميع المساهمات لدعم أنشطة المؤسسة وخدماتها وعملها المجتمعي.'
 };
+
 const ur: Dictionary = {
   'nav.home':'ہوم','nav.donation':'عطیہ','nav.contact':'رابطہ',
   'contact.title':'رابطہ','contact.subtitle':'ہم سے رابطہ کریں','contact.location':'مقام','contact.address':'تنظیم کا پتہ','contact.directions':'راستہ دیکھیں','contact.askTitle':'سوال پوچھیں','contact.askSubtitle':'واٹس ایپ کے ذریعے سوال بھیجیں','contact.askBody':'کیا آپ کا کوئی سوال ہے؟ واٹس ایپ کے ذریعے تنظیم سے رابطہ کریں۔','contact.askButton':'واٹس ایپ پر پوچھیں','contact.staff':'رابطہ افراد','contact.noStaff':'ابھی کوئی رابطہ فرد درج نہیں ہے۔','contact.call':'کال کریں',
@@ -48,8 +56,10 @@ const ur: Dictionary = {
   'install.title':'ایپ انسٹال کریں','install.description':'فوری رسائی کے لیے ہوم اسکرین پر شامل کریں','install.button':'انسٹال','install.close':'بند کریں',
   'common.loading':'لوڈ ہو رہا ہے...','common.close':'بند کریں','common.save':'محفوظ کریں','common.saving':'محفوظ ہو رہا ہے...',
   'recovery.title':'نیا پاس ورڈ منتخب کریں','recovery.password':'نیا پاس ورڈ','recovery.repeat':'نیا پاس ورڈ دوبارہ لکھیں','recovery.show':'پاس ورڈ دکھائیں','recovery.tooShort':'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔','recovery.noMatch':'پاس ورڈ ایک جیسے نہیں ہیں۔','recovery.noConnection':'سسٹم سے رابطہ نہیں ہے۔','recovery.failed':'پاس ورڈ محفوظ نہیں ہو سکا: ','recovery.success':'پاس ورڈ محفوظ ہو گیا۔ اب آپ نئے پاس ورڈ سے لاگ ان کر سکتے ہیں۔',
-  'activity.label':'سرگرمی','activity.contact':'رابطہ فرد','activity.addCalendar':'کیلنڈر میں شامل کریں','activity.addReminder':'یاد دہانی شامل کریں','activity.call':'کال','activity.sms':'ایس ایم ایس','activity.whatsapp':'واٹس ایپ','activity.email':'ای میل'
+  'activity.label':'سرگرمی','activity.contact':'رابطہ فرد','activity.addCalendar':'کیلنڈر میں شامل کریں','activity.addReminder':'یاد دہانی شامل کریں','activity.call':'کال','activity.sms':'ایس ایم ایس','activity.whatsapp':'واٹس ایپ','activity.email':'ای میل',
+  'donation.title':'ہمارے کام کی حمایت کریں','donation.subtitle':'آپ کی شراکت تنظیم کی سرگرمیوں اور کام کی حمایت کرتی ہے۔','donation.copyNumber':'نمبر کاپی کریں','donation.copied':'کاپی ہو گیا','donation.openVipps':'Vipps میں کھولیں','donation.openingVipps':'Vipps کھل رہا ہے...','donation.vippsDisabled':'Vipps لنک غیر فعال ہے۔ تعاون کے لیے نمبر کاپی کریں۔','donation.note':'تمام تعاون تنظیم کی سرگرمیوں، خدمات اور سماجی کام کے لیے استعمال ہوتا ہے۔'
 };
+
 const dictionaries: Record<string, Dictionary> = { nb, en, tr, ar, ur };
 
 type I18nValue = { language:string; direction:'ltr'|'rtl'; locale:string; t:(key:string)=>string; reload:()=>Promise<void> };
