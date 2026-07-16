@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Edit3, Loader2, Plus, Search, Trash2, UserPlus, Users, X } from 'lucide-react';
+import { useAppI18n } from '../lib/appI18n';
+import { getAccessGroupTranslation } from '../lib/accessGroupTranslations';
 import { supabase } from '../lib/supabase';
 
 type Group={id:string;name:string;description:string};
 type Membership={id:string;user_id:string;display_name:string|null;email:string|null;role:string;status:string};
 
 export function GroupManagementModule({organizationId,onChanged}:{organizationId:string;onChanged?:()=>void}){
+  const { language }=useAppI18n();
+  const t=(key:string)=>getAccessGroupTranslation(language,key);
   const [groups,setGroups]=useState<Group[]>([]);
   const [loading,setLoading]=useState(true);
   const [saving,setSaving]=useState(false);
@@ -20,67 +24,26 @@ export function GroupManagementModule({organizationId,onChanged}:{organizationId
   const [memberSearch,setMemberSearch]=useState('');
   const [membersLoading,setMembersLoading]=useState(false);
 
-  const load=async()=>{
-    const client=supabase;if(!client)return;
-    setLoading(true);setError('');
-    const {data,error}=await client.from('organization_groups').select('id,name,description').eq('organization_id',organizationId).order('name');
-    if(error)setError(error.message);else setGroups((data||[]).map(row=>({id:row.id,name:row.name||'',description:row.description||''})));
-    setLoading(false);
-  };
-  useEffect(()=>{void load();},[organizationId]);
+  const load=async()=>{const client=supabase;if(!client)return;setLoading(true);setError('');const {data,error}=await client.from('organization_groups').select('id,name,description').eq('organization_id',organizationId).order('name');if(error)setError(error.message);else setGroups((data||[]).map(row=>({id:row.id,name:row.name||'',description:row.description||''})));setLoading(false);};
+  useEffect(()=>{void load();},[organizationId,language]);
 
   const start=(group?:Group)=>{setEditing(group||null);setName(group?.name||'');setDescription(group?.description||'');setError('');setOpen(true);};
-  const save=async(e:FormEvent)=>{
-    e.preventDefault();const client=supabase;if(!client||!name.trim())return;
-    setSaving(true);setError('');
-    const payload={organization_id:organizationId,name:name.trim(),description:description.trim()||null,updated_at:new Date().toISOString()};
-    const result=editing?await client.from('organization_groups').update(payload).eq('id',editing.id).eq('organization_id',organizationId):await client.from('organization_groups').insert(payload);
-    setSaving(false);
-    if(result.error){setError(result.error.message);return;}
-    setOpen(false);await load();onChanged?.();
-  };
-  const remove=async(group:Group)=>{
-    const client=supabase;if(!client||!confirm(`Slette gruppen «${group.name}»?`))return;
-    const {error}=await client.from('organization_groups').delete().eq('id',group.id).eq('organization_id',organizationId);
-    if(error)setError(error.message);else{await load();onChanged?.();}
-  };
+  const save=async(e:FormEvent)=>{e.preventDefault();const client=supabase;if(!client||!name.trim())return;setSaving(true);setError('');const payload={organization_id:organizationId,name:name.trim(),description:description.trim()||null,updated_at:new Date().toISOString()};const result=editing?await client.from('organization_groups').update(payload).eq('id',editing.id).eq('organization_id',organizationId):await client.from('organization_groups').insert(payload);setSaving(false);if(result.error){setError(result.error.message);return;}setOpen(false);await load();onChanged?.();};
+  const remove=async(group:Group)=>{const client=supabase;if(!client||!confirm(`${t('groups.deletePrefix')}${group.name}${t('groups.deleteSuffix')}`))return;const {error}=await client.from('organization_groups').delete().eq('id',group.id).eq('organization_id',organizationId);if(error)setError(error.message);else{await load();onChanged?.();}};
 
-  const openMembers=async(group:Group)=>{
-    const client=supabase;if(!client)return;
-    setMemberGroup(group);setMembersLoading(true);setError('');setMemberSearch('');
-    const [membersResult,selectedResult]=await Promise.all([
-      client.from('organization_user_memberships').select('id,user_id,display_name,email,role,status').eq('organization_id',organizationId).in('status',['active','pending']).order('created_at'),
-      client.from('organization_group_members').select('membership_id').eq('group_id',group.id),
-    ]);
-    if(membersResult.error||selectedResult.error)setError((membersResult.error||selectedResult.error)?.message||'Kunne ikke hente medlemmer.');
-    setMembers((membersResult.data||[]) as Membership[]);
-    setSelectedIds((selectedResult.data||[]).map(row=>row.membership_id));
-    setMembersLoading(false);
-  };
+  const openMembers=async(group:Group)=>{const client=supabase;if(!client)return;setMemberGroup(group);setMembersLoading(true);setError('');setMemberSearch('');const [membersResult,selectedResult]=await Promise.all([client.from('organization_user_memberships').select('id,user_id,display_name,email,role,status').eq('organization_id',organizationId).in('status',['active','pending']).order('created_at'),client.from('organization_group_members').select('membership_id').eq('group_id',group.id)]);if(membersResult.error||selectedResult.error)setError((membersResult.error||selectedResult.error)?.message||t('groups.loadMembersFailed'));setMembers((membersResult.data||[]) as Membership[]);setSelectedIds((selectedResult.data||[]).map(row=>row.membership_id));setMembersLoading(false);};
 
-  const filteredMembers=useMemo(()=>{
-    const needle=memberSearch.trim().toLowerCase();
-    return members.filter(member=>!needle||[member.display_name,member.email,member.role,member.user_id].filter(Boolean).join(' ').toLowerCase().includes(needle));
-  },[members,memberSearch]);
-
-  const saveMembers=async()=>{
-    const client=supabase;if(!client||!memberGroup)return;
-    setSaving(true);setError('');
-    const {error}=await client.rpc('set_organization_group_members',{p_organization_id:organizationId,p_group_id:memberGroup.id,p_membership_ids:selectedIds});
-    setSaving(false);
-    if(error){setError(error.message);return;}
-    setMemberGroup(null);onChanged?.();
-  };
-
+  const filteredMembers=useMemo(()=>{const needle=memberSearch.trim().toLowerCase();return members.filter(member=>!needle||[member.display_name,member.email,member.role,member.user_id].filter(Boolean).join(' ').toLowerCase().includes(needle));},[members,memberSearch]);
+  const saveMembers=async()=>{const client=supabase;if(!client||!memberGroup)return;setSaving(true);setError('');const {error}=await client.rpc('set_organization_group_members',{p_organization_id:organizationId,p_group_id:memberGroup.id,p_membership_ids:selectedIds});setSaving(false);if(error){setError(error.message);return;}setMemberGroup(null);onChanged?.();};
   const toggleMember=(membershipId:string)=>setSelectedIds(current=>current.includes(membershipId)?current.filter(id=>id!==membershipId):[...current,membershipId]);
 
   return <section className="rounded-3xl border bg-white p-5 shadow-sm">
-    <div className="flex items-center justify-between gap-3"><div className="flex items-start gap-3"><Users size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">Brukergrupper</h4><p className="mt-1 text-xs leading-5 opacity-55">Opprett grupper og velg hvilke medlemmer som tilhører dem.</p></div></div><button onClick={()=>start()} className="flex shrink-0 items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}><Plus size={14}/>Ny gruppe</button></div>
+    <div className="flex items-center justify-between gap-3"><div className="flex items-start gap-3"><Users size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">{t('groups.title')}</h4><p className="mt-1 text-xs leading-5 opacity-55">{t('groups.subtitle')}</p></div></div><button onClick={()=>start()} className="flex shrink-0 items-center gap-1 rounded-xl px-3 py-2 text-xs font-semibold" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}><Plus size={14}/>{t('groups.new')}</button></div>
     {error&&!open&&!memberGroup&&<p className="mt-4 rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}
-    {loading?<div className="flex justify-center p-7"><Loader2 className="animate-spin"/></div>:groups.length===0?<p className="mt-4 rounded-xl border p-5 text-center text-sm opacity-50">Ingen grupper er opprettet ennå.</p>:<div className="mt-4 space-y-2">{groups.map(group=><div key={group.id} className="flex items-center gap-3 rounded-2xl border p-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{background:'var(--brand-subtle)',color:'var(--brand-primary)'}}><Users size={16}/></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{group.name}</p>{group.description&&<p className="truncate text-xs opacity-45">{group.description}</p>}</div><button onClick={()=>void openMembers(group)} className="flex items-center gap-1 rounded-lg bg-black/5 px-2.5 py-2 text-xs"><UserPlus size={14}/>Medlemmer</button><button onClick={()=>start(group)} className="rounded-lg bg-black/5 p-2"><Edit3 size={14}/></button><button onClick={()=>void remove(group)} className="rounded-lg bg-red-50 p-2 text-red-700"><Trash2 size={14}/></button></div>)}</div>}
+    {loading?<div className="flex justify-center p-7"><Loader2 className="animate-spin"/></div>:groups.length===0?<p className="mt-4 rounded-xl border p-5 text-center text-sm opacity-50">{t('groups.empty')}</p>:<div className="mt-4 space-y-2">{groups.map(group=><div key={group.id} className="flex items-center gap-3 rounded-2xl border p-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl" style={{background:'var(--brand-subtle)',color:'var(--brand-primary)'}}><Users size={16}/></span><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{group.name}</p>{group.description&&<p className="truncate text-xs opacity-45">{group.description}</p>}</div><button onClick={()=>void openMembers(group)} className="flex items-center gap-1 rounded-lg bg-black/5 px-2.5 py-2 text-xs"><UserPlus size={14}/>{t('groups.members')}</button><button onClick={()=>start(group)} className="rounded-lg bg-black/5 p-2"><Edit3 size={14}/></button><button onClick={()=>void remove(group)} className="rounded-lg bg-red-50 p-2 text-red-700"><Trash2 size={14}/></button></div>)}</div>}
 
-    {open&&<div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/45 sm:items-center sm:p-4"><form onSubmit={save} className="w-full max-w-md rounded-t-3xl bg-white p-5 sm:rounded-3xl"><div className="flex items-center justify-between"><h3 className="font-serif text-xl">{editing?'Rediger gruppe':'Ny gruppe'}</h3><button type="button" onClick={()=>setOpen(false)} className="rounded-full bg-black/5 p-2"><X size={17}/></button></div><div className="mt-4 space-y-3"><input required className="w-full rounded-xl border p-3 text-sm" placeholder="Gruppenavn" value={name} onChange={e=>setName(e.target.value)}/><textarea className="min-h-24 w-full rounded-xl border p-3 text-sm" placeholder="Beskrivelse (valgfritt)" value={description} onChange={e=>setDescription(e.target.value)}/>{error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}<button disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:'Lagre gruppe'}</button></div></form></div>}
+    {open&&<div className="fixed inset-0 z-[160] flex items-end justify-center bg-black/45 sm:items-center sm:p-4"><form onSubmit={save} className="w-full max-w-md rounded-t-3xl bg-white p-5 sm:rounded-3xl"><div className="flex items-center justify-between"><h3 className="font-serif text-xl">{editing?t('groups.edit'):t('groups.new')}</h3><button type="button" aria-label={t('groups.close')} onClick={()=>setOpen(false)} className="rounded-full bg-black/5 p-2"><X size={17}/></button></div><div className="mt-4 space-y-3"><input required className="w-full rounded-xl border p-3 text-sm" placeholder={t('groups.name')} value={name} onChange={e=>setName(e.target.value)}/><textarea className="min-h-24 w-full rounded-xl border p-3 text-sm" placeholder={t('groups.description')} value={description} onChange={e=>setDescription(e.target.value)}/>{error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}<button disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:t('groups.save')}</button></div></form></div>}
 
-    {memberGroup&&<div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/45 sm:items-center sm:p-4"><div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 sm:rounded-3xl"><div className="flex items-center justify-between"><div><p className="text-xs uppercase tracking-wider opacity-45">Administrer medlemmer</p><h3 className="font-serif text-xl">{memberGroup.name}</h3></div><button onClick={()=>setMemberGroup(null)} className="rounded-full bg-black/5 p-2"><X size={17}/></button></div><label className="mt-4 flex items-center gap-2 rounded-xl border px-3"><Search size={15} className="opacity-40"/><input className="w-full bg-transparent py-3 text-sm outline-none" placeholder="Søk medlem" value={memberSearch} onChange={e=>setMemberSearch(e.target.value)}/></label>{error&&<p className="mt-3 rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}{membersLoading?<div className="flex justify-center p-8"><Loader2 className="animate-spin"/></div>:filteredMembers.length===0?<p className="mt-4 rounded-xl border p-5 text-center text-sm opacity-50">Ingen appbrukere er registrert i organisasjonen ennå.</p>:<div className="mt-4 space-y-2">{filteredMembers.map(member=><label key={member.id} className="flex cursor-pointer items-center gap-3 rounded-2xl border p-3"><input type="checkbox" checked={selectedIds.includes(member.id)} onChange={()=>toggleMember(member.id)}/><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{member.display_name||member.email||`Bruker ${member.user_id.slice(0,8)}`}</p><p className="truncate text-xs opacity-45">{member.email||member.role} · {member.status==='pending'?'Venter på godkjenning':member.role}</p></div></label>)}</div>}<div className="sticky bottom-0 mt-5 grid grid-cols-2 gap-3 bg-white pt-3"><button onClick={()=>setMemberGroup(null)} className="rounded-xl border py-3 text-sm">Avbryt</button><button onClick={()=>void saveMembers()} disabled={saving||membersLoading} className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:`Lagre (${selectedIds.length})`}</button></div></div></div>}
+    {memberGroup&&<div className="fixed inset-0 z-[170] flex items-end justify-center bg-black/45 sm:items-center sm:p-4"><div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-white p-5 sm:rounded-3xl"><div className="flex items-center justify-between"><div><p className="text-xs uppercase tracking-wider opacity-45">{t('groups.manageMembers')}</p><h3 className="font-serif text-xl">{memberGroup.name}</h3></div><button aria-label={t('groups.close')} onClick={()=>setMemberGroup(null)} className="rounded-full bg-black/5 p-2"><X size={17}/></button></div><label className="mt-4 flex items-center gap-2 rounded-xl border px-3"><Search size={15} className="opacity-40"/><input className="w-full bg-transparent py-3 text-sm outline-none" placeholder={t('groups.searchMember')} value={memberSearch} onChange={e=>setMemberSearch(e.target.value)}/></label>{error&&<p className="mt-3 rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}{membersLoading?<div className="flex justify-center p-8"><Loader2 className="animate-spin"/></div>:filteredMembers.length===0?<p className="mt-4 rounded-xl border p-5 text-center text-sm opacity-50">{t('groups.noUsers')}</p>:<div className="mt-4 space-y-2">{filteredMembers.map(member=><label key={member.id} className="flex cursor-pointer items-center gap-3 rounded-2xl border p-3"><input type="checkbox" checked={selectedIds.includes(member.id)} onChange={()=>toggleMember(member.id)}/><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{member.display_name||member.email||`${t('groups.userPrefix')}${member.user_id.slice(0,8)}`}</p><p className="truncate text-xs opacity-45">{member.email||member.role} · {member.status==='pending'?t('groups.pending'):member.role}</p></div></label>)}</div>}<div className="sticky bottom-0 mt-5 grid grid-cols-2 gap-3 bg-white pt-3"><button onClick={()=>setMemberGroup(null)} className="rounded-xl border py-3 text-sm">{t('groups.cancel')}</button><button onClick={()=>void saveMembers()} disabled={saving||membersLoading} className="flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:`${t('groups.saveSelectedPrefix')}${selectedIds.length}${t('groups.saveSelectedSuffix')}`}</button></div></div></div>}
   </section>;
 }
