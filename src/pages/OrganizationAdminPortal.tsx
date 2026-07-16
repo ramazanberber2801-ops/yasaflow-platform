@@ -9,6 +9,7 @@ import { OrganizationOnboardingChecklist } from '../components/OrganizationOnboa
 import { OrganizationSettingsModule } from '../components/OrganizationSettingsModule';
 import { OrganizationStaffModule } from '../components/OrganizationStaffModule';
 import { useApp } from '../context/AppContext';
+import { getAdminPortalTranslation } from '../lib/adminPortalTranslations';
 import { useAppI18n } from '../lib/appI18n';
 import { useOrganizationModules } from '../lib/moduleEngine';
 import { resolveOrganizationAdminSession, type OrganizationAdminSession } from '../lib/organizationAdminSession';
@@ -40,7 +41,8 @@ function trialInfo(session: OrganizationAdminSession) {
 }
 
 function Dashboard({ organizationId, organizationName, enabled, onNavigate, locked }:{ organizationId:string; organizationName:string; enabled:(moduleId:string,fallback?:boolean)=>boolean; onNavigate:(section:PortalSection)=>void; locked:boolean }){
-  const { t } = useAppI18n();
+  const { language } = useAppI18n();
+  const t = (key: string) => getAdminPortalTranslation(language, key) || key;
   const [stats,setStats]=useState<DashboardStats>({members:0,news:0,activities:0,staff:0});
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState('');
@@ -84,7 +86,8 @@ function Dashboard({ organizationId, organizationName, enabled, onNavigate, lock
 }
 
 function PortalWithModules({ session, administratorName }: { session: OrganizationAdminSession; administratorName: string }) {
-  const { t, locale } = useAppI18n();
+  const { language, locale } = useAppI18n();
+  const t = (key: string) => getAdminPortalTranslation(language, key) || key;
   const [activeSection, setActiveSection] = useState<PortalSection>('dashboard');
   const { enabled, loading } = useOrganizationModules(session.organizationId);
   const trial = trialInfo(session);
@@ -108,13 +111,14 @@ function PortalWithModules({ session, administratorName }: { session: Organizati
 }
 
 export function OrganizationAdminPortal() {
-  const { t } = useAppI18n();
+  const { language } = useAppI18n();
+  const t = (key: string) => getAdminPortalTranslation(language, key) || key;
   const { currentAdmin } = useApp();
   const [session, setSession] = useState<OrganizationAdminSession | null>(null);
   const [sessionError, setSessionError] = useState('');
   const [sessionLoading, setSessionLoading] = useState(true);
 
-  useEffect(() => { let cancelled = false; resolveOrganizationAdminSession().then((resolved) => { if (!cancelled) setSession(resolved); }).catch((error) => { if (!cancelled) setSessionError(error instanceof Error ? error.message : t('adminPortal.loadOrganizationError')); }).finally(() => { if (!cancelled) setSessionLoading(false); }); return () => { cancelled = true; }; }, [t]);
+  useEffect(() => { let cancelled = false; resolveOrganizationAdminSession().then((resolved) => { if (!cancelled) setSession(resolved); }).catch((error) => { if (!cancelled) setSessionError(error instanceof Error ? error.message : getAdminPortalTranslation(language, 'adminPortal.loadOrganizationError') || ''); }).finally(() => { if (!cancelled) setSessionLoading(false); }); return () => { cancelled = true; }; }, [language]);
 
   const administratorName = session?.adminDisplayName || currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || t('adminPortal.administrator');
   if (sessionLoading) return <div className="flex min-h-full items-center justify-center p-8" style={{ backgroundColor: brand.background, color: brand.text }}><div className="flex items-center gap-3 text-sm opacity-65"><Loader2 className="animate-spin" size={18} /> {t('adminPortal.loadingOrganization')}</div></div>;
