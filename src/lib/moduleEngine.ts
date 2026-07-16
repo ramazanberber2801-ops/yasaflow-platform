@@ -43,7 +43,7 @@ export const DEFAULT_MODULES: ModuleState = {
   settings: true,
   contact: true,
   donation: true,
-  push: true,
+  push: false,
   prayer: false,
   sohbet: false,
   ramadan: false,
