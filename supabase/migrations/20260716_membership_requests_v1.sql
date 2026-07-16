@@ -20,6 +20,15 @@ create index if not exists organization_membership_requests_org_status_idx
 
 alter table public.organization_membership_requests enable row level security;
 
+create policy if not exists "organization admins can read membership requests"
+on public.organization_membership_requests for select to authenticated
+using (exists (
+  select 1 from public.organization_admins a
+  where a.organization_id = organization_membership_requests.organization_id
+    and a.user_id = auth.uid()
+    and coalesce(a.status,'active') in ('active','accepted')
+));
+
 create or replace function public.submit_membership_request(
   p_organization_id text,
   p_first_name text,
@@ -53,6 +62,11 @@ begin
   if p_decision not in ('approved','rejected') then raise exception 'invalid_decision'; end if;
   select * into r from public.organization_membership_requests where id=p_request_id for update;
   if not found or r.status <> 'pending' then raise exception 'request_not_pending'; end if;
+  if not exists (
+    select 1 from public.organization_admins a
+    where a.organization_id=r.organization_id and a.user_id=auth.uid()
+      and coalesce(a.status,'active') in ('active','accepted')
+  ) then raise exception 'not_authorized'; end if;
   if p_decision='approved' then
     insert into public.people(full_name,primary_email,primary_phone,updated_at)
     values(trim(r.first_name||' '||r.last_name),r.email,r.phone,now()) returning id into v_person_id;
