@@ -2,8 +2,8 @@
 
 Only the next 3–5 concrete tasks belong in this file.
 
-1. Run the Members, News and Activities migrations in Supabase SQL Editor.
-2. Build organization Settings.
-3. Build roles and access control.
-4. Prepare public delivery of organization-scoped content.
-5. After July 29, 2026: deploy and verify `invite-organization-admin` and test Members/News/Activities.
+1. Prepare public delivery of organization-scoped news, activities and organization settings.
+2. Review public and legacy components for remaining hardcoded language before beta.
+3. After July 29, 2026: deploy and verify `invite-organization-admin`.
+4. Test all Administrator Portal modules with a real invited administrator.
+5. Run mobile and RTL visual verification for Arabic and Urdu.
