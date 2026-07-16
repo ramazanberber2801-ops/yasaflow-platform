@@ -7,7 +7,8 @@ import { getSettingsTranslation } from '../lib/settingsTranslations';
 import { supabase } from '../lib/supabase';
 
 type FormState = {
-  display_name:string; short_name:string; address:string; map_url:string; phone:string; email:string; website:string;
+  display_name:string; short_name:string; description:string; banner_url:string; address:string; map_url:string; phone:string; email:string; website:string;
+  facebook_url:string; instagram_url:string; youtube_url:string; tiktok_url:string;
   whatsapp_number:string; donation_number:string; donation_url:string; bank_account:string; iban:string;
   opening_hours:string; weekly_event:string; logo_url:string; app_icon_url:string;
   publish_phone:boolean; publish_email:boolean; publish_address:boolean; publish_website:boolean; publish_opening_hours:boolean;
@@ -16,7 +17,7 @@ type FormState = {
   language:string;
 };
 
-const empty:FormState={display_name:'',short_name:'',address:'',map_url:'',phone:'',email:'',website:'',whatsapp_number:'',donation_number:'',donation_url:'',bank_account:'',iban:'',opening_hours:'',weekly_event:'',logo_url:'',app_icon_url:'',publish_phone:false,publish_email:false,publish_address:false,publish_website:false,publish_opening_hours:false,ramadan_enabled:false,ramadan_start_date:'',ramadan_end_date:'',kurban_enabled:false,kurban_start_date:'',language:'nb'};
+const empty:FormState={display_name:'',short_name:'',description:'',banner_url:'',address:'',map_url:'',phone:'',email:'',website:'',facebook_url:'',instagram_url:'',youtube_url:'',tiktok_url:'',whatsapp_number:'',donation_number:'',donation_url:'',bank_account:'',iban:'',opening_hours:'',weekly_event:'',logo_url:'',app_icon_url:'',publish_phone:false,publish_email:false,publish_address:false,publish_website:false,publish_opening_hours:false,ramadan_enabled:false,ramadan_start_date:'',ramadan_end_date:'',kurban_enabled:false,kurban_start_date:'',language:'nb'};
 
 export function OrganizationSettingsModule({organizationId}:{organizationId:string}){
   const {language:appLanguage}=useAppI18n();
@@ -85,43 +86,23 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
     <section className="rounded-3xl border bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3"><Languages size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">{t('settings.appLanguage')}</h4><p className="mt-1 text-xs opacity-55">{t('settings.languageHelp')}</p></div></div>
       <div className="relative mt-4">
-        <button type="button" onClick={()=>setLanguageOpen(!languageOpen)} className="flex w-full items-center justify-between rounded-xl border bg-white px-4 py-3 text-left">
-          <span><span className="block text-sm font-semibold">{selectedLanguage.nativeName}</span><span className="block text-xs opacity-50">{selectedLanguage.name} · {selectedLanguage.code.toUpperCase()}{selectedLanguage.direction==='rtl'?' · RTL':''}</span></span>
-          <ChevronDown size={18} className={`transition ${languageOpen?'rotate-180':''}`}/>
-        </button>
-        {languageOpen&&<div className="absolute left-0 right-0 z-30 mt-2 rounded-2xl border bg-white p-3 shadow-2xl">
-          <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-35"/><input autoFocus value={languageQuery} onChange={e=>setLanguageQuery(e.target.value)} placeholder={t('settings.searchLanguage')} className="w-full rounded-xl border py-3 pl-9 pr-3 text-sm outline-none"/></div>
-          <div className="mt-2 max-h-64 overflow-y-auto">
-            {filteredLanguages.length===0?<p className="p-4 text-center text-sm opacity-50">{t('settings.noLanguage')}</p>:filteredLanguages.map(language=><button key={language.code} type="button" onClick={()=>{setForm({...form,language:language.code});setLanguageOpen(false);setLanguageQuery('');}} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left hover:bg-black/5"><span><span className="block text-sm font-semibold">{language.nativeName}</span><span className="block text-xs opacity-50">{language.name} · {language.code.toUpperCase()}{language.direction==='rtl'?' · RTL':''}</span></span>{form.language===language.code&&<Check size={17} style={{color:'var(--brand-primary)'}}/>}</button>)}
-          </div>
-        </div>}
+        <button type="button" onClick={()=>setLanguageOpen(!languageOpen)} className="flex w-full items-center justify-between rounded-xl border bg-white px-4 py-3 text-left"><span><span className="block text-sm font-semibold">{selectedLanguage.nativeName}</span><span className="block text-xs opacity-50">{selectedLanguage.name} · {selectedLanguage.code.toUpperCase()}{selectedLanguage.direction==='rtl'?' · RTL':''}</span></span><ChevronDown size={18} className={`transition ${languageOpen?'rotate-180':''}`}/></button>
+        {languageOpen&&<div className="absolute left-0 right-0 z-30 mt-2 rounded-2xl border bg-white p-3 shadow-2xl"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-35"/><input autoFocus value={languageQuery} onChange={e=>setLanguageQuery(e.target.value)} placeholder={t('settings.searchLanguage')} className="w-full rounded-xl border py-3 pl-9 pr-3 text-sm outline-none"/></div><div className="mt-2 max-h-64 overflow-y-auto">{filteredLanguages.length===0?<p className="p-4 text-center text-sm opacity-50">{t('settings.noLanguage')}</p>:filteredLanguages.map(language=><button key={language.code} type="button" onClick={()=>{setForm({...form,language:language.code});setLanguageOpen(false);setLanguageQuery('');}} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left hover:bg-black/5"><span><span className="block text-sm font-semibold">{language.nativeName}</span><span className="block text-xs opacity-50">{language.name} · {language.code.toUpperCase()}{language.direction==='rtl'?' · RTL':''}</span></span>{form.language===language.code&&<Check size={17} style={{color:'var(--brand-primary)'}}/>}</button>)}</div></div>}
       </div>
       <p className="mt-3 text-xs opacity-50">{t('settings.languageNote')}</p>
     </section>
 
-    <section className="grid gap-4 rounded-3xl border bg-white p-5 shadow-sm sm:grid-cols-2">{field('display_name',t('settings.displayName'))}{field('short_name',t('settings.shortName'))}{field('phone',t('settings.phone'))}{field('email',t('settings.email'),'email')}{field('website','Nettside','url')}{field('whatsapp_number',t('settings.whatsapp'))}{field('address',t('settings.address'))}{field('map_url',t('settings.mapUrl'),'url')}{field('logo_url',t('settings.logoUrl'),'url')}{field('app_icon_url',t('settings.appIconUrl'),'url')}{field('donation_number',t('settings.donationNumber'))}{field('donation_url',t('settings.donationUrl'),'url')}{field('bank_account',t('settings.bankAccount'))}{field('iban',t('settings.iban'))}{field('opening_hours',t('settings.openingHours'))}{field('weekly_event',t('settings.weeklyEvent'))}</section>
-
-    <section className="rounded-3xl border bg-white p-5 shadow-sm">
-      <div className="flex items-start gap-3"><Eye size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">Offentlige innstillinger</h4><p className="mt-1 text-xs opacity-55">Vis kun det organisasjonen har valgt å publisere.</p></div></div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {publishChoice('publish_phone','Telefon',Boolean(form.phone.trim()))}
-        {publishChoice('publish_email','E-post',Boolean(form.email.trim()))}
-        {publishChoice('publish_address','Adresse',Boolean(form.address.trim()))}
-        {publishChoice('publish_website','Nettside',Boolean(form.website.trim()))}
-        {publishChoice('publish_opening_hours','Åpningstider',Boolean(form.opening_hours.trim()))}
-      </div>
+    <section className="grid gap-4 rounded-3xl border bg-white p-5 shadow-sm sm:grid-cols-2">
+      {field('display_name',t('settings.displayName'))}{field('short_name',t('settings.shortName'))}
+      <label className="block sm:col-span-2"><span className="text-xs font-medium">{t('settings.description')}</span><textarea rows={5} className="mt-1 w-full rounded-xl border p-3 text-sm" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>
+      {field('banner_url',t('settings.bannerUrl'),'url')}{field('website',t('settings.website'),'url')}
+      {field('facebook_url',t('settings.facebook'),'url')}{field('instagram_url',t('settings.instagram'),'url')}{field('youtube_url',t('settings.youtube'),'url')}{field('tiktok_url',t('settings.tiktok'),'url')}
+      {field('phone',t('settings.phone'))}{field('email',t('settings.email'),'email')}{field('whatsapp_number',t('settings.whatsapp'))}{field('address',t('settings.address'))}{field('map_url',t('settings.mapUrl'),'url')}{field('logo_url',t('settings.logoUrl'),'url')}{field('app_icon_url',t('settings.appIconUrl'),'url')}{field('donation_number',t('settings.donationNumber'))}{field('donation_url',t('settings.donationUrl'),'url')}{field('bank_account',t('settings.bankAccount'))}{field('iban',t('settings.iban'))}{field('opening_hours',t('settings.openingHours'))}{field('weekly_event',t('settings.weeklyEvent'))}
     </section>
 
-    <section className="rounded-3xl border bg-white p-5 shadow-sm">
-      <h4 className="font-semibold">{t('settings.optionalModules')}</h4>
-      <div className="mt-4 space-y-4">
-        <label className="flex items-start justify-between gap-4 rounded-2xl border p-4"><div className="flex gap-3"><BookOpen size={20} style={{color:'var(--brand-primary)'}}/><div><p className="text-sm font-semibold">{t('settings.dailyTitle')}</p><p className="mt-1 text-xs leading-5 opacity-55">{t('settings.dailyBody')}</p></div></div><input type="checkbox" className="mt-1 h-5 w-5" checked={dailyInspiration} onChange={e=>setDailyInspiration(e.target.checked)}/></label>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.ramadan_enabled} onChange={e=>setForm({...form,ramadan_enabled:e.target.checked})}/>{t('settings.enableRamadan')}</label>
-        {form.ramadan_enabled&&<div className="grid gap-3 sm:grid-cols-2">{field('ramadan_start_date',t('settings.startDate'),'date')}{field('ramadan_end_date',t('settings.endDate'),'date')}</div>}
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.kurban_enabled} onChange={e=>setForm({...form,kurban_enabled:e.target.checked})}/>{t('settings.enableKurban')}</label>
-        {form.kurban_enabled&&field('kurban_start_date',t('settings.startDate'),'date')}
-      </div>
-    </section>
+    <section className="rounded-3xl border bg-white p-5 shadow-sm"><div className="flex items-start gap-3"><Eye size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">Offentlige innstillinger</h4><p className="mt-1 text-xs opacity-55">Vis kun det organisasjonen har valgt å publisere.</p></div></div><div className="mt-4 grid gap-3 sm:grid-cols-2">{publishChoice('publish_phone','Telefon',Boolean(form.phone.trim()))}{publishChoice('publish_email','E-post',Boolean(form.email.trim()))}{publishChoice('publish_address','Adresse',Boolean(form.address.trim()))}{publishChoice('publish_website','Nettside',Boolean(form.website.trim()))}{publishChoice('publish_opening_hours','Åpningstider',Boolean(form.opening_hours.trim()))}</div></section>
+
+    <section className="rounded-3xl border bg-white p-5 shadow-sm"><h4 className="font-semibold">{t('settings.optionalModules')}</h4><div className="mt-4 space-y-4"><label className="flex items-start justify-between gap-4 rounded-2xl border p-4"><div className="flex gap-3"><BookOpen size={20} style={{color:'var(--brand-primary)'}}/><div><p className="text-sm font-semibold">{t('settings.dailyTitle')}</p><p className="mt-1 text-xs leading-5 opacity-55">{t('settings.dailyBody')}</p></div></div><input type="checkbox" className="mt-1 h-5 w-5" checked={dailyInspiration} onChange={e=>setDailyInspiration(e.target.checked)}/></label><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.ramadan_enabled} onChange={e=>setForm({...form,ramadan_enabled:e.target.checked})}/>{t('settings.enableRamadan')}</label>{form.ramadan_enabled&&<div className="grid gap-3 sm:grid-cols-2">{field('ramadan_start_date',t('settings.startDate'),'date')}{field('ramadan_end_date',t('settings.endDate'),'date')}</div>}<label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.kurban_enabled} onChange={e=>setForm({...form,kurban_enabled:e.target.checked})}/>{t('settings.enableKurban')}</label>{form.kurban_enabled&&field('kurban_start_date',t('settings.startDate'),'date')}</div></section>
     {error&&<p className="rounded-xl bg-red-50 p-3 text-xs text-red-700">{error}</p>}{message&&<p className="rounded-xl bg-green-50 p-3 text-xs text-green-700">{message}</p>}
     <button disabled={saving} className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium disabled:opacity-50" style={{background:'var(--brand-primary)',color:'var(--brand-primary-text)'}}>{saving?<Loader2 size={16} className="animate-spin"/>:<Save size={16}/>} {t('settings.save')}</button>
   </form>;
