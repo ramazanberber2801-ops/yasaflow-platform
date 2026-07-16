@@ -1,22 +1,21 @@
 # Yasaflow – Project Status
 
-Last updated: July 11, 2026
+Last updated: July 16, 2026
 
 ## One-line summary
 
-Yasaflow now has organization-scoped Administrator Portal modules for Members V1, News V1 and Activities V1. Owner Dashboard V2 remains complete. Real administrator invitation and end-to-end testing remain deferred until the Supabase Edge Function is deployed after July 29, 2026.
+Yasaflow now has an organization-scoped, multilingual Administrator Portal. The active administrator modules follow the organization language in Norwegian, English, Turkish, Arabic and Urdu. Real administrator invitation and end-to-end testing remain deferred until the Supabase Edge Function is deployed after July 29, 2026.
 
 ## Current phase
 
-Customer Administrator Portal.
+Customer Administrator Portal quality assurance and public organization delivery.
 
 Current priority order:
 
-1. Run pending Members, News and Activities migrations in Supabase.
-2. Build organization Settings.
-3. Build roles and access control.
-4. Prepare public delivery of organization-scoped content.
-5. After July 29, deploy and verify the administrator invitation Edge Function.
+1. Verify all administrator modules end to end with a real invited organization administrator after July 29.
+2. Prepare public delivery of organization-scoped news, activities and organization settings.
+3. Run a mobile and RTL quality pass for Arabic and Urdu.
+4. Review remaining public or legacy components before beta release.
 
 ## Completed
 
@@ -26,37 +25,64 @@ Current priority order:
 - Members database foundation and Members V1 UI.
 - Organization News database foundation and News V1 UI.
 - Organization Activities database foundation and Activities V1 UI.
+- Organization Settings.
+- Access and membership controls.
+- User groups and content visibility rules.
+- Manual organization push notifications.
+- Organization-scoped language selection.
+- Administrator Portal localization in Norwegian, English, Turkish, Arabic and Urdu.
 
-## Activities V1
+## Administrator Portal localization
 
-Implemented:
+The following active administrator areas use organization-scoped translations:
 
-- Dedicated `organization_activities` table, separate from the legacy global `sohbet` table.
-- Organization-scoped RLS.
-- Activity list and search.
-- Draft, published and cancelled filtering.
-- Create and edit activity.
-- Title, description, date, start/end time, location and capacity.
-- Automatic `published_at` when publishing.
-- Clear migration error state.
+- Portal shell and dashboard.
+- Onboarding checklist.
+- Members.
+- News.
+- Activities.
+- Board and staff.
+- Access and membership.
+- User groups and group member roles.
+- Content visibility.
+- Organization settings.
+- Manual push notifications.
+- Login, forgot-password, password recovery and installation guidance.
+
+The final component-tree scan found and corrected the remaining hardcoded Norwegian text in the manual push module.
 
 Current limitations:
 
-- `supabase/migrations/20260711_organization_activities.sql` must be run in Supabase before Activities V1 can store data.
-- No delete, registration, waiting list, attendance or QR check-in yet.
-- The public application still reads legacy global activity data.
-- Real administrator testing remains blocked until the invitation Edge Function is deployed.
+- A real administrator session has not yet been used for complete end-to-end testing.
+- Arabic and Urdu direction is enabled globally, but every mobile layout still needs visual RTL verification.
+- Supabase and browser-generated error messages can remain in their original technical language.
+- Public and legacy components outside the active Administrator Portal require a separate localization review before beta.
+
+## Organization-scoped modules
+
+Implemented:
+
+- Members.
+- News.
+- Activities.
+- Settings.
+- Board and staff.
+- Access and membership.
+- User groups.
+- Per-content visibility.
+- Manual push notifications when the purchased module is enabled.
 
 ## Deferred task — after July 29, 2026
 
 - Deploy `invite-organization-admin` to Supabase.
 - Verify invitation email, redirect and password setup.
 - Verify `organization_admins.user_id` and invitation status.
-- Test Members V1, News V1 and Activities V1 as a real organization administrator.
+- Test Members, News, Activities, Settings, Access and Push as a real organization administrator.
+- Complete mobile and RTL visual verification.
 
 ## Active implementation target
 
-Build organization Settings using the same organization-scoped architecture.
+Prepare public delivery of organization-scoped content while keeping the administrator invitation flow unchanged.
 
 ## Architecture guidance
 
