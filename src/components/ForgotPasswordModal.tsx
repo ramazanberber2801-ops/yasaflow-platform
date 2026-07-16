@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAppI18n } from '../lib/appI18n';
 
 export function ForgotPasswordModal({
   open,
@@ -11,6 +12,7 @@ export function ForgotPasswordModal({
   onClose: () => void;
   initialUsername?: string;
 }) {
+  const { t } = useAppI18n();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -35,13 +37,13 @@ export function ForgotPasswordModal({
     const cleanEmail = email.trim();
 
     if (!cleanEmail) {
-      setError('E-posta zorunludur.');
+      setError(t('forgot.emailRequired'));
       return;
     }
 
     const client = supabase;
     if (!client) {
-      setError('Sistem bağlantısı yok.');
+      setError(t('recovery.noConnection'));
       return;
     }
 
@@ -54,26 +56,24 @@ export function ForgotPasswordModal({
     setLoading(false);
 
     if (error) {
-      setError('Sıfırlama e-postası gönderilemedi: ' + error.message);
+      setError(t('forgot.sendFailed') + error.message);
       return;
     }
 
-    setMessage('Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.');
+    setMessage(t('forgot.sent'));
   };
 
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4" style={{ backgroundColor: 'color-mix(in srgb, var(--brand-secondary) 70%, transparent)' }}>
       <div className="theme-surface w-full max-w-sm rounded-2xl p-6 shadow-2xl border-2">
         <div className="flex justify-between mb-5">
-          <h2 className="font-serif text-xl">Şifremi Sıfırla</h2>
-          <button onClick={onClose}>
+          <h2 className="font-serif text-xl">{t('forgot.title')}</h2>
+          <button onClick={onClose} aria-label={t('common.close')}>
             <X size={20} />
           </button>
         </div>
 
-        <p className="text-xs theme-muted mb-4">
-          E-posta adresinizi girin. Supabase Auth size güvenli bir şifre sıfırlama bağlantısı gönderecek.
-        </p>
+        <p className="text-xs theme-muted mb-4">{t('forgot.description')}</p>
 
         {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
         {message && <p className="text-green-700 text-xs mb-3">{message}</p>}
@@ -82,7 +82,7 @@ export function ForgotPasswordModal({
           <input
             type="email"
             className="theme-input w-full p-3 border rounded-xl"
-            placeholder="E-posta"
+            placeholder={t('login.email')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -93,7 +93,7 @@ export function ForgotPasswordModal({
             disabled={loading}
             className="theme-primary-button w-full p-3 rounded-xl font-medium disabled:opacity-60"
           >
-            {loading ? <Loader2 className="animate-spin mx-auto" /> : 'Sıfırlama E-postası Gönder'}
+            {loading ? <Loader2 className="animate-spin mx-auto" /> : t('forgot.submit')}
           </button>
         </form>
       </div>
