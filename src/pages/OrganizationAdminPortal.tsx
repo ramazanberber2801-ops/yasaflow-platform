@@ -91,9 +91,10 @@ function PortalWithModules({ session, administratorName }: { session: Organizati
   const [activeSection, setActiveSection] = useState<PortalSection>('dashboard');
   const { enabled, loading } = useOrganizationModules(session.organizationId);
   const trial = trialInfo(session);
+  const pushEnabled = enabled('push', false);
   const sections = useMemo(() => allSections.filter((section) => {
     if (trial.expired && !['dashboard','settings'].includes(section.id)) return false;
-    return !section.moduleId || enabled(section.moduleId, true);
+    return !section.moduleId || enabled(section.moduleId, section.moduleId !== 'push');
   }), [enabled, trial.expired]);
 
   useEffect(() => { if (!sections.some((section) => section.id === activeSection)) setActiveSection('dashboard'); }, [sections, activeSection]);
@@ -105,7 +106,7 @@ function PortalWithModules({ session, administratorName }: { session: Organizati
     {trial.expired&&<div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6"><div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950"><AlertCircle size={19} className="mt-0.5 shrink-0"/><div><p className="text-sm font-semibold">{t('adminPortal.trial.expiredTitle')}</p><p className="mt-1 text-xs leading-5">{t('adminPortal.trial.expiredBody')}</p></div></div></div>}
     <div className="mx-auto grid max-w-6xl gap-4 p-4 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
       <nav className="grid grid-cols-4 gap-2 rounded-2xl border bg-white p-2 shadow-sm sm:grid-cols-8 lg:flex lg:flex-col" style={{ borderColor: mix(brand.primary, 16) }}>{sections.map(({id,labelKey,icon:Icon})=>{const active=activeSection===id;return <button key={id} onClick={()=>setActiveSection(id)} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[10px] font-medium lg:min-h-0 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3 lg:text-xs" style={{backgroundColor:active?mix(brand.primary,12):'transparent',color:active?brand.primary:brand.text}}><Icon size={17}/><span>{t(labelKey)}</span></button>;})}</nav>
-      <main>{activeSection==='dashboard'?<Dashboard organizationId={session.organizationId} organizationName={session.organizationName} enabled={enabled} onNavigate={setActiveSection} locked={trial.expired}/>:activeSection==='members'?<MembersModule organizationId={session.organizationId}/>:activeSection==='news'?<NewsModule organizationId={session.organizationId}/>:activeSection==='activities'?<ActivitiesModule organizationId={session.organizationId}/>:activeSection==='notifications'?<ManualPushModule organizationId={session.organizationId}/>:activeSection==='administration'?<OrganizationStaffModule organizationId={session.organizationId}/>:activeSection==='access'?<AccessMembershipModule organizationId={session.organizationId}/>:<OrganizationSettingsModule organizationId={session.organizationId}/>}</main>
+      <main>{activeSection==='dashboard'?<Dashboard organizationId={session.organizationId} organizationName={session.organizationName} enabled={enabled} onNavigate={setActiveSection} locked={trial.expired}/>:activeSection==='members'?<MembersModule organizationId={session.organizationId}/>:activeSection==='news'?<NewsModule organizationId={session.organizationId} pushEnabled={pushEnabled}/>:activeSection==='activities'?<ActivitiesModule organizationId={session.organizationId}/>:activeSection==='notifications'&&pushEnabled?<ManualPushModule organizationId={session.organizationId}/>:activeSection==='administration'?<OrganizationStaffModule organizationId={session.organizationId}/>:activeSection==='access'?<AccessMembershipModule organizationId={session.organizationId}/>:<OrganizationSettingsModule organizationId={session.organizationId}/>}</main>
     </div>
   </div>;
 }
