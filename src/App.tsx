@@ -8,6 +8,7 @@ import { InstallButton } from './components/InstallButton';
 import { InstallGuideModal } from './components/InstallGuideModal';
 import { HomePage } from './pages/HomePage';
 import { ContactPage } from './pages/ContactPage';
+import { useAppI18n } from './lib/appI18n';
 import { supabase } from './lib/supabase';
 import { useOrganizationModules } from './lib/moduleEngine';
 import { DEFAULT_ORGANIZATION_ID } from './lib/organization';
@@ -40,6 +41,7 @@ function contrastText(hex: string) {
 }
 
 function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useAppI18n();
   const [first, setFirst] = useState('');
   const [second, setSecond] = useState('');
   const [visible, setVisible] = useState(false);
@@ -54,17 +56,17 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
     setMessage('');
     setError('');
 
-    if (first.length < 6) return setError('En az 6 karakter girin.');
-    if (first !== second) return setError('İki giriş aynı değil.');
-    if (!supabase) return setError('Sistem bağlantısı yok.');
+    if (first.length < 6) return setError(t('recovery.tooShort'));
+    if (first !== second) return setError(t('recovery.noMatch'));
+    if (!supabase) return setError(t('recovery.noConnection'));
 
     setBusy(true);
     const { error: updateError } = await supabase.auth.updateUser({ password: first });
     setBusy(false);
 
-    if (updateError) return setError('Kaydedilemedi: ' + updateError.message);
+    if (updateError) return setError(t('recovery.failed') + updateError.message);
 
-    setMessage('Kaydedildi. Yeni şifreyle giriş yapabilirsiniz.');
+    setMessage(t('recovery.success'));
     setFirst('');
     setSecond('');
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -79,24 +81,24 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
     <div className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center p-4">
       <div className="bg-[var(--brand-background)] w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ color: 'var(--brand-text)' }}>
         <div className="flex justify-between mb-5">
-          <h2 className="font-serif text-xl">Yeni Şifre Belirle</h2>
-          <button onClick={onClose} className="text-xl leading-none">×</button>
+          <h2 className="font-serif text-xl">{t('recovery.title')}</h2>
+          <button onClick={onClose} className="text-xl leading-none" aria-label={t('common.close')}>×</button>
         </div>
 
         {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
         {message && <p className="text-green-700 text-xs mb-3">{message}</p>}
 
         <form onSubmit={submit} className="space-y-4">
-          <input type={visible ? 'text' : 'password'} className="w-full p-3 border rounded-xl" placeholder="Yeni şifre" value={first} onChange={(e) => setFirst(e.target.value)} required />
-          <input type={visible ? 'text' : 'password'} className="w-full p-3 border rounded-xl" placeholder="Yeni şifre tekrar" value={second} onChange={(e) => setSecond(e.target.value)} required />
+          <input type={visible ? 'text' : 'password'} className="w-full p-3 border rounded-xl" placeholder={t('recovery.password')} value={first} onChange={(e) => setFirst(e.target.value)} required />
+          <input type={visible ? 'text' : 'password'} className="w-full p-3 border rounded-xl" placeholder={t('recovery.repeat')} value={second} onChange={(e) => setSecond(e.target.value)} required />
 
           <label className="flex items-center gap-2 text-xs opacity-70">
             <input type="checkbox" checked={visible} onChange={(e) => setVisible(e.target.checked)} />
-            Şifreyi göster
+            {t('recovery.show')}
           </label>
 
           <button type="submit" disabled={busy} className="w-full p-3 rounded-xl font-medium" style={{ backgroundColor: 'var(--brand-primary)', color: 'var(--brand-primary-text)' }}>
-            {busy ? 'Kaydediliyor...' : 'Kaydet'}
+            {busy ? t('common.saving') : t('common.save')}
           </button>
         </form>
       </div>
@@ -105,6 +107,7 @@ function RecoveryDialog({ open, onClose }: { open: boolean; onClose: () => void 
 }
 
 function AppContent() {
+  const { t } = useAppI18n();
   const { isAdmin, isInitialized, settings } = useApp();
   const { enabled } = useOrganizationModules(DEFAULT_ORGANIZATION_ID);
   const [page, setPage] = useState<Page>('home');
@@ -273,7 +276,7 @@ function AppContent() {
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F4FAFF', color: '#071B53' }}>
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#0A8DFF', borderTopColor: 'transparent' }}></div>
-          <p className="text-xs opacity-50 font-medium">Yükleniyor...</p>
+          <p className="text-xs opacity-50 font-medium">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -351,7 +354,7 @@ function AppContent() {
               className="w-full py-3 rounded-xl text-sm font-medium"
               style={{ backgroundColor: brandPrimary, color: contrastText(brandPrimary) }}
             >
-              Kapat
+              {t('common.close')}
             </button>
           </div>
         </div>
