@@ -44,7 +44,8 @@ Current priority order:
 - Public organization page with profile, news detail, activities and sharing.
 - Public news images display without center cropping.
 - Board and donation sections removed from the Home feed.
-- PWA install prompt now follows the organization language.
+- PWA install prompt and installation guidance follow the organization language.
+- Initial app loading, password recovery and push-message close actions follow the organization language.
 
 ## Administrator Portal localization
 
@@ -62,6 +63,7 @@ The following active administrator areas use organization-scoped translations:
 - Organization settings.
 - Manual push notifications.
 - Login, forgot-password, password recovery and installation guidance.
+- Initial app loading and app-shell actions.
 
 Current limitations:
 
@@ -70,7 +72,6 @@ Current limitations:
 - Supabase and browser-generated error messages can remain in their original technical language.
 - New membership form setting labels still require full localization in all supported languages.
 - Membership email delivery still requires end-to-end testing.
-- The initial full-page loading label in `App.tsx` is still hardcoded and must be localized.
 
 ## Organization-scoped modules
 
@@ -97,7 +98,7 @@ Implemented:
 
 ## Active implementation target
 
-Verify membership email delivery and complete the remaining public-language quality fixes, then proceed to organization-scoped event registration improvements.
+Verify membership email delivery and localize the remaining membership form setting labels, then proceed to organization-scoped event registration improvements.
 
 ## Architecture guidance
 
