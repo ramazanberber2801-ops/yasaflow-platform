@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock3, Loader2, MapPin } from 'lucide-react';
 import { useAppI18n } from '../lib/appI18n';
+import { getCalendarCopy } from '../lib/appUiCopy';
 import { DEFAULT_ORGANIZATION_ID } from '../lib/organization';
 import { supabase } from '../lib/supabase';
 
@@ -15,21 +16,12 @@ type Activity = {
   category: string | null;
 };
 
-type CalendarCopy = { title: string; empty: string; today: string; activities: string; previousMonth: string; nextMonth: string; eventCount: (count:number) => string };
-const copy: Record<string, CalendarCopy> = {
-  nb: { title: 'Kalender', empty: 'Ingen aktiviteter denne dagen.', today: 'I dag', activities: 'Aktiviteter', previousMonth: 'Forrige måned', nextMonth: 'Neste måned', eventCount: count => `${count} aktiviteter` },
-  en: { title: 'Calendar', empty: 'No activities on this day.', today: 'Today', activities: 'Activities', previousMonth: 'Previous month', nextMonth: 'Next month', eventCount: count => `${count} activities` },
-  tr: { title: 'Takvim', empty: 'Bu gün için etkinlik yok.', today: 'Bugün', activities: 'Etkinlikler', previousMonth: 'Önceki ay', nextMonth: 'Sonraki ay', eventCount: count => `${count} etkinlik` },
-  ar: { title: 'التقويم', empty: 'لا توجد أنشطة في هذا اليوم.', today: 'اليوم', activities: 'الأنشطة', previousMonth: 'الشهر السابق', nextMonth: 'الشهر التالي', eventCount: count => `${count} أنشطة` },
-  ur: { title: 'کیلنڈر', empty: 'اس دن کوئی سرگرمی نہیں ہے۔', today: 'آج', activities: 'سرگرمیاں', previousMonth: 'پچھلا مہینہ', nextMonth: 'اگلا مہینہ', eventCount: count => `${count} سرگرمیاں` },
-};
-
 const pad = (value: number) => String(value).padStart(2, '0');
 const toDateKey = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
 export function CalendarPage() {
   const { language, locale, direction } = useAppI18n();
-  const text = copy[language] || copy.en;
+  const text = getCalendarCopy(language);
   const today = useMemo(() => new Date(), []);
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(toDateKey(today));

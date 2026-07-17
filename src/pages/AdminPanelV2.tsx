@@ -4,6 +4,8 @@ import { OwnerOverview } from '../components/OwnerOverview';
 import { OwnerThemeManager } from '../components/OwnerThemeManager';
 import { OrganizationAdminPortal } from './OrganizationAdminPortal';
 import { OwnerPanelV2 } from './OwnerPanelV2';
+import { useAppI18n } from '../lib/appI18n';
+import { getAdminShellCopy } from '../lib/appUiCopy';
 
 const brand = {
   primary: 'var(--brand-primary)',
@@ -20,11 +22,13 @@ const isOwnerRole = (role?: string) => ['owner', 'super_admin', 'superadmin'].in
 
 export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { currentAdmin, logout } = useApp();
+  const { language, direction } = useAppI18n();
+  const text = getAdminShellCopy(language);
 
   if (!open) return null;
 
   const canAccessOwner = isOwnerRole(currentAdmin?.role);
-  const administratorName = currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || 'Admin';
+  const administratorName = currentAdmin?.displayName || currentAdmin?.display_name || currentAdmin?.username || text.administrator;
 
   const handleLogout = () => {
     logout();
@@ -32,7 +36,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex min-h-0 flex-col overflow-hidden" style={{ backgroundColor: brand.background, color: brand.text }}>
+    <div dir={direction} className="fixed inset-0 z-[80] flex min-h-0 flex-col overflow-hidden" style={{ backgroundColor: brand.background, color: brand.text }}>
       <header
         className="shrink-0 px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-md sm:px-5 sm:py-4"
         style={{ backgroundColor: brand.secondary, color: brand.secondaryText }}
@@ -43,9 +47,9 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
               <ShieldCheck size={18} style={{ color: brand.primary }} />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-serif text-base sm:text-lg">Yasaflow administrasjon</h1>
+              <h1 className="truncate font-serif text-base sm:text-lg">{text.title}</h1>
               <p className="truncate text-[10px] opacity-60">
-                {administratorName} · {canAccessOwner ? 'Owner' : 'Administrator'}
+                {administratorName} · {canAccessOwner ? text.owner : text.administrator}
               </p>
             </div>
           </div>
@@ -55,16 +59,16 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
               onClick={handleLogout}
               className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs sm:px-3"
               style={{ backgroundColor: 'rgba(255,255,255,0.10)', color: brand.secondaryText }}
-              aria-label="Logg ut"
+              aria-label={text.logout}
             >
               <LogOut size={15} />
-              <span className="hidden sm:inline">Logg ut</span>
+              <span className="hidden sm:inline">{text.logout}</span>
             </button>
             <button
               onClick={onClose}
               className="flex h-9 w-9 items-center justify-center rounded-lg"
               style={{ backgroundColor: 'rgba(255,255,255,0.10)' }}
-              aria-label="Lukk administrasjonspanelet"
+              aria-label={text.close}
             >
               <X size={18} style={{ color: brand.secondaryText }} />
             </button>
@@ -75,7 +79,7 @@ export function AdminPanelV2({ open, onClose }: { open: boolean; onClose: () => 
       <div className="shrink-0 border-b-2 bg-white" style={{ borderColor: mix(brand.primary, 20) }}>
         <div className="mx-auto flex w-full max-w-7xl items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium" style={{ color: brand.primary }}>
           {canAccessOwner ? <Crown size={15} /> : <Building2 size={15} />}
-          <span>{canAccessOwner ? 'Owner Panel' : 'Administratorportal'}</span>
+          <span>{canAccessOwner ? text.ownerPanel : text.administratorPortal}</span>
         </div>
       </div>
 

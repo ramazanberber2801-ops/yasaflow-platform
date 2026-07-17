@@ -1,22 +1,15 @@
 import { Bell, Building2, Contact, CreditCard, FileText, HandCoins, LogIn, MessageCircle, Settings, ShieldCheck, Users } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useAppI18n } from '../lib/appI18n';
+import { getMorePageCopy } from '../lib/appUiCopy';
 import { useOrganizationModules } from '../lib/moduleEngine';
 import { DEFAULT_ORGANIZATION_ID } from '../lib/organization';
-
-const copy: Record<string, Record<string, string>> = {
-  nb: { more: 'Mer', organization: 'Min organisasjon', admin: 'Administrator', visitor: 'Medlem eller besøkende', notifications: 'Varsler', contact: 'Kontakt', documents: 'Dokumenter', members: 'Medlemmer', donations: 'Donasjoner', payments: 'Betalinger', chat: 'Chat', administration: 'Administrasjon', login: 'Logg inn', settings: 'Innstillinger og moduler' },
-  en: { more: 'More', organization: 'My organization', admin: 'Administrator', visitor: 'Member or visitor', notifications: 'Notifications', contact: 'Contact', documents: 'Documents', members: 'Members', donations: 'Donations', payments: 'Payments', chat: 'Chat', administration: 'Administration', login: 'Sign in', settings: 'Settings and modules' },
-  tr: { more: 'Daha fazla', organization: 'Kuruluşum', admin: 'Yönetici', visitor: 'Üye veya ziyaretçi', notifications: 'Bildirimler', contact: 'İletişim', documents: 'Belgeler', members: 'Üyeler', donations: 'Bağışlar', payments: 'Ödemeler', chat: 'Sohbet', administration: 'Yönetim', login: 'Giriş yap', settings: 'Ayarlar ve modüller' },
-  ar: { more: 'المزيد', organization: 'مؤسستي', admin: 'مسؤول', visitor: 'عضو أو زائر', notifications: 'الإشعارات', contact: 'اتصل بنا', documents: 'المستندات', members: 'الأعضاء', donations: 'التبرعات', payments: 'المدفوعات', chat: 'الدردشة', administration: 'الإدارة', login: 'تسجيل الدخول', settings: 'الإعدادات والوحدات' },
-  ur: { more: 'مزید', organization: 'میری تنظیم', admin: 'ایڈمن', visitor: 'رکن یا وزیٹر', notifications: 'اطلاعات', contact: 'رابطہ', documents: 'دستاویزات', members: 'ارکان', donations: 'عطیات', payments: 'ادائیگیاں', chat: 'چیٹ', administration: 'انتظامیہ', login: 'لاگ اِن', settings: 'ترتیبات اور ماڈیولز' },
-};
 
 export function MorePage({ onAdmin, onContact, onDonate, onNotifications, unreadNotifications = 0 }: { onAdmin: () => void; onContact: () => void; onDonate: () => void; onNotifications: () => void; unreadNotifications?: number }) {
   const { isAdmin } = useApp();
   const { language, direction } = useAppI18n();
   const { enabled } = useOrganizationModules(DEFAULT_ORGANIZATION_ID);
-  const text = copy[language] || copy.en;
+  const text = getMorePageCopy(language);
   const items = [
     enabled('push') && { label: text.notifications, icon: Bell, action: onNotifications, badge: unreadNotifications },
     enabled('contact') && { label: text.contact, icon: Contact, action: onContact },

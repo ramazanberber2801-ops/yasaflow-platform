@@ -1,22 +1,15 @@
 import { CalendarDays, CalendarRange, Home, Menu } from 'lucide-react';
 import { useAppI18n } from '../lib/appI18n';
+import { getBottomNavCopy } from '../lib/appUiCopy';
 import type { Page } from '../types';
 
 interface BottomNavProps { current: Page; onNavigate: (page: Page) => void; unreadNotifications?: number; }
 
 type NavPage = 'home' | 'activities' | 'calendar' | 'more';
 
-const labels: Record<string, Record<NavPage, string>> = {
-  nb: { home: 'Hjem', activities: 'Aktiviteter', calendar: 'Kalender', more: 'Mer' },
-  en: { home: 'Home', activities: 'Activities', calendar: 'Calendar', more: 'More' },
-  tr: { home: 'Ana Sayfa', activities: 'Etkinlikler', calendar: 'Takvim', more: 'Daha fazla' },
-  ar: { home: 'الرئيسية', activities: 'الأنشطة', calendar: 'التقويم', more: 'المزيد' },
-  ur: { home: 'ہوم', activities: 'سرگرمیاں', calendar: 'کیلنڈر', more: 'مزید' },
-};
-
 export function BottomNav({ current, onNavigate, unreadNotifications = 0 }: BottomNavProps) {
   const { language, direction } = useAppI18n();
-  const text = labels[language] || labels.en;
+  const text = getBottomNavCopy(language);
   const items: { page: NavPage; label: string; icon: typeof Home }[] = [
     { page: 'home', label: text.home, icon: Home },
     { page: 'activities', label: text.activities, icon: CalendarRange },
