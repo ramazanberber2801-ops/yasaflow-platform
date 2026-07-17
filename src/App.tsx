@@ -16,11 +16,11 @@ import { supabase } from './lib/supabase';
 import { useOrganizationModules } from './lib/moduleEngine';
 import { DEFAULT_ORGANIZATION_ID } from './lib/organization';
 import { getTheme } from './lib/themeEngine';
-import { isPushMessageRead, loadActivePushMessages } from './lib/notificationCenter';
+import { isPushMessageRead, loadActivePushMessages, subscribeToPushMessages } from './lib/notificationCenter';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
 
-const NAVIGATION_RELEASE = '2026-07-17-navigation-v2';
+const NAVIGATION_RELEASE = '2026-07-17-navigation-v3';
 
 function safeColor(value: unknown, fallback: string) {
   const color = String(value || '').trim();
@@ -82,6 +82,12 @@ function AppContent() {
     }
   }, [enabled]);
 
+  const openNotificationById = useCallback((messageId: string) => {
+    if (!enabled('push')) return;
+    setInitialNotificationId(messageId);
+    setPage('notifications');
+  }, [enabled]);
+
   useEffect(() => {
     document.documentElement.dataset.navigationRelease = NAVIGATION_RELEASE;
   }, []);
@@ -104,15 +110,27 @@ function AppContent() {
     if (!isInitialized || !enabled('push')) return;
     const params = new URLSearchParams(window.location.search);
     const messageId = params.get('notification') || params.get('message_id');
-    if (messageId) {
-      setInitialNotificationId(messageId);
-      setPage('notifications');
-    }
+    if (messageId) openNotificationById(messageId);
+
     void refreshUnread();
     const handleRead = () => void refreshUnread();
+    const unsubscribe = subscribeToPushMessages(DEFAULT_ORGANIZATION_ID, () => void refreshUnread());
     window.addEventListener('yasaflow-notifications-read', handleRead);
-    return () => window.removeEventListener('yasaflow-notifications-read', handleRead);
-  }, [isInitialized, enabled, refreshUnread]);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('yasaflow-notifications-read', handleRead);
+    };
+  }, [isInitialized, enabled, refreshUnread, openNotificationById]);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type !== 'OPEN_NOTIFICATION' || !event.data?.message_id) return;
+      openNotificationById(String(event.data.message_id));
+    };
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+    return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+  }, [openNotificationById]);
 
   const clearInitialNotification = () => {
     setInitialNotificationId(null);
