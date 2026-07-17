@@ -5,49 +5,45 @@ const corsHeaders={
   'Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type',
 };
 
-type Payload={jobId?:string;requestId?:string;eventType?:'received'|'approved'|'rejected'};
+type Payload={requestId:string;eventType:'received'|'approved'|'rejected'};
+type EmailPayload={job_id:string;recipient_email:string;recipient_name:string;organization_name:string;reply_to_email:string|null;welcome_message:string|null};
 
 Deno.serve(async(req)=>{
   if(req.method==='OPTIONS')return new Response('ok',{headers:corsHeaders});
+  let jobId='';
   try{
     const supabaseUrl=Deno.env.get('SUPABASE_URL');
-    const serviceKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const anonKey=Deno.env.get('SUPABASE_ANON_KEY');
     const resendKey=Deno.env.get('RESEND_API_KEY');
     const fromEmail=Deno.env.get('MEMBERSHIP_FROM_EMAIL')||'Yasaflow <noreply@yasaflow.com>';
-    if(!supabaseUrl||!serviceKey||!resendKey)throw new Error('Missing required environment variables');
-    const admin=createClient(supabaseUrl,serviceKey,{auth:{persistSession:false}});
+    if(!supabaseUrl||!anonKey||!resendKey)throw new Error('Missing required environment variables');
+    const authorization=req.headers.get('Authorization')||'';
+    const client=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:authorization}},auth:{persistSession:false}});
     const body=(await req.json()) as Payload;
-    let job:any=null;
-    if(body.jobId){
-      const {data,error}=await admin.from('membership_email_jobs').select('*').eq('id',body.jobId).single();
-      if(error)throw error;job=data;
-    }else if(body.requestId&&body.eventType){
-      const {data,error}=await admin.from('membership_email_jobs').select('*').eq('request_id',body.requestId).eq('event_type',body.eventType).single();
-      if(error)throw error;job=data;
-    }else throw new Error('jobId or requestId/eventType required');
-    if(job.status==='sent')return new Response(JSON.stringify({ok:true,alreadySent:true}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
-    await admin.from('membership_email_jobs').update({status:'processing',attempts:(job.attempts||0)+1,last_error:null}).eq('id',job.id);
-    const {data:request,error:requestError}=await admin.from('organization_membership_requests').select('*').eq('id',job.request_id).single();
-    if(requestError)throw requestError;
-    const {data:settings,error:settingsError}=await admin.from('organization_settings').select('display_name,short_name,membership_welcome_message,email').eq('organization_id',request.organization_id).maybeSingle();
-    if(settingsError)throw settingsError;
-    const organizationName=settings?.display_name||settings?.short_name||'Yasaflow';
-    const name=`${request.first_name} ${request.last_name}`.trim();
-    const subjects={received:`Vi har mottatt medlemsforespørselen din – ${organizationName}`,approved:`Medlemskapet ditt er godkjent – ${organizationName}`,rejected:`Oppdatering om medlemsforespørselen din – ${organizationName}`};
-    const intros={received:`Hei ${name},<br><br>Vi har mottatt medlemsforespørselen din. Organisasjonen behandler den og kontakter deg ved behov.`,approved:`Hei ${name},<br><br>Medlemsforespørselen din er godkjent.`,rejected:`Hei ${name},<br><br>Medlemsforespørselen din er dessverre avslått.`};
-    const welcome=job.event_type==='approved'&&settings?.membership_welcome_message?`<p>${String(settings.membership_welcome_message).replace(/\n/g,'<br>')}</p>`:'';
-    const html=`<div style="font-family:Arial,sans-serif;line-height:1.6;color:#222"><p>${intros[job.event_type as keyof typeof intros]}</p>${welcome}<p>Vennlig hilsen<br>${organizationName}</p></div>`;
-    const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${resendKey}`,'Content-Type':'application/json'},body:JSON.stringify({from:fromEmail,to:[request.email],reply_to:settings?.email||undefined,subject:subjects[job.event_type as keyof typeof subjects],html})});
+    if(!body.requestId||!['received','approved','rejected'].includes(body.eventType))throw new Error('Invalid payload');
+    const {data,error}=await client.rpc('prepare_membership_email',{p_request_id:body.requestId,p_event_type:body.eventType});
+    if(error)throw error;
+    const payload=(data?.[0]||null) as EmailPayload|null;
+    if(!payload)return new Response(JSON.stringify({ok:true,skipped:true}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
+    jobId=payload.job_id;
+    const subjects={received:`Vi har mottatt medlemsforespørselen din – ${payload.organization_name}`,approved:`Medlemskapet ditt er godkjent – ${payload.organization_name}`,rejected:`Oppdatering om medlemsforespørselen din – ${payload.organization_name}`};
+    const intros={received:`Hei ${payload.recipient_name},<br><br>Vi har mottatt medlemsforespørselen din. Organisasjonen behandler den og kontakter deg ved behov.`,approved:`Hei ${payload.recipient_name},<br><br>Medlemsforespørselen din er godkjent.`,rejected:`Hei ${payload.recipient_name},<br><br>Medlemsforespørselen din er dessverre avslått.`};
+    const welcome=body.eventType==='approved'&&payload.welcome_message?`<p>${payload.welcome_message.replace(/\n/g,'<br>')}</p>`:'';
+    const html=`<div style="font-family:Arial,sans-serif;line-height:1.6;color:#222"><p>${intros[body.eventType]}</p>${welcome}<p>Vennlig hilsen<br>${payload.organization_name}</p></div>`;
+    const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${resendKey}`,'Content-Type':'application/json'},body:JSON.stringify({from:fromEmail,to:[payload.recipient_email],reply_to:payload.reply_to_email||undefined,subject:subjects[body.eventType],html})});
     const result=await response.json();
     if(!response.ok)throw new Error(result?.message||'Resend request failed');
-    const timestampField=job.event_type==='received'?'received_email_sent_at':'decision_email_sent_at';
-    await Promise.all([
-      admin.from('membership_email_jobs').update({status:'sent',processed_at:new Date().toISOString(),last_error:null}).eq('id',job.id),
-      admin.from('organization_membership_requests').update({[timestampField]:new Date().toISOString()}).eq('id',job.request_id),
-    ]);
+    const {error:completeError}=await client.rpc('complete_membership_email',{p_job_id:jobId,p_request_id:body.requestId,p_event_type:body.eventType});
+    if(completeError)throw completeError;
     return new Response(JSON.stringify({ok:true,id:result.id}),{headers:{...corsHeaders,'Content-Type':'application/json'}});
   }catch(error){
     const message=error instanceof Error?error.message:String(error);
+    try{
+      if(jobId){
+        const supabaseUrl=Deno.env.get('SUPABASE_URL');const anonKey=Deno.env.get('SUPABASE_ANON_KEY');
+        if(supabaseUrl&&anonKey){const client=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:req.headers.get('Authorization')||''}}});await client.rpc('fail_membership_email',{p_job_id:jobId,p_error:message});}
+      }
+    }catch{}
     return new Response(JSON.stringify({ok:false,error:message}),{status:400,headers:{...corsHeaders,'Content-Type':'application/json'}});
   }
 });
