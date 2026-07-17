@@ -19,6 +19,8 @@ import { getTheme } from './lib/themeEngine';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
 
+const NAVIGATION_RELEASE = '2026-07-17-navigation-v1';
+
 function safeColor(value: unknown, fallback: string) {
   const color = String(value || '').trim();
   return /^#[0-9a-fA-F]{6}$/.test(color) ? color : fallback;
@@ -67,6 +69,10 @@ function AppContent() {
     '--brand-subtle': `color-mix(in srgb, ${brandPrimary} 10%, ${brandCard})`,
     '--brand-surface': `color-mix(in srgb, ${brandBackground} 92%, #FFFFFF 8%)`,
   } as React.CSSProperties;
+
+  useEffect(() => {
+    document.documentElement.dataset.navigationRelease = NAVIGATION_RELEASE;
+  }, []);
 
   useEffect(() => {
     if (!isInitialized) return;
