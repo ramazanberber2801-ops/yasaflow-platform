@@ -1,5 +1,5 @@
 // Yasaflow Service Worker — push notifications + safe update caching
-const CACHE_NAME = 'yasaflow-v19';
+const CACHE_NAME = 'yasaflow-v20';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.svg',
@@ -82,13 +82,15 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
+  const messageId = event.notification.data?.message_id || null;
   const target = new URL(event.notification.data?.url || '/', self.location.origin).href;
   event.waitUntil((async () => {
     const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of windowClients) {
       if ('focus' in client) {
-        await client.navigate(target);
-        return client.focus();
+        if (messageId) client.postMessage({ type: 'OPEN_NOTIFICATION', message_id: messageId });
+        await client.focus();
+        return;
       }
     }
     return clients.openWindow(target);
