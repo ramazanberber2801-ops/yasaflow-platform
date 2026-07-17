@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { BottomNav } from './components/BottomNav';
 import { AdminLoginModal } from './components/AdminLoginModal';
@@ -11,14 +11,16 @@ import { ContactPage } from './pages/ContactPage';
 import { ActivitiesPage } from './pages/ActivitiesPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { MorePage } from './pages/MorePage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { supabase } from './lib/supabase';
 import { useOrganizationModules } from './lib/moduleEngine';
 import { DEFAULT_ORGANIZATION_ID } from './lib/organization';
 import { getTheme } from './lib/themeEngine';
+import { isPushMessageRead, loadActivePushMessages } from './lib/notificationCenter';
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
 
-const NAVIGATION_RELEASE = '2026-07-17-navigation-v1';
+const NAVIGATION_RELEASE = '2026-07-17-navigation-v2';
 
 function safeColor(value: unknown, fallback: string) {
   const color = String(value || '').trim();
@@ -45,6 +47,8 @@ function AppContent() {
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
   const [themeId, setThemeId] = useState('yasaflow-standard');
   const [themeLoaded, setThemeLoaded] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [initialNotificationId, setInitialNotificationId] = useState<string | null>(null);
 
   const selectedTheme = getTheme(themeId);
   const brandPrimary = safeColor(selectedTheme?.tokens.primary || settings?.brandingPrimaryColor, '#0A8DFF');
@@ -68,6 +72,16 @@ function AppContent() {
     '--brand-surface': `color-mix(in srgb, ${brandBackground} 92%, #FFFFFF 8%)`,
   } as React.CSSProperties;
 
+  const refreshUnread = useCallback(async () => {
+    if (!enabled('push')) { setUnreadNotifications(0); return; }
+    try {
+      const messages = await loadActivePushMessages(DEFAULT_ORGANIZATION_ID);
+      setUnreadNotifications(messages.filter((message) => !isPushMessageRead(message.id)).length);
+    } catch {
+      setUnreadNotifications(0);
+    }
+  }, [enabled]);
+
   useEffect(() => {
     document.documentElement.dataset.navigationRelease = NAVIGATION_RELEASE;
   }, []);
@@ -83,11 +97,36 @@ function AppContent() {
 
   useEffect(() => {
     if (page === 'activities' && !enabled('activities', true)) setPage('home');
+    if (page === 'notifications' && !enabled('push')) setPage('more');
   }, [page, enabled]);
+
+  useEffect(() => {
+    if (!isInitialized || !enabled('push')) return;
+    const params = new URLSearchParams(window.location.search);
+    const messageId = params.get('notification') || params.get('message_id');
+    if (messageId) {
+      setInitialNotificationId(messageId);
+      setPage('notifications');
+    }
+    void refreshUnread();
+    const handleRead = () => void refreshUnread();
+    window.addEventListener('yasaflow-notifications-read', handleRead);
+    return () => window.removeEventListener('yasaflow-notifications-read', handleRead);
+  }, [isInitialized, enabled, refreshUnread]);
+
+  const clearInitialNotification = () => {
+    setInitialNotificationId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('notification');
+    url.searchParams.delete('message_id');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+    void refreshUnread();
+  };
 
   const openAdmin = () => isAdmin ? setShowPanel(true) : setShowLogin(true);
   const openContact = () => enabled('contact') ? setPage('contact') : undefined;
   const openDonate = () => enabled('donation') ? setShowDonate(true) : undefined;
+  const openNotifications = () => enabled('push') ? setPage('notifications') : undefined;
   const showGuide = (browser: BrowserType, platform: Platform) => { setGuideBrowser(browser); setGuidePlatform(platform); setShowInstallGuide(true); };
 
   if (!isInitialized || !themeLoaded) return <div className="flex min-h-screen items-center justify-center" style={{background:'#F4FAFF',color:'#071B53'}}><div className="h-10 w-10 animate-spin rounded-full border-2 border-t-transparent" aria-label="Loading" /></div>;
@@ -96,11 +135,12 @@ function AppContent() {
     {page === 'home' && <HomePage />}
     {page === 'activities' && enabled('activities', true) && <ActivitiesPage />}
     {page === 'calendar' && <CalendarPage />}
-    {page === 'more' && <MorePage onAdmin={openAdmin} onContact={openContact} onDonate={openDonate} />}
+    {page === 'more' && <MorePage onAdmin={openAdmin} onContact={openContact} onDonate={openDonate} onNotifications={openNotifications} unreadNotifications={unreadNotifications} />}
     {page === 'contact' && enabled('contact') && <ContactPage />}
+    {page === 'notifications' && enabled('push') && <NotificationsPage initialMessageId={initialNotificationId} onConsumedInitialMessage={clearInitialNotification} />}
 
     <InstallButton onShowGuide={showGuide} />
-    <BottomNav current={page === 'contact' ? 'more' : page} onNavigate={setPage} />
+    <BottomNav current={page === 'contact' || page === 'notifications' ? 'more' : page} onNavigate={setPage} unreadNotifications={unreadNotifications} />
     <AdminLoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     <AdminPanel open={showPanel} onClose={() => setShowPanel(false)} />
     {enabled('donation') && <DonationModal open={showDonate} onClose={() => setShowDonate(false)} />}
