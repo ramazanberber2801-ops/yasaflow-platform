@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Bell, Check, Clock3, Loader2, X } from 'lucide-react';
 import { useAppI18n } from '../lib/appI18n';
 import { DEFAULT_ORGANIZATION_ID } from '../lib/organization';
-import { isPushMessageRead, loadActivePushMessages, markPushMessageRead, type PushMessage } from '../lib/notificationCenter';
+import { isPushMessageRead, loadActivePushMessages, markPushMessageRead, subscribeToPushMessages, type PushMessage } from '../lib/notificationCenter';
 
 const copy: Record<string, Record<string, string>> = {
   nb: { title: 'Varsler', empty: 'Ingen aktive varsler.', unread: 'Ulest', read: 'Lest', close: 'Lukk', error: 'Kunne ikke hente varsler.' },
@@ -21,25 +21,42 @@ export function NotificationsPage({ initialMessageId, onConsumedInitialMessage }
   const [error, setError] = useState('');
   const [, forceReadRefresh] = useState(0);
 
+  const refreshMessages = useCallback(async (showLoader = false) => {
+    if (showLoader) setLoading(true);
+    try {
+      const data = await loadActivePushMessages(DEFAULT_ORGANIZATION_ID);
+      setMessages(data);
+      setError('');
+      return data;
+    } catch {
+      setError(text.error);
+      return [] as PushMessage[];
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  }, [text.error]);
+
   useEffect(() => {
     let alive = true;
-    loadActivePushMessages(DEFAULT_ORGANIZATION_ID)
-      .then((data) => {
-        if (!alive) return;
-        setMessages(data);
-        if (initialMessageId) {
-          const match = data.find((message) => message.id === initialMessageId);
-          if (match) {
-            markPushMessageRead(match.id);
-            setSelected(match);
-          }
-          onConsumedInitialMessage?.();
-        }
-      })
-      .catch(() => alive && setError(text.error))
-      .finally(() => alive && setLoading(false));
-    return () => { alive = false; };
-  }, [initialMessageId]);
+    refreshMessages(true).then((data) => {
+      if (!alive || !initialMessageId) return;
+      const match = data.find((message) => message.id === initialMessageId);
+      if (match) {
+        markPushMessageRead(match.id);
+        setSelected(match);
+      }
+      onConsumedInitialMessage?.();
+    });
+
+    const unsubscribe = subscribeToPushMessages(DEFAULT_ORGANIZATION_ID, () => {
+      if (alive) void refreshMessages();
+    });
+
+    return () => {
+      alive = false;
+      unsubscribe();
+    };
+  }, [initialMessageId, onConsumedInitialMessage, refreshMessages]);
 
   const openMessage = (message: PushMessage) => {
     markPushMessageRead(message.id);
