@@ -59,7 +59,6 @@ begin
   if not exists (
     select 1 from public.organization_admins a
     where a.organization_id=r.organization_id and a.user_id=auth.uid()
-      and coalesce(a.status,'active') in ('active','accepted')
   ) then raise exception 'not_authorized'; end if;
   if p_decision='approved' then
     insert into public.people(full_name,primary_email,primary_phone,updated_at)
