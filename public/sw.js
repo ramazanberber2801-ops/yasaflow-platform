@@ -1,5 +1,5 @@
 // Yasaflow Service Worker — push notifications + safe update caching
-const CACHE_NAME = 'yasaflow-v18';
+const CACHE_NAME = 'yasaflow-v19';
 const STATIC_ASSETS = [
   '/manifest.json',
   '/favicon.svg',
@@ -61,13 +61,18 @@ self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
 
   const title = data.title || 'Yasaflow';
+  const messageId = data.message_id || null;
+  const targetUrl = new URL(data.url || '/', self.location.origin);
+  if (messageId) targetUrl.searchParams.set('notification', messageId);
+
   const options = {
     body: data.body || 'Yeni bildirim var.',
     icon: '/images/dtim-logo.svg',
     badge: '/images/dtim-logo.svg',
+    tag: messageId ? `yasaflow-${messageId}` : undefined,
     data: {
-      url: data.url || '/',
-      message_id: data.message_id || null,
+      url: `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`,
+      message_id: messageId,
     },
   };
 
@@ -77,8 +82,17 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || '/';
-  event.waitUntil(clients.openWindow(url));
+  const target = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  event.waitUntil((async () => {
+    const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of windowClients) {
+      if ('focus' in client) {
+        await client.navigate(target);
+        return client.focus();
+      }
+    }
+    return clients.openWindow(target);
+  })());
 });
 
 self.addEventListener('message', (event) => {
