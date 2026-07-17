@@ -4,7 +4,7 @@ Last updated: July 17, 2026
 
 ## One-line summary
 
-Yasaflow now has an organization-scoped, multilingual Administrator Portal and public organization delivery with membership registration V2. Membership V1/V2 database migrations and the secure `send-membership-email` Edge Function are deployed in Supabase. Resend secrets and final delivery testing remain.
+Yasaflow now has an organization-scoped, multilingual Administrator Portal and public organization delivery with membership registration V2. Membership V1/V2 database migrations and the secure `send-membership-email` Edge Function are deployed in Supabase. Resend secrets are configured; final delivery testing remains.
 
 ## Current phase
 
@@ -12,7 +12,7 @@ Customer Administrator Portal quality assurance and public organization delivery
 
 Current priority order:
 
-1. Configure `RESEND_API_KEY` and `MEMBERSHIP_FROM_EMAIL`, then verify received, approved and rejected membership emails.
+1. Verify received, approved and rejected membership emails end to end.
 2. Verify all administrator modules end to end with a real invited organization administrator after July 29.
 3. Run a mobile and RTL quality pass for Arabic and Urdu.
 4. Review remaining public or legacy components before beta release.
@@ -27,6 +27,7 @@ Current priority order:
 - Membership V1 and V2 migrations deployed to Supabase.
 - Secure membership email dispatch RPCs deployed.
 - `send-membership-email` Edge Function deployed and active.
+- Resend secrets configured in Supabase.
 - Membership request approval and rejection history.
 - Membership request search and status filtering.
 - Configurable membership welcome message.
@@ -41,6 +42,9 @@ Current priority order:
 - Organization-scoped language selection.
 - Administrator Portal localization in Norwegian, English, Turkish, Arabic and Urdu.
 - Public organization page with profile, news detail, activities and sharing.
+- Public news images display without center cropping.
+- Board and donation sections removed from the Home feed.
+- PWA install prompt now follows the organization language.
 
 ## Administrator Portal localization
 
@@ -65,7 +69,8 @@ Current limitations:
 - Arabic and Urdu direction is enabled globally, but every mobile layout still needs visual RTL verification.
 - Supabase and browser-generated error messages can remain in their original technical language.
 - New membership form setting labels still require full localization in all supported languages.
-- Membership email delivery still requires Supabase secrets `RESEND_API_KEY` and `MEMBERSHIP_FROM_EMAIL` plus end-to-end testing.
+- Membership email delivery still requires end-to-end testing.
+- The initial full-page loading label in `App.tsx` is still hardcoded and must be localized.
 
 ## Organization-scoped modules
 
@@ -92,7 +97,7 @@ Implemented:
 
 ## Active implementation target
 
-Configure Resend secrets and verify membership email delivery, then proceed to organization-scoped event registration improvements.
+Verify membership email delivery and complete the remaining public-language quality fixes, then proceed to organization-scoped event registration improvements.
 
 ## Architecture guidance
 
