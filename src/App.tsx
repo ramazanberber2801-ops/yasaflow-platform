@@ -11,7 +11,6 @@ import { ContactPage } from './pages/ContactPage';
 import { ActivitiesPage } from './pages/ActivitiesPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { MorePage } from './pages/MorePage';
-import { useAppI18n } from './lib/appI18n';
 import { supabase } from './lib/supabase';
 import { useOrganizationModules } from './lib/moduleEngine';
 import { DEFAULT_ORGANIZATION_ID } from './lib/organization';
@@ -35,7 +34,6 @@ function contrastText(hex: string) {
 }
 
 function AppContent() {
-  const { t } = useAppI18n();
   const { isAdmin, isInitialized, settings } = useApp();
   const { enabled } = useOrganizationModules(DEFAULT_ORGANIZATION_ID);
   const [page, setPage] = useState<Page>('home');
@@ -92,7 +90,7 @@ function AppContent() {
   const openDonate = () => enabled('donation') ? setShowDonate(true) : undefined;
   const showGuide = (browser: BrowserType, platform: Platform) => { setGuideBrowser(browser); setGuidePlatform(platform); setShowInstallGuide(true); };
 
-  if (!isInitialized || !themeLoaded) return <div className="flex min-h-screen items-center justify-center" style={{background:'#F4FAFF',color:'#071B53'}}><div className="flex flex-col items-center gap-3"><div className="h-10 w-10 animate-spin rounded-full border-2 border-t-transparent"/><p className="text-xs opacity-50">{t('common.loading')}</p></div></div>;
+  if (!isInitialized || !themeLoaded) return <div className="flex min-h-screen items-center justify-center" style={{background:'#F4FAFF',color:'#071B53'}}><div className="h-10 w-10 animate-spin rounded-full border-2 border-t-transparent" aria-label="Loading" /></div>;
 
   return <div className="min-h-screen" style={{...brandVars,backgroundColor:'var(--brand-background)',color:'var(--brand-text)'}}>
     {page === 'home' && <HomePage />}
