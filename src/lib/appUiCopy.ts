@@ -10,6 +10,10 @@ type CalendarCopy = {
   title: string; empty: string; today: string; activities: string;
   previousMonth: string; nextMonth: string; eventCount: (count: number) => string;
 };
+type AdminShellCopy = {
+  title: string; owner: string; administrator: string; logout: string; close: string;
+  ownerPanel: string; administratorPortal: string;
+};
 
 const bottomNav: Record<AppUiLanguage, BottomNavCopy> = {
   nb: { home: 'Hjem', activities: 'Aktiviteter', calendar: 'Kalender', more: 'Mer' },
@@ -35,22 +39,20 @@ const calendar: Record<AppUiLanguage, CalendarCopy> = {
   ur: { title: 'کیلنڈر', empty: 'اس دن کوئی سرگرمی نہیں ہے۔', today: 'آج', activities: 'سرگرمیاں', previousMonth: 'پچھلا مہینہ', nextMonth: 'اگلا مہینہ', eventCount: count => `${count} سرگرمیاں` },
 };
 
+const adminShell: Record<AppUiLanguage, AdminShellCopy> = {
+  nb: { title: 'Yasaflow-administrasjon', owner: 'Eier', administrator: 'Administrator', logout: 'Logg ut', close: 'Lukk administrasjonspanelet', ownerPanel: 'Eierpanel', administratorPortal: 'Administratorportal' },
+  en: { title: 'Yasaflow administration', owner: 'Owner', administrator: 'Administrator', logout: 'Sign out', close: 'Close administration panel', ownerPanel: 'Owner panel', administratorPortal: 'Administrator portal' },
+  tr: { title: 'Yasaflow yönetimi', owner: 'Sahip', administrator: 'Yönetici', logout: 'Çıkış yap', close: 'Yönetim panelini kapat', ownerPanel: 'Sahip paneli', administratorPortal: 'Yönetici portalı' },
+  ar: { title: 'إدارة Yasaflow', owner: 'المالك', administrator: 'المسؤول', logout: 'تسجيل الخروج', close: 'إغلاق لوحة الإدارة', ownerPanel: 'لوحة المالك', administratorPortal: 'بوابة المسؤول' },
+  ur: { title: 'Yasaflow انتظامیہ', owner: 'مالک', administrator: 'ایڈمن', logout: 'لاگ آؤٹ', close: 'انتظامی پینل بند کریں', ownerPanel: 'مالک پینل', administratorPortal: 'ایڈمن پورٹل' },
+};
+
 function normalizeLanguage(language: string): AppUiLanguage {
   return language in bottomNav ? language as AppUiLanguage : 'en';
 }
 
-export function getBottomNavCopy(language: string): BottomNavCopy {
-  return bottomNav[normalizeLanguage(language)];
-}
-
-export function getMorePageCopy(language: string): MorePageCopy {
-  return morePage[normalizeLanguage(language)];
-}
-
-export function getCalendarCopy(language: string): CalendarCopy {
-  return calendar[normalizeLanguage(language)];
-}
-
-export function getActivitiesTitle(language: string): string {
-  return bottomNav[normalizeLanguage(language)].activities;
-}
+export function getBottomNavCopy(language: string): BottomNavCopy { return bottomNav[normalizeLanguage(language)]; }
+export function getMorePageCopy(language: string): MorePageCopy { return morePage[normalizeLanguage(language)]; }
+export function getCalendarCopy(language: string): CalendarCopy { return calendar[normalizeLanguage(language)]; }
+export function getActivitiesTitle(language: string): string { return bottomNav[normalizeLanguage(language)].activities; }
+export function getAdminShellCopy(language: string): AdminShellCopy { return adminShell[normalizeLanguage(language)]; }
