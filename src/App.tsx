@@ -20,7 +20,7 @@ import { isPushMessageRead, loadActivePushMessages, subscribeToPushMessages } fr
 import type { Page } from './types';
 import type { BrowserType, Platform } from './lib/browserDetect';
 
-const NAVIGATION_RELEASE = '2026-07-17-navigation-v3';
+const NAVIGATION_RELEASE = '2026-07-18-admin-login-v1';
 
 function safeColor(value: unknown, fallback: string) {
   const color = String(value || '').trim();
@@ -88,9 +88,20 @@ function AppContent() {
     setPage('notifications');
   }, [enabled]);
 
+  const openAdmin = useCallback(() => isAdmin ? setShowPanel(true) : setShowLogin(true), [isAdmin]);
+
   useEffect(() => {
     document.documentElement.dataset.navigationRelease = NAVIGATION_RELEASE;
   }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    const path = window.location.pathname.replace(/\/+$/, '') || '/';
+    const params = new URLSearchParams(window.location.search);
+    if (path === '/admin' || path === '/login' || params.get('login') === '1' || params.get('payment') === 'success') {
+      openAdmin();
+    }
+  }, [isInitialized, openAdmin]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -141,7 +152,6 @@ function AppContent() {
     void refreshUnread();
   };
 
-  const openAdmin = () => isAdmin ? setShowPanel(true) : setShowLogin(true);
   const openContact = () => enabled('contact') ? setPage('contact') : undefined;
   const openDonate = () => enabled('donation') ? setShowDonate(true) : undefined;
   const openNotifications = () => enabled('push') ? setPage('notifications') : undefined;
@@ -157,6 +167,7 @@ function AppContent() {
     {page === 'contact' && enabled('contact') && <ContactPage />}
     {page === 'notifications' && enabled('push') && <NotificationsPage initialMessageId={initialNotificationId} onConsumedInitialMessage={clearInitialNotification} />}
 
+    {page === 'home' && <button type="button" onClick={openAdmin} className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-40 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-lg backdrop-blur" style={{background:'color-mix(in srgb, var(--brand-card) 92%, transparent)',borderColor:'var(--brand-border)',color:'var(--brand-text)'}}>{isAdmin ? 'Åpne administrasjon' : 'Logg inn'}</button>}
     <InstallButton onShowGuide={showGuide} />
     <BottomNav current={page === 'contact' || page === 'notifications' ? 'more' : page} onNavigate={setPage} unreadNotifications={unreadNotifications} />
     <AdminLoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
