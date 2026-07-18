@@ -7,6 +7,14 @@ const organizationTypes=['Moské','Kirke','Borettslag / sameie','Idrettslag','Fo
 const languages=['Norsk','English','Türkçe','العربية','اردو'];
 const normalizeSlug=(value:string)=>value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48);
 
+function getOrganizationAppUrl(slug:string,organizationId:string){
+  const host=window.location.hostname.toLowerCase();
+  const isLocal=host==='localhost'||host==='127.0.0.1';
+  const isPreview=host.endsWith('.vercel.app');
+  if(isLocal||isPreview)return `/?org=${encodeURIComponent(organizationId)}&slug=${encodeURIComponent(slug)}`;
+  return `https://${encodeURIComponent(slug)}.yasaflow.com`;
+}
+
 export function OrganizationRegistrationFlow(){
   const [form,setForm]=useState({organizationName:'',organizationType:'Forening',country:'Norge',language:'Norsk',adminName:'',email:'',password:'',slug:''});
   const [slugEdited,setSlugEdited]=useState(false);
@@ -33,11 +41,11 @@ export function OrganizationRegistrationFlow(){
       selectOrganization(organizationId);
       writeStoredAdminSession({organization_id:organizationId,user_id:user?.id,auth_user_id:user?.id,email:form.email.trim().toLowerCase(),username:form.email.trim().toLowerCase(),display_name:form.adminName.trim(),displayName:form.adminName.trim(),role:'owner',invitation_status:'accepted'});
       setCreated(true);
-      setTimeout(()=>window.location.assign(`/?org=${encodeURIComponent(organizationId)}&slug=${encodeURIComponent(slug)}`),1200);
+      setTimeout(()=>window.location.assign(getOrganizationAppUrl(slug,organizationId)),1200);
     }catch(err){setError(err instanceof Error?err.message:'Registreringen kunne ikke fullføres.');}finally{setBusy(false);}
   };
 
-  if(created)return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-5"><div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl"><CheckCircle2 className="mx-auto text-green-600" size={46}/><h1 className="mt-4 text-2xl font-semibold">Organisasjonen er klar</h1><p className="mt-2 text-sm text-slate-500">Du sendes nå videre til Yasaflow. Prøveperioden varer i 7 dager.</p></div></div>;
+  if(created)return <div className="flex min-h-screen items-center justify-center bg-slate-50 p-5"><div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-xl"><CheckCircle2 className="mx-auto text-green-600" size={46}/><h1 className="mt-4 text-2xl font-semibold">Organisasjonen er klar</h1><p className="mt-2 text-sm text-slate-500">Du sendes nå videre til organisasjonens egen Yasaflow-adresse. Prøveperioden varer i 7 dager.</p></div></div>;
 
   return <div className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900"><div className="mx-auto max-w-xl"><div className="mb-6 text-center"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-white"><Building2 size={26}/></div><h1 className="mt-4 text-3xl font-semibold">Opprett organisasjonen din</h1><p className="mt-2 text-sm text-slate-500">7 dager gratis prøveperiode. Ingen betaling registreres nå.</p></div>
     <form onSubmit={submit} className="space-y-4 rounded-3xl bg-white p-6 shadow-xl">
