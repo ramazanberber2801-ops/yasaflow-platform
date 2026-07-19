@@ -47,13 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const confirmed = data.status === 'confirmed';
   const baseUrl = `https://${req.headers.host || 'dtim-ramazanberber2801-ops-projects.vercel.app'}`;
   const ticketUrl = `${baseUrl}/api/send-activity-ticket?registrationId=${encodeURIComponent(data.id)}&ticketToken=${encodeURIComponent(data.ticket_token)}`;
+  const badgeUrl = `${baseUrl}/api/activity-badges?registrationId=${encodeURIComponent(data.id)}&ticketToken=${encodeURIComponent(data.ticket_token)}`;
 
   const ticketCard = `<div style="max-width:620px;margin:24px auto;background:#fff;border:1px solid #e4e4e7;border-radius:22px;padding:30px;box-sizing:border-box"><p style="font-size:13px;color:#666;margin:0 0 8px">${escapeHtml(organizationName)} · Arrangement Pro</p><h1 style="font-size:28px;margin:0 0 10px">${escapeHtml(activity.title)}</h1><p style="font-size:17px;margin:0 0 22px">${escapeHtml(data.full_name)}</p><div style="background:#f7f7f8;border-radius:14px;padding:16px;margin:18px 0"><p style="margin:5px 0"><strong>Dato:</strong> ${escapeHtml(date)}</p>${time ? `<p style="margin:5px 0"><strong>Tid:</strong> ${escapeHtml(time)}</p>` : ''}${activity.location ? `<p style="margin:5px 0"><strong>Sted:</strong> ${escapeHtml(activity.location)}</p>` : ''}<p style="margin:5px 0"><strong>Antall:</strong> ${data.attendees}</p></div>${confirmed ? `<div style="text-align:center"><img src="${qrUrl}" width="300" height="300" alt="QR-billett" style="max-width:100%;height:auto"><p style="font-size:13px;color:#666">Vis QR-koden ved inngangen. Billetten kan bare sjekkes inn én gang.</p></div>` : '<p style="padding:14px;background:#fff7ed;border-radius:12px;color:#9a3412">Du står på venteliste. QR-billetten aktiveres når plassen er bekreftet.</p>'}<p style="font-size:11px;color:#888;word-break:break-all">Billett-ID: ${escapeHtml(data.id)}</p></div>`;
 
   if (req.method === 'GET') {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'private, no-store');
-    return res.status(200).send(`<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(activity.title)} – billett</title><style>body{margin:0;padding:16px;background:#f4f4f5;font-family:Arial,sans-serif;color:#202020}.actions{max-width:620px;margin:0 auto 12px;display:flex;gap:10px}.actions button{border:0;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer}@media print{body{background:#fff;padding:0}.actions{display:none}}</style></head><body><div class="actions"><button onclick="window.print()">Last ned / skriv ut PDF</button></div>${ticketCard}</body></html>`);
+    return res.status(200).send(`<!doctype html><html lang="no"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(activity.title)} – billett</title><style>body{margin:0;padding:16px;background:#f4f4f5;font-family:Arial,sans-serif;color:#202020}.actions{max-width:620px;margin:0 auto 12px;display:flex;flex-wrap:wrap;gap:10px}.actions button,.actions a{border:0;border-radius:10px;padding:12px 16px;background:#18181b;color:#fff;text-decoration:none;font-weight:700;cursor:pointer}.actions a.secondary{background:#fff;color:#18181b;border:1px solid #d4d4d8}@media print{body{background:#fff;padding:0}.actions{display:none}}</style></head><body><div class="actions"><button onclick="window.print()">Last ned / skriv ut PDF</button>${confirmed ? `<a class="secondary" href="${badgeUrl}">Åpne navneskilt</a>` : ''}</div>${ticketCard}</body></html>`);
   }
 
   if (!resendKey) return res.status(500).json({ error: 'Missing email configuration' });
@@ -71,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ ok: true, skipped: true });
   }
 
-  const html = `<!doctype html><html lang="no"><head><meta charset="utf-8"><title>${escapeHtml(activity.title)}</title></head><body style="margin:0;background:#f4f4f5;font-family:Arial,sans-serif;color:#202020"><div style="max-width:660px;margin:auto;padding:24px"><p>Hei ${escapeHtml(data.full_name)},</p><p>${confirmed ? 'Påmeldingen din er bekreftet. Din personlige QR-billett ligger nedenfor.' : 'Arrangementet er fullt, og du står på venteliste.'}</p>${ticketCard}<p style="text-align:center"><a href="${ticketUrl}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:13px 18px;border-radius:10px;font-weight:700">Åpne og last ned billetten</a></p><p style="font-size:13px;color:#777">Vennlig hilsen<br>${escapeHtml(organizationName)}</p></div></body></html>`;
+  const html = `<!doctype html><html lang="no"><head><meta charset="utf-8"><title>${escapeHtml(activity.title)}</title></head><body style="margin:0;background:#f4f4f5;font-family:Arial,sans-serif;color:#202020"><div style="max-width:660px;margin:auto;padding:24px"><p>Hei ${escapeHtml(data.full_name)},</p><p>${confirmed ? 'Påmeldingen din er bekreftet. Din personlige QR-billett ligger nedenfor.' : 'Arrangementet er fullt, og du står på venteliste.'}</p>${ticketCard}<p style="text-align:center"><a href="${ticketUrl}" style="display:inline-block;background:#18181b;color:#fff;text-decoration:none;padding:13px 18px;border-radius:10px;font-weight:700">Åpne og last ned billetten</a>${confirmed ? `<br><a href="${badgeUrl}" style="display:inline-block;margin-top:10px;color:#18181b;font-weight:700">Åpne navneskilt</a>` : ''}</p><p style="font-size:13px;color:#777">Vennlig hilsen<br>${escapeHtml(organizationName)}</p></div></body></html>`;
 
   const emailResponse = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -82,5 +83,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!emailResponse.ok) return res.status(502).json({ error: emailResult?.message || 'Email delivery failed' });
 
   await supabase.from('activity_registrations').update({ confirmation_email_sent_at: new Date().toISOString() }).eq('id', data.id);
-  return res.status(200).json({ ok: true, id: emailResult.id, resent: force, ticketUrl });
+  return res.status(200).json({ ok: true, id: emailResult.id, resent: force, ticketUrl, badgeUrl });
 }
