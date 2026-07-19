@@ -1,0 +1,48 @@
+name: Connect invitation overview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/connect-invitation-overview.yml'
+      - 'src/components/owner/OrganizationInvitationOverview.tsx'
+
+permissions:
+  contents: write
+
+jobs:
+  connect:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Patch OwnerPanel
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/pages/OwnerPanelV2.tsx')
+          text = path.read_text()
+          import_line = "import { OrganizationInvitationOverview } from '../components/owner/OrganizationInvitationOverview';\n"
+          anchor = "import { OwnerPanelFormField, OwnerPanelTextInput } from '../components/owner/OwnerPanelFormField';\n"
+          if import_line not in text:
+              text = text.replace(anchor, anchor + import_line)
+
+          marker = '    <div className="flex gap-2">{isCreating&&'
+          overview = '    {!isCreating&&organization.id&&<OrganizationInvitationOverview organizationId={organization.id}/>}\n\n'
+          if overview not in text:
+              text = text.replace(marker, overview + marker)
+
+          old = "setInviteMessage(`Invitasjonen er sendt til ${invitation.email}. Lenken utløper ${new Date(invitation.expiresAt).toLocaleString('nb-NO')}.`);if(supabase)"
+          new = "setInviteMessage(`Invitasjonen er sendt til ${invitation.email}. Lenken utløper ${new Date(invitation.expiresAt).toLocaleString('nb-NO')}.`);window.dispatchEvent(new CustomEvent('yasaflow-organization-invitation-sent'));if(supabase)"
+          text = text.replace(old, new)
+          path.write_text(text)
+          PY
+      - name: Commit integration
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add src/pages/OwnerPanelV2.tsx
+          git diff --cached --quiet || git commit -m "Show invitation overview in OwnerPanel"
+          git push
