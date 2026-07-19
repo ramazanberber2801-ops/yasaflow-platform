@@ -1,4 +1,4 @@
-export type SupportedNotificationLanguage = 'nb' | 'en' | 'tr' | 'ar' | 'ur' | 'de' | 'fr';
+export type SupportedNotificationLanguage = 'nb' | 'en' | 'da' | 'tr' | 'ar' | 'ur' | 'de' | 'fr';
 
 type NotificationTranslations = {
   title: string;
@@ -28,6 +28,15 @@ const translations: Record<SupportedNotificationLanguage, NotificationTranslatio
     processing: 'Processing...',
     disabledSuccess: 'Notifications have been disabled.',
     disabledError: 'Notifications could not be disabled.',
+  },
+  da: {
+    title: 'Notifikationer',
+    description: 'Aktivér notifikationer for at modtage de seneste nyheder, aktiviteter og vigtige meddelelser.',
+    enableButton: 'Aktivér notifikationer',
+    disableButton: 'Deaktivér notifikationer',
+    processing: 'Behandler...',
+    disabledSuccess: 'Notifikationer er deaktiveret.',
+    disabledError: 'Notifikationerne kunne ikke deaktiveres.',
   },
   tr: {
     title: 'Bildirimler',
@@ -81,6 +90,7 @@ const aliases: Record<string, SupportedNotificationLanguage> = {
   nb: 'nb',
   nn: 'nb',
   en: 'en',
+  da: 'da',
   tr: 'tr',
   ar: 'ar',
   ur: 'ur',
