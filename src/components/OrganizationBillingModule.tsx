@@ -7,7 +7,7 @@ const ARRANGEMENT_PRO_PRODUCT_ID=String(import.meta.env.VITE_CREEM_ARRANGEMENT_P
 const PRODUCTS = [
   { id: 'prod_21PIYy2aAeG6y2B3Zjul2a', name: 'Yasaflow Core Platform', price: '€32/mnd', description: 'Full tilgang til Yasaflow-plattformen.', kind: 'core', moduleId: null, configured: true },
   { id: 'prod_7jeTFbEys6FrrBstowAJuL', name: 'Push-varslinger', price: '€5/mnd', description: 'Send push-varsler til medlemmer og besøkende.', kind: 'addon', moduleId: 'push', configured: true },
-  { id: 'prod_4DP5C2BFo9HZM8K32SqKXl', name: 'Donasjoner', price: '€4/mnd', description: 'Aktiver donasjonsmodulen for organisasjonen.', kind: 'addon', moduleId: 'donation', configured: true },
+  { id: 'prod_4DP5C2BFo9HZM8K32SqKXl', name: 'Eksterne betalingslenker', price: '€4/mnd', description: 'Legg til lenker til Vipps, PayPal, Stripe eller andre eksterne betalingstjenester. Yasaflow lagrer og viser kun lenkene og behandler ikke betalinger.', kind: 'addon', moduleId: 'donation', configured: true },
   { id: ARRANGEMENT_PRO_PRODUCT_ID||'arrangement-pro-unconfigured', name: 'Arrangement Pro', price: 'Pris settes i Creem', description: 'Påmelding, venteliste, QR-medlemskort, QR- og manuell innsjekk, oppmøtestatistikk og CSV-eksport.', kind: 'addon', moduleId: 'arrangement-pro', configured: Boolean(ARRANGEMENT_PRO_PRODUCT_ID) },
 ] as const;
 
