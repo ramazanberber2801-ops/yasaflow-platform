@@ -1,0 +1,51 @@
+name: Security role isolation
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  role-isolation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ secrets.SECURITY_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SECURITY_SUPABASE_ANON_KEY }}
+      MEMBER_ACCESS_TOKEN: ${{ secrets.SECURITY_MEMBER_ACCESS_TOKEN }}
+      ORG_ADMIN_ACCESS_TOKEN: ${{ secrets.SECURITY_ORG_ADMIN_ACCESS_TOKEN }}
+      SUPERADMIN_ACCESS_TOKEN: ${{ secrets.SECURITY_SUPERADMIN_ACCESS_TOKEN }}
+      MEMBER_ORG_ID: ${{ secrets.SECURITY_MEMBER_ORG_ID }}
+      ADMIN_ORG_ID: ${{ secrets.SECURITY_ADMIN_ORG_ID }}
+      FOREIGN_ORG_ID: ${{ secrets.SECURITY_FOREIGN_ORG_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Check security test configuration
+        id: config
+        shell: bash
+        run: |
+          required=(SUPABASE_URL SUPABASE_ANON_KEY MEMBER_ACCESS_TOKEN ORG_ADMIN_ACCESS_TOKEN SUPERADMIN_ACCESS_TOKEN MEMBER_ORG_ID ADMIN_ORG_ID FOREIGN_ORG_ID)
+          missing=0
+          for name in "${required[@]}"; do
+            if [ -z "${!name}" ]; then
+              echo "Missing GitHub secret for $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run read-only role isolation tests
+        if: steps.config.outputs.configured == 'true'
+        run: npm run test:security:roles
+      - name: Explain skipped test
+        if: steps.config.outputs.configured != 'true'
+        run: echo "Role isolation test skipped until SECURITY_* repository secrets are configured."
