@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig(async ({ mode }) => {
   const plugins = [react(), tailwindcss()];
   try {
-    // @ts-ignore
+    // @ts-expect-error Optional local plugin is generated only in supported environments.
     const m = await import('./.vite-source-tags.js');
     plugins.push(m.sourceTags());
   } catch {}
