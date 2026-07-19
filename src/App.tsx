@@ -175,7 +175,6 @@ function AppContent() {
     {page === 'contact' && enabled('contact') && <ContactPage />}
     {page === 'notifications' && enabled('push') && <NotificationsPage initialMessageId={initialNotificationId} onConsumedInitialMessage={clearInitialNotification} />}
 
-    {page === 'home' && <button type="button" onClick={openAdmin} className="fixed right-4 top-[max(1rem,env(safe-area-inset-top))] z-40 rounded-xl border px-4 py-2.5 text-sm font-semibold shadow-lg backdrop-blur" style={{background:'color-mix(in srgb, var(--brand-card) 92%, transparent)',borderColor:'var(--brand-border)',color:'var(--brand-text)'}}>{isAdmin ? 'Åpne administrasjon' : 'Logg inn'}</button>}
     <InstallButton onShowGuide={showGuide} />
     <BottomNav current={page === 'contact' || page === 'notifications' ? 'more' : page} onNavigate={setPage} unreadNotifications={unreadNotifications} />
     <AdminLoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
