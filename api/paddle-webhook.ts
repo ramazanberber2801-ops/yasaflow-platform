@@ -30,6 +30,10 @@ type PaddleDetails = {
 };
 
 const MAX_SIGNATURE_AGE_SECONDS = 300;
+const MAX_BODY_BYTES = 1024 * 1024;
+const EVENT_ID_PATTERN = /^[A-Za-z0-9_-]{8,160}$/;
+const EVENT_TYPE_PATTERN = /^(subscription|transaction)\.[a-z0-9_]+$/;
+const ORGANIZATION_ID_PATTERN = /^[A-Za-z0-9_-]{1,120}$/;
 
 const PRICE_IDS = {
   core: 'pri_01kxq49nngz9sc8yhrpp7kaytd',
@@ -45,11 +49,32 @@ const MODULE_BY_PRICE_ID: Record<string, string> = {
 function readRawBody(req: IncomingMessage): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
+    let totalBytes = 0;
+    let settled = false;
+
+    const fail = (error: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+
     req.on('data', (chunk) => {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      if (settled) return;
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      totalBytes += buffer.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        fail(new Error('PAYLOAD_TOO_LARGE'));
+        req.destroy();
+        return;
+      }
+      chunks.push(buffer);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
+    req.on('end', () => {
+      if (settled) return;
+      settled = true;
+      resolve(Buffer.concat(chunks));
+    });
+    req.on('error', fail);
   });
 }
 
@@ -92,6 +117,7 @@ function verifyPaddleSignature(
 
   return signatures.some((signature) => {
     try {
+      if (!/^[0-9a-f]{64}$/i.test(signature)) return false;
       const receivedBuffer = Buffer.from(signature, 'hex');
       return (
         receivedBuffer.length === expectedBuffer.length &&
@@ -120,6 +146,14 @@ function asString(value: unknown): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
+function validateEvent(event: PaddleEvent): string | null {
+  if (!event.event_id || !EVENT_ID_PATTERN.test(event.event_id)) return 'Invalid event_id';
+  if (!event.event_type || !EVENT_TYPE_PATTERN.test(event.event_type)) return 'Invalid event_type';
+  if (!asRecord(event.data)) return 'Invalid event data';
+  if (event.occurred_at && Number.isNaN(Date.parse(event.occurred_at))) return 'Invalid occurred_at';
+  return null;
+}
+
 function extractPriceIds(data: Record<string, unknown>): string[] {
   const ids = new Set<string>();
   const items = Array.isArray(data.items) ? data.items : [];
@@ -141,12 +175,16 @@ function extractPriceIds(data: Record<string, unknown>): string[] {
 function extractDetails(event: PaddleEvent): PaddleDetails {
   const data = asRecord(event.data) ?? {};
   const customData = asRecord(data.custom_data) ?? {};
+  const rawOrganizationId =
+    asString(customData.organization_id) ??
+    asString(customData.organizationId) ??
+    asString(data.organization_id);
 
   return {
     organizationId:
-      asString(customData.organization_id) ??
-      asString(customData.organizationId) ??
-      asString(data.organization_id),
+      rawOrganizationId && ORGANIZATION_ID_PATTERN.test(rawOrganizationId)
+        ? rawOrganizationId
+        : null,
     customerId: asString(data.customer_id),
     subscriptionId: asString(data.subscription_id) ?? asString(data.id),
     transactionId:
@@ -174,11 +212,28 @@ async function supabaseRequest(
   });
 }
 
+async function organizationExists(
+  config: SupabaseConfig,
+  organizationId: string,
+): Promise<boolean> {
+  const response = await supabaseRequest(
+    config,
+    `organizations?select=id&id=eq.${encodeURIComponent(organizationId)}&limit=1`,
+  );
+  if (!response.ok) return false;
+  const rows = (await response.json()) as Array<{ id?: string }>;
+  return rows[0]?.id === organizationId;
+}
+
 async function findOrganizationId(
   config: SupabaseConfig,
   details: PaddleDetails,
 ): Promise<string | null> {
-  if (details.organizationId) return details.organizationId;
+  if (details.organizationId) {
+    return (await organizationExists(config, details.organizationId))
+      ? details.organizationId
+      : null;
+  }
 
   const lookups: Array<[string, string | null]> = [
     ['paddle_subscription_id', details.subscriptionId],
@@ -356,8 +411,8 @@ async function storeEvent(
     method: 'POST',
     headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
     body: JSON.stringify({
-      event_id: event.event_id ?? null,
-      event_type: event.event_type ?? 'unknown',
+      event_id: event.event_id,
+      event_type: event.event_type,
       occurred_at: event.occurred_at ?? new Date().toISOString(),
       organization_id: organizationId,
       payload: event,
@@ -371,12 +426,9 @@ async function storeEvent(
 
 async function processPaddleEvent(event: PaddleEvent): Promise<void> {
   const config = getSupabaseConfig();
-  if (!config) {
-    console.warn('Supabase server configuration is missing; event was verified but not processed.');
-    return;
-  }
+  if (!config) throw new Error('Supabase server configuration is missing');
 
-  const eventType = event.event_type ?? 'unknown';
+  const eventType = event.event_type as string;
   const details = extractDetails(event);
   const organizationId = await findOrganizationId(config, details);
 
@@ -391,6 +443,12 @@ async function processPaddleEvent(event: PaddleEvent): Promise<void> {
   await updatePaidModules(config, organizationId, eventType, details);
 }
 
+function sendJson(res: ServerResponse, statusCode: number, body: unknown): void {
+  res.statusCode = statusCode;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(body));
+}
+
 export default async function handler(
   req: IncomingMessage & {
     method?: string;
@@ -399,45 +457,48 @@ export default async function handler(
   res: ServerResponse,
 ): Promise<void> {
   if (req.method !== 'POST') {
-    res.statusCode = 405;
     res.setHeader('Allow', 'POST');
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Method not allowed' }));
+    sendJson(res, 405, { error: 'Method not allowed' });
+    return;
+  }
+
+  const contentLengthHeader = req.headers['content-length'];
+  const contentLength = Array.isArray(contentLengthHeader)
+    ? Number(contentLengthHeader[0])
+    : Number(contentLengthHeader);
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    sendJson(res, 413, { error: 'Payload too large' });
     return;
   }
 
   const webhookSecret = process.env.PADDLE_WEBHOOK_SECRET;
   if (!webhookSecret) {
     console.error('PADDLE_WEBHOOK_SECRET is not configured');
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Webhook is not configured' }));
+    sendJson(res, 500, { error: 'Webhook is not configured' });
     return;
   }
 
   const headerValue = req.headers['paddle-signature'];
   const signatureHeader = Array.isArray(headerValue) ? headerValue[0] : headerValue;
   if (!signatureHeader) {
-    res.statusCode = 400;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Missing Paddle-Signature header' }));
+    sendJson(res, 400, { error: 'Missing Paddle-Signature header' });
     return;
   }
 
   let rawBody: Buffer;
   try {
     rawBody = await readRawBody(req);
-  } catch {
-    res.statusCode = 400;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Unable to read request body' }));
+  } catch (error) {
+    if (error instanceof Error && error.message === 'PAYLOAD_TOO_LARGE') {
+      sendJson(res, 413, { error: 'Payload too large' });
+      return;
+    }
+    sendJson(res, 400, { error: 'Unable to read request body' });
     return;
   }
 
   if (!verifyPaddleSignature(rawBody, signatureHeader, webhookSecret)) {
-    res.statusCode = 401;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Invalid webhook signature' }));
+    sendJson(res, 401, { error: 'Invalid webhook signature' });
     return;
   }
 
@@ -445,22 +506,22 @@ export default async function handler(
   try {
     event = JSON.parse(rawBody.toString('utf8')) as PaddleEvent;
   } catch {
-    res.statusCode = 400;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Invalid JSON payload' }));
+    sendJson(res, 400, { error: 'Invalid JSON payload' });
+    return;
+  }
+
+  const validationError = validateEvent(event);
+  if (validationError) {
+    sendJson(res, 400, { error: validationError });
     return;
   }
 
   try {
     await processPaddleEvent(event);
     console.info('Processed Paddle webhook:', event.event_type, event.event_id);
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ received: true }));
+    sendJson(res, 200, { received: true });
   } catch (error) {
     console.error('Paddle webhook processing failed:', error);
-    res.statusCode = 500;
-    res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ error: 'Webhook processing failed' }));
+    sendJson(res, 500, { error: 'Webhook processing failed' });
   }
 }
