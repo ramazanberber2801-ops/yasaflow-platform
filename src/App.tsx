@@ -187,6 +187,11 @@ function AppContent() {
 }
 
 export default function App() {
+  if (window.location.hostname === 'portal.yasaflow.com') {
+    window.location.replace(`https://yasaflow.com/portal${window.location.search}${window.location.hash}`);
+    return null;
+  }
+
   const path = window.location.pathname.replace(/\/+$/, '') || '/';
   if (path === '/accept-invitation') return <AcceptInvitationPage />;
   return <AppProvider><AppContent /></AppProvider>;
