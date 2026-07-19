@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { X, Loader2 } from 'lucide-react';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
@@ -19,6 +19,24 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    if (params.get('recovery') === '1' || hash.get('type') === 'recovery') {
+      setMustChangePassword(true);
+    }
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setMustChangePassword(true);
+      }
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   if (!isOpen) return null;
 
@@ -90,6 +108,12 @@ export const AdminLoginModal: React.FC<{ isOpen: boolean; onClose: () => void }>
     setNewPassword('');
     setConfirmPassword('');
     setMustChangePassword(false);
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete('recovery');
+    cleanUrl.hash = '';
+    window.history.replaceState({}, '', `${cleanUrl.pathname}${cleanUrl.search}`);
+
     onClose();
   };
 
