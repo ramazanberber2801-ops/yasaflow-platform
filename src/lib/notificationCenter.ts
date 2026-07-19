@@ -37,9 +37,10 @@ export function clearExpiredReadIds(activeIds: string[]) {
 }
 
 export async function loadActivePushMessages(organizationId: string) {
-  if (!supabase) return [] as PushMessage[];
+  const client = supabase;
+  if (!client) return [] as PushMessage[];
   const now = new Date().toISOString();
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from('push_messages')
     .select('id,title,body,created_at,expires_at,organization_id')
     .eq('organization_id', organizationId)
@@ -52,9 +53,10 @@ export async function loadActivePushMessages(organizationId: string) {
 }
 
 export function subscribeToPushMessages(organizationId: string, onChange: () => void) {
-  if (!supabase) return () => {};
+  const client = supabase;
+  if (!client) return () => {};
 
-  const channel = supabase
+  const channel = client
     .channel(`push-messages:${organizationId}`)
     .on(
       'postgres_changes',
@@ -69,6 +71,6 @@ export function subscribeToPushMessages(organizationId: string, onChange: () => 
     .subscribe();
 
   return () => {
-    void supabase.removeChannel(channel);
+    void client.removeChannel(channel);
   };
 }
