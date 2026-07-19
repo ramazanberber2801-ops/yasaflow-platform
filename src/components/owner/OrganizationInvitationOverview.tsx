@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Ban, Clock3, Mail, RefreshCw, RotateCw, ShieldCheck } from 'lucide-react';
+import { Ban, Clock3, LockKeyhole, Mail, RefreshCw, RotateCw, ShieldCheck } from 'lucide-react';
 import {
   resendOrganizationInvitation,
   revokeOrganizationInvitation,
 } from '../../lib/organizationInvitationActions';
+import { getOrganizationPermissions, type OrganizationRole } from '../../lib/organizationRbac';
 import { supabase } from '../../lib/supabase';
 
 type InvitationStatus = 'pending' | 'sent' | 'accepted' | 'expired' | 'revoked' | 'failed';
@@ -33,6 +34,12 @@ const statusLabels: Record<InvitationStatus, string> = {
   failed: 'Mislyktes',
 };
 
+const roleLabels: Record<OrganizationRole, string> = {
+  owner: 'Eier',
+  admin: 'Administrator',
+  staff: 'Ansatt',
+};
+
 function dateTime(value: string | null) {
   if (!value) return '—';
   return new Date(value).toLocaleString('nb-NO', { dateStyle: 'short', timeStyle: 'short' });
@@ -52,26 +59,33 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
   const [message, setMessage] = useState('');
   const [filter, setFilter] = useState<'all' | InvitationStatus>('all');
   const [actionId, setActionId] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<OrganizationRole | null>(null);
+  const canManageInvitations = currentRole === 'owner' || currentRole === 'admin';
 
   const load = useCallback(async () => {
     if (!supabase || !organizationId) {
       setInvitations([]);
+      setCurrentRole(null);
       return;
     }
 
     setLoading(true);
     setError('');
-    const { data, error: queryError } = await supabase
-      .from('organization_invitations')
-      .select('id,email,display_name,role,status,sent_at,expires_at,accepted_at,created_at')
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false });
+    const [permissions, invitationsResult] = await Promise.all([
+      getOrganizationPermissions(organizationId),
+      supabase
+        .from('organization_invitations')
+        .select('id,email,display_name,role,status,sent_at,expires_at,accepted_at,created_at')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false }),
+    ]);
 
-    if (queryError) {
-      setError(queryError.message || 'Kunne ikke hente invitasjonene.');
+    setCurrentRole(permissions.role);
+    if (invitationsResult.error) {
+      setError(invitationsResult.error.message || 'Kunne ikke hente invitasjonene.');
       setInvitations([]);
     } else {
-      setInvitations((data || []) as Invitation[]);
+      setInvitations((invitationsResult.data || []) as Invitation[]);
     }
     setLoading(false);
   }, [organizationId]);
@@ -94,7 +108,7 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
   }, {}), [invitations]);
 
   const resend = async (invitation: Invitation) => {
-    if (actionId) return;
+    if (!canManageInvitations || actionId) return;
     const confirmed = window.confirm(`Sende en ny invitasjon til ${invitation.email}? Den gamle lenken blir ugyldig.`);
     if (!confirmed) return;
 
@@ -114,7 +128,7 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
   };
 
   const revoke = async (invitation: Invitation) => {
-    if (actionId) return;
+    if (!canManageInvitations || actionId) return;
     const confirmed = window.confirm(`Tilbakekalle invitasjonen til ${invitation.email}? Lenken vil slutte å virke med en gang.`);
     if (!confirmed) return;
 
@@ -145,6 +159,12 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
         <button type="button" onClick={() => void load()} disabled={loading || Boolean(actionId)} className="rounded-xl border p-2 disabled:opacity-50" aria-label="Oppdater invitasjoner"><RefreshCw size={16} className={loading ? 'animate-spin' : ''} /></button>
       </div>
 
+      {!canManageInvitations && currentRole && (
+        <p className="mb-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <LockKeyhole size={14} /> Rollen {roleLabels[currentRole]} kan se, men ikke administrere invitasjoner.
+        </p>
+      )}
+
       <div className="mb-3 flex flex-wrap gap-2">
         {(['all','sent','accepted','expired','failed','revoked'] as const).map((status) => (
           <button key={status} type="button" onClick={() => setFilter(status)} className="rounded-full border px-3 py-1.5 text-xs" style={{ background: filter === status ? 'var(--brand-primary)' : 'white', color: filter === status ? 'var(--brand-primary-text)' : 'var(--brand-text)', borderColor: 'var(--brand-border)' }}>
@@ -161,8 +181,8 @@ export function OrganizationInvitationOverview({ organizationId }: Props) {
         {visible.map((invitation) => {
           const status = effectiveStatus(invitation);
           const busy = actionId === invitation.id;
-          const canResend = ['pending', 'sent', 'expired', 'failed'].includes(status);
-          const canRevoke = status === 'pending' || status === 'sent';
+          const canResend = canManageInvitations && ['pending', 'sent', 'expired', 'failed'].includes(status);
+          const canRevoke = canManageInvitations && (status === 'pending' || status === 'sent');
           return (
             <article key={invitation.id} className="rounded-xl border p-3" style={{ borderColor: 'var(--brand-border)' }}>
               <div className="flex items-start justify-between gap-3">
