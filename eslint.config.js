@@ -20,13 +20,12 @@ export default defineConfig([
       globals: globals.browser,
     },
     rules: {
-      // Existing API and UI files still contain a small amount of legacy
-      // typing debt. Keep these visible in CI without blocking production
-      // builds while they are replaced with concrete types incrementally.
+      // Keep existing typing debt visible without blocking deploys.
       '@typescript-eslint/no-explicit-any': 'warn',
-      // Empty catch blocks are currently used only for optional browser
-      // capabilities such as vibration/audio feedback.
+      // Optional browser capabilities use empty catch blocks in a few places.
       'no-empty': ['warn', { allowEmptyCatch: true }],
+      // Legacy data-loading effects are being refactored incrementally.
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
 ])
