@@ -9,15 +9,14 @@ import { supabase } from '../lib/supabase';
 
 type FormState = {
   display_name:string; short_name:string; description:string; address:string; map_url:string; phone:string; email:string; website:string;
-  whatsapp_number:string; donation_number:string; donation_url:string; bank_account:string; iban:string;
-  opening_hours:string; weekly_event:string; logo_url:string; app_icon_url:string;
+  whatsapp_number:string; opening_hours:string; weekly_event:string; logo_url:string; app_icon_url:string;
   publish_phone:boolean; publish_email:boolean; publish_address:boolean; publish_website:boolean; publish_opening_hours:boolean;
   ramadan_enabled:boolean; ramadan_start_date:string; ramadan_end_date:string;
   kurban_enabled:boolean; kurban_start_date:string;
   language:string;
 };
 
-const empty:FormState={display_name:'',short_name:'',description:'',address:'',map_url:'',phone:'',email:'',website:'',whatsapp_number:'',donation_number:'',donation_url:'',bank_account:'',iban:'',opening_hours:'',weekly_event:'',logo_url:'',app_icon_url:'',publish_phone:false,publish_email:false,publish_address:false,publish_website:false,publish_opening_hours:false,ramadan_enabled:false,ramadan_start_date:'',ramadan_end_date:'',kurban_enabled:false,kurban_start_date:'',language:'nb'};
+const empty:FormState={display_name:'',short_name:'',description:'',address:'',map_url:'',phone:'',email:'',website:'',whatsapp_number:'',opening_hours:'',weekly_event:'',logo_url:'',app_icon_url:'',publish_phone:false,publish_email:false,publish_address:false,publish_website:false,publish_opening_hours:false,ramadan_enabled:false,ramadan_start_date:'',ramadan_end_date:'',kurban_enabled:false,kurban_start_date:'',language:'nb'};
 
 export function OrganizationSettingsModule({organizationId}:{organizationId:string}){
   const {language:appLanguage}=useAppI18n();
@@ -45,7 +44,8 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
       if(settingsResult.error)setError(settingsResult.error.message);
       else {
         const language=findLanguage(organizationResult.data?.language).code;
-        setForm(settingsResult.data?{...empty,...settingsResult.data,language,ramadan_start_date:settingsResult.data.ramadan_start_date||'',ramadan_end_date:settingsResult.data.ramadan_end_date||'',kurban_start_date:settingsResult.data.kurban_start_date||''}:{...empty,language});
+        const data=settingsResult.data||{};
+        setForm({...empty,...data,language,ramadan_start_date:data.ramadan_start_date||'',ramadan_end_date:data.ramadan_end_date||'',kurban_start_date:data.kurban_start_date||''});
       }
       if(moduleResult.error)setError(moduleResult.error.message);
       else setDailyInspiration(Boolean(moduleResult.data?.enabled));
@@ -96,7 +96,7 @@ export function OrganizationSettingsModule({organizationId}:{organizationId:stri
     <section className="grid gap-4 rounded-3xl border bg-white p-5 shadow-sm sm:grid-cols-2">
       {field('display_name',t('settings.displayName'))}{field('short_name',t('settings.shortName'))}
       <label className="block sm:col-span-2"><span className="text-xs font-medium">{t('settings.description')}</span><textarea rows={5} className="mt-1 w-full rounded-xl border p-3 text-sm" value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>
-      {field('website',t('settings.website'),'url')}{field('phone',t('settings.phone'))}{field('email',t('settings.email'),'email')}{field('whatsapp_number',t('settings.whatsapp'))}{field('address',t('settings.address'))}{field('map_url',t('settings.mapUrl'),'url')}{field('logo_url',t('settings.logoUrl'),'url')}{field('app_icon_url',t('settings.appIconUrl'),'url')}{field('donation_number',t('settings.donationNumber'))}{field('donation_url',t('settings.donationUrl'),'url')}{field('bank_account',t('settings.bankAccount'))}{field('iban',t('settings.iban'))}{field('opening_hours',t('settings.openingHours'))}{field('weekly_event',t('settings.weeklyEvent'))}
+      {field('website',t('settings.website'),'url')}{field('phone',t('settings.phone'))}{field('email',t('settings.email'),'email')}{field('whatsapp_number',t('settings.whatsapp'))}{field('address',t('settings.address'))}{field('map_url',t('settings.mapUrl'),'url')}{field('logo_url',t('settings.logoUrl'),'url')}{field('app_icon_url',t('settings.appIconUrl'),'url')}{field('opening_hours',t('settings.openingHours'))}{field('weekly_event',t('settings.weeklyEvent'))}
     </section>
 
     <section className="rounded-3xl border bg-white p-5 shadow-sm"><div className="flex items-start gap-3"><Eye size={20} style={{color:'var(--brand-primary)'}}/><div><h4 className="font-semibold">{t('settings.publicTitle')}</h4><p className="mt-1 text-xs opacity-55">{t('settings.publicSubtitle')}</p></div></div><div className="mt-4 grid gap-3 sm:grid-cols-2">{publishChoice('publish_phone',t('settings.phone'),Boolean(form.phone.trim()))}{publishChoice('publish_email',t('settings.email'),Boolean(form.email.trim()))}{publishChoice('publish_address',t('settings.address'),Boolean(form.address.trim()))}{publishChoice('publish_website',t('settings.website'),Boolean(form.website.trim()))}{publishChoice('publish_opening_hours',t('settings.openingHours'),Boolean(form.opening_hours.trim()))}</div></section>
