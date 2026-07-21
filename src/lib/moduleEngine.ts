@@ -14,7 +14,6 @@ export type ModuleId =
   | 'contact'
   | 'about'
   | 'documents'
-  | 'donation'
   | 'push'
   | 'prayer'
   | 'jumuah'
@@ -44,7 +43,6 @@ export const DEFAULT_MODULES: ModuleState = {
   administration: true,
   settings: true,
   contact: true,
-  donation: true,
   push: false,
   prayer: false,
   sohbet: false,
