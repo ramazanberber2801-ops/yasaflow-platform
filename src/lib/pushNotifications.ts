@@ -153,5 +153,5 @@ export async function sendPushNotification(input: { title: string; body: string;
 
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result?.error || 'Push-varselet kunne ikke sendes.');
-  return result as { ok: boolean; sent: number; failed: number; message_id: string; organization_id: string };
+  return result as { ok: boolean; sent: number; failed: number; removed: number; message_id: string; organization_id: string };
 }
