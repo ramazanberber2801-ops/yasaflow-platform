@@ -14,6 +14,12 @@ function getBearerToken(req: VercelRequest) {
   return authorization.slice('Bearer '.length).trim();
 }
 
+function pushStatusCode(error: unknown) {
+  if (!error || typeof error !== 'object') return 0;
+  const value = (error as { statusCode?: unknown }).statusCode;
+  return typeof value === 'number' ? value : Number(value || 0);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!supabaseUrl || !supabaseServiceRoleKey || !vapidPublicKey || !vapidPrivateKey) {
@@ -95,15 +101,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const payload = JSON.stringify({ title: cleanTitle, body: cleanBody, url: notificationUrl, message_id: messageId, organization_id: targetOrganizationId });
   let sent = 0;
   let failed = 0;
+  const expiredIds: string[] = [];
 
-  await Promise.all((data || []).map(async (row: { subscription: webpush.PushSubscription }) => {
+  await Promise.all((data || []).map(async (row: { id: string; subscription: webpush.PushSubscription }) => {
     try {
       await webpush.sendNotification(row.subscription, payload);
       sent += 1;
-    } catch {
-      failed += 1;
+    } catch (sendError) {
+      const statusCode = pushStatusCode(sendError);
+      if (statusCode === 404 || statusCode === 410) {
+        expiredIds.push(row.id);
+      } else {
+        failed += 1;
+        console.error('Push delivery failed:', statusCode || 'unknown', sendError);
+      }
     }
   }));
 
-  return res.status(200).json({ ok: true, sent, failed, message_id: messageId, organization_id: targetOrganizationId });
+  let removed = 0;
+  if (expiredIds.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('push_subscriptions')
+      .delete()
+      .eq('organization_id', targetOrganizationId)
+      .in('id', expiredIds);
+
+    if (deleteError) {
+      console.error('Expired push subscriptions could not be removed:', deleteError);
+      failed += expiredIds.length;
+    } else {
+      removed = expiredIds.length;
+    }
+  }
+
+  return res.status(200).json({
+    ok: true,
+    sent,
+    failed,
+    removed,
+    message_id: messageId,
+    organization_id: targetOrganizationId,
+  });
 }
