@@ -20,6 +20,18 @@ function pushStatusCode(error: unknown) {
   return typeof value === 'number' ? value : Number(value || 0);
 }
 
+function cleanImageUrl(value: unknown) {
+  const url = String(value || '').trim();
+  if (!url) return '';
+  if (url.startsWith('/')) return url;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' ? parsed.href : '';
+  } catch {
+    return '';
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   if (!supabaseUrl || !supabaseServiceRoleKey || !vapidPublicKey || !vapidPrivateKey) {
@@ -45,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userId = userData.user?.id;
   if (userError || !userId) return res.status(401).json({ error: 'Invalid administrator session' });
 
-  const [{ data: organizationAdmin }, { data: platformAdmin }, { data: pushModule }] = await Promise.all([
+  const [{ data: organizationAdmin }, { data: platformAdmin }, { data: pushModule }, { data: organizationSettings }] = await Promise.all([
     supabase
       .from('organization_admins')
       .select('id')
@@ -66,6 +78,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .eq('organization_id', targetOrganizationId)
       .eq('module_id', 'push')
       .maybeSingle(),
+    supabase
+      .from('organization_settings')
+      .select('app_icon_url,logo_url')
+      .eq('organization_id', targetOrganizationId)
+      .maybeSingle(),
   ]);
 
   if (!organizationAdmin && !platformAdmin) {
@@ -75,6 +92,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!pushModule?.enabled) {
     return res.status(403).json({ error: 'Push notifications are not enabled for this organization' });
   }
+
+  const organizationIcon = cleanImageUrl(organizationSettings?.app_icon_url)
+    || cleanImageUrl(organizationSettings?.logo_url)
+    || '/favicon.svg';
 
   webpush.setVapidDetails('mailto:admin@yasaflow.com', vapidPublicKey, vapidPrivateKey);
   const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
@@ -98,7 +119,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  const payload = JSON.stringify({ title: cleanTitle, body: cleanBody, url: notificationUrl, message_id: messageId, organization_id: targetOrganizationId });
+  const payload = JSON.stringify({
+    title: cleanTitle,
+    body: cleanBody,
+    url: notificationUrl,
+    icon: organizationIcon,
+    badge: organizationIcon,
+    message_id: messageId,
+    organization_id: targetOrganizationId,
+  });
   let sent = 0;
   let failed = 0;
   const expiredIds: string[] = [];
