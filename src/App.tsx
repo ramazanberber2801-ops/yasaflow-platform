@@ -4,7 +4,6 @@ import { BottomNav } from './components/BottomNav';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminPanel } from './pages/AdminPanel';
 import { AcceptInvitationPage } from './pages/AcceptInvitationPage';
-import { DonationModal } from './components/DonationModal';
 import { InstallButton } from './components/InstallButton';
 import { InstallGuideModal } from './components/InstallGuideModal';
 import { HomePage } from './pages/HomePage';
@@ -42,7 +41,6 @@ function AppContent() {
   const [page, setPage] = useState<Page>('home');
   const [showLogin, setShowLogin] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
-  const [showDonate, setShowDonate] = useState(false);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
   const [guideBrowser, setGuideBrowser] = useState<BrowserType>('safari');
   const [guidePlatform, setGuidePlatform] = useState<Platform>('ios');
@@ -163,7 +161,6 @@ function AppContent() {
   };
 
   const openContact = () => enabled('contact') ? setPage('contact') : undefined;
-  const openDonate = () => enabled('donation') ? setShowDonate(true) : undefined;
   const openNotifications = () => enabled('push') ? setPage('notifications') : undefined;
   const showGuide = (browser: BrowserType, platform: Platform) => { setGuideBrowser(browser); setGuidePlatform(platform); setShowInstallGuide(true); };
 
@@ -173,7 +170,7 @@ function AppContent() {
     {page === 'home' && <HomePage />}
     {page === 'activities' && enabled('activities', true) && <ActivitiesPage />}
     {page === 'calendar' && <CalendarPage />}
-    {page === 'more' && <MorePage onAdmin={openAdmin} onContact={openContact} onDonate={openDonate} onNotifications={openNotifications} unreadNotifications={unreadNotifications} />}
+    {page === 'more' && <MorePage onAdmin={openAdmin} onContact={openContact} onNotifications={openNotifications} unreadNotifications={unreadNotifications} />}
     {page === 'contact' && enabled('contact') && <ContactPage />}
     {page === 'notifications' && enabled('push') && <NotificationsPage initialMessageId={initialNotificationId} onConsumedInitialMessage={clearInitialNotification} />}
 
@@ -181,7 +178,6 @@ function AppContent() {
     <BottomNav current={page === 'contact' || page === 'notifications' ? 'more' : page} onNavigate={setPage} unreadNotifications={unreadNotifications} />
     <AdminLoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
     <AdminPanel open={showPanel} onClose={() => setShowPanel(false)} />
-    {enabled('donation') && <DonationModal open={showDonate} onClose={() => setShowDonate(false)} />}
     <InstallGuideModal open={showInstallGuide} onClose={() => setShowInstallGuide(false)} browser={guideBrowser} platform={guidePlatform} />
   </div>;
 }
