@@ -5,6 +5,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PASSWORD_REQUIREMENT_MESSAGE = 'Passordet må ha minst 6 tegn og inneholde stor bokstav, liten bokstav, tall og spesialtegn.';
+const isValidPassword = (password: string) => password.length >= 6
+  && /[A-Z]/.test(password)
+  && /[a-z]/.test(password)
+  && /[0-9]/.test(password)
+  && /[^A-Za-z0-9]/.test(password);
+
 type InvitationPayload = {
   action?: 'inspect' | 'accept';
   token?: string;
@@ -99,7 +106,7 @@ Deno.serve(async (request) => {
 
     if (!userId) {
       const password = payload.password || '';
-      if (password.length < 8) return json({ error: 'Passordet må ha minst 8 tegn.' }, 400);
+      if (!isValidPassword(password)) return json({ error: PASSWORD_REQUIREMENT_MESSAGE }, 400);
 
       const { data: created, error: createError } = await adminClient.auth.admin.createUser({
         email: invitation.email,
