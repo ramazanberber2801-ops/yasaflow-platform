@@ -57,6 +57,8 @@ function OwnerWorkspace() {
   </main>;
 }
 
+const OWNER_ROLES = new Set(['owner', 'platform_owner', 'super_admin', 'platform_admin']);
+
 export function CustomerAccountPortal() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -66,23 +68,50 @@ export function CustomerAccountPortal() {
   const [isOwner, setIsOwner] = useState(false);
   const [error, setError] = useState('');
 
-  const resolveOwnerRole = async (userId?: string) => {
-    if (!supabase || !userId) { setIsOwner(false); return; }
-    const { data } = await supabase.from('admins').select('role').eq('auth_user_id', userId).maybeSingle();
-    const role = String(data?.role || '').toLowerCase();
-    setIsOwner(['owner', 'platform_owner', 'super_admin'].includes(role));
+  const resolveOwnerRole = async (user?: { id?: string; email?: string | null; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null) => {
+    if (!supabase || !user?.id) { setIsOwner(false); return; }
+
+    const metadataRoles = [
+      user.app_metadata?.role,
+      user.app_metadata?.platform_role,
+      user.user_metadata?.role,
+      user.user_metadata?.platform_role,
+    ].map((value) => String(value || '').toLowerCase());
+
+    if (metadataRoles.some((role) => OWNER_ROLES.has(role))) {
+      setIsOwner(true);
+      return;
+    }
+
+    const [legacyResult, organizationResult] = await Promise.all([
+      supabase.from('admins').select('role').eq('auth_user_id', user.id).maybeSingle(),
+      supabase.from('organization_admins').select('role').eq('user_id', user.id),
+    ]);
+
+    const roles = [
+      legacyResult.data?.role,
+      ...(organizationResult.data || []).map((row) => row.role),
+    ].map((value) => String(value || '').toLowerCase());
+
+    const configuredOwners = String(import.meta.env.VITE_PLATFORM_OWNER_EMAILS || 'ramazanberber2801@gmail.com')
+      .split(',')
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean);
+    const normalizedEmail = String(user.email || '').trim().toLowerCase();
+
+    setIsOwner(roles.some((role) => OWNER_ROLES.has(role)) || configuredOwners.includes(normalizedEmail));
   };
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
     supabase.auth.getSession().then(async ({ data }) => {
       setAuthenticated(Boolean(data.session));
-      await resolveOwnerRole(data.session?.user.id);
+      await resolveOwnerRole(data.session?.user);
       setLoading(false);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthenticated(Boolean(session));
-      void resolveOwnerRole(session?.user.id);
+      void resolveOwnerRole(session?.user);
     });
     return () => listener.subscription.unsubscribe();
   }, []);
@@ -93,7 +122,7 @@ export function CustomerAccountPortal() {
     setSubmitting(true);
     setError('');
     const { data, error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-    if (!loginError) await resolveOwnerRole(data.user?.id);
+    if (!loginError) await resolveOwnerRole(data.user);
     setSubmitting(false);
     if (loginError) setError('Kunne ikke logge inn. Kontroller e-post og passord.');
   };
