@@ -3,10 +3,10 @@ import { ArrowLeft, Building2, CreditCard, ExternalLink, Loader2, LogIn, LogOut,
 import { OrganizationAdminPortal } from './OrganizationAdminPortal';
 import { supabase } from '../lib/supabase';
 
-type OwnerView = 'chooser' | 'organizations' | 'clinics';
+type WorkspaceView = 'chooser' | 'organizations' | 'clinics';
 
-function OwnerWorkspace() {
-  const [view, setView] = useState<OwnerView>('chooser');
+function WorkspaceChooser() {
+  const [view, setView] = useState<WorkspaceView>('chooser');
 
   if (view === 'organizations') return <div>
     <div className="mx-auto max-w-6xl px-4 pt-5 sm:px-6">
@@ -19,18 +19,18 @@ function OwnerWorkspace() {
     <button onClick={() => setView('chooser')} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm"><ArrowLeft size={16}/> Tilbake til valg</button>
     <div className="mt-6 rounded-3xl border bg-white p-6 shadow-sm sm:p-8">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-100 text-fuchsia-700"><Stethoscope size={26}/></div>
-      <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Klinikk-onboarding</h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Dette området er separat fra organisasjonsadministrasjonen. Her kan du starte onboarding for en klinikk, eller åpne den samme registreringsflyten som kundene bruker selv.</p>
+      <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Klinikker</h1>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Start onboarding for en ny klinikk eller åpne kundens selvregistrering.</p>
       <div className="mt-7 grid gap-4 md:grid-cols-2">
         <a href="/registrer?type=clinic&source=owner" className="group rounded-3xl border border-fuchsia-200 bg-fuchsia-50 p-6 transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex items-center justify-between"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-600 text-white"><Plus size={22}/></div><ExternalLink size={18} className="text-fuchsia-500"/></div>
           <h2 className="mt-5 text-xl font-semibold text-slate-950">Onboard ny klinikk</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Fyll ut klinikkdata på vegne av kunden. Kunden kan senere fullføre abonnement og betaling i samme flyt.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Fyll ut klinikkdata på vegne av kunden og fortsett til abonnement og aktivering.</p>
         </a>
         <a href="/registrer?type=clinic" className="group rounded-3xl border border-sky-200 bg-sky-50 p-6 transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex items-center justify-between"><div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white"><UserPlus size={22}/></div><ExternalLink size={18} className="text-sky-500"/></div>
           <h2 className="mt-5 text-xl font-semibold text-slate-950">Kundens selvregistrering</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Åpner nøyaktig samme klinikkflyt kunden bruker fra «Kom i gang». Paddle-checkout kobles til denne flyten senere.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Åpner den samme registreringsflyten som kunden bruker fra Yasaflow-nettsiden.</p>
         </a>
       </div>
     </div>
@@ -38,92 +38,49 @@ function OwnerWorkspace() {
 
   return <main className="mx-auto w-full max-w-6xl p-4 sm:p-8">
     <div className="rounded-3xl border bg-white p-6 shadow-sm sm:p-8">
-      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Owner</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-sky-700">Yasaflow portal</p>
       <h1 className="mt-3 font-serif text-3xl font-semibold text-slate-950 sm:text-4xl">Hva vil du administrere?</h1>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Du bruker samme innlogging, men organisasjoner og klinikk-onboarding holdes i to separate arbeidsområder.</p>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Velg arbeidsområdet du vil åpne. Du trenger ikke logge inn på nytt når du bytter.</p>
       <div className="mt-8 grid gap-4 md:grid-cols-2">
         <button onClick={() => setView('organizations')} className="rounded-3xl border border-sky-200 bg-sky-50 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-600 text-white"><Building2 size={23}/></div>
           <h2 className="mt-5 text-xl font-semibold text-slate-950">Organisasjoner</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Åpne den eksisterende organisasjonsdelen og administrer organisasjoner uten å blande inn klinikksalg og onboarding.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Åpne organisasjonsoversikten og administrer organisasjoner, medlemmer, innhold og innstillinger.</p>
         </button>
         <button onClick={() => setView('clinics')} className="rounded-3xl border border-fuchsia-200 bg-fuchsia-50 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-600 text-white"><Stethoscope size={23}/></div>
           <h2 className="mt-5 text-xl font-semibold text-slate-950">Klinikker</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Start onboarding for nye klinikker og åpne kundens selvregistrering. Begge bruker samme fremtidige Paddle-checkout.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Start klinikk-onboarding og åpne kundens selvregistrering.</p>
         </button>
       </div>
     </div>
   </main>;
 }
 
-const OWNER_ROLES = new Set(['owner', 'platform_owner', 'super_admin', 'platform_admin']);
-
-export function CustomerAccountPortal({ forceOwner = false }: { forceOwner?: boolean }) {
+export function CustomerAccountPortal({ forceOwner: _forceOwner = false }: { forceOwner?: boolean }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [isOwner, setIsOwner] = useState(forceOwner);
   const [error, setError] = useState('');
-
-  const resolveOwnerRole = async (user?: { id?: string; email?: string | null; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null) => {
-    if (forceOwner) { setIsOwner(true); return; }
-    if (!supabase || !user?.id) { setIsOwner(false); return; }
-
-    const metadataRoles = [
-      user.app_metadata?.role,
-      user.app_metadata?.platform_role,
-      user.user_metadata?.role,
-      user.user_metadata?.platform_role,
-    ].map((value) => String(value || '').toLowerCase());
-
-    if (metadataRoles.some((role) => OWNER_ROLES.has(role))) {
-      setIsOwner(true);
-      return;
-    }
-
-    const [legacyResult, organizationResult] = await Promise.all([
-      supabase.from('admins').select('role').eq('auth_user_id', user.id).maybeSingle(),
-      supabase.from('organization_admins').select('role').eq('user_id', user.id),
-    ]);
-
-    const roles = [
-      legacyResult.data?.role,
-      ...(organizationResult.data || []).map((row) => row.role),
-    ].map((value) => String(value || '').toLowerCase());
-
-    const configuredOwners = String(import.meta.env.VITE_PLATFORM_OWNER_EMAILS || 'ramazanberber2801@gmail.com')
-      .split(',')
-      .map((value) => value.trim().toLowerCase())
-      .filter(Boolean);
-    const normalizedEmail = String(user.email || '').trim().toLowerCase();
-
-    setIsOwner(roles.some((role) => OWNER_ROLES.has(role)) || configuredOwners.includes(normalizedEmail));
-  };
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       setAuthenticated(Boolean(data.session));
-      await resolveOwnerRole(data.session?.user);
       setLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthenticated(Boolean(session));
-      void resolveOwnerRole(session?.user);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setAuthenticated(Boolean(session)));
     return () => listener.subscription.unsubscribe();
-  }, [forceOwner]);
+  }, []);
 
   const login = async (event: FormEvent) => {
     event.preventDefault();
     if (!supabase) return;
     setSubmitting(true);
     setError('');
-    const { data, error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-    if (!loginError) await resolveOwnerRole(data.user);
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     setSubmitting(false);
     if (loginError) setError('Kunne ikke logge inn. Kontroller e-post og passord.');
   };
@@ -131,7 +88,6 @@ export function CustomerAccountPortal({ forceOwner = false }: { forceOwner?: boo
   const logout = async () => {
     await supabase?.auth.signOut();
     setAuthenticated(false);
-    setIsOwner(forceOwner);
   };
 
   if (loading) return <div className="flex min-h-screen items-center justify-center bg-slate-50"><Loader2 className="animate-spin" /></div>;
@@ -143,26 +99,26 @@ export function CustomerAccountPortal({ forceOwner = false }: { forceOwner?: boo
         <button onClick={()=>void logout()} className="flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium"><LogOut size={16}/> Logg ut</button>
       </div>
     </header>
-    {(forceOwner || isOwner) ? <OwnerWorkspace /> : <OrganizationAdminPortal />}
+    <WorkspaceChooser />
   </div>;
 
   return <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-4">
     <section className="w-full max-w-md rounded-3xl border bg-white p-7 shadow-xl">
       <a href="/" className="text-sm font-semibold text-sky-700">← Til Yasaflow</a>
       <div className="mt-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700"><CreditCard size={25}/></div>
-      <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">{forceOwner ? 'Owner-innlogging' : 'Kundeinnlogging'}</h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{forceOwner ? 'Logg inn for å velge mellom organisasjoner og klinikk-onboarding.' : 'Logg inn for å administrere klinikken eller organisasjonen, abonnementet, tilleggsmoduler og fakturaer.'}</p>
+      <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Logg inn</h1>
+      <p className="mt-2 text-sm leading-6 text-slate-600">Logg inn én gang og velg deretter mellom organisasjoner og klinikker.</p>
       <form onSubmit={login} className="mt-6 space-y-4">
         <label className="block"><span className="text-sm font-medium text-slate-700">E-post</span><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
         <label className="block"><span className="text-sm font-medium text-slate-700">Passord</span><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
         {error&&<p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <button disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{submitting?<Loader2 size={17} className="animate-spin"/>:<LogIn size={17}/>} Logg inn</button>
       </form>
-      {!forceOwner && <div className="mt-5 grid gap-3">
+      <div className="mt-5 grid gap-3">
         <a href="/registrer?type=clinic" className="flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white"><Stethoscope size={16}/> Opprett klinikk</a>
         <a href="/registrer" className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700"><UserPlus size={16}/> Opprett organisasjon</a>
         <a href="/?forgot=1" className="flex items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700">Glemt passord</a>
-      </div>}
+      </div>
     </section>
   </main>;
 }
