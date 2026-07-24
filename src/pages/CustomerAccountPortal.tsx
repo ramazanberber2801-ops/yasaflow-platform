@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowLeft, Building2, CreditCard, ExternalLink, Loader2, LogIn, LogOut, Plus, Stethoscope, UserPlus } from 'lucide-react';
+import { ArrowLeft, Building2, CreditCard, ExternalLink, Loader2, LogIn, LogOut, Plus, Sparkles, UserPlus } from 'lucide-react';
 import { OrganizationAdminPortal } from './OrganizationAdminPortal';
 import { supabase } from '../lib/supabase';
 
@@ -18,7 +18,7 @@ function WorkspaceChooser() {
   if (view === 'clinics') return <main className="mx-auto w-full max-w-6xl p-4 sm:p-8">
     <button onClick={() => setView('chooser')} className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm"><ArrowLeft size={16}/> Tilbake til valg</button>
     <div className="mt-6 rounded-3xl border bg-white p-6 shadow-sm sm:p-8">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-100 text-fuchsia-700"><Stethoscope size={26}/></div>
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-100 text-fuchsia-700"><Sparkles size={26}/></div>
       <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Klinikker</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Start onboarding for en ny klinikk eller åpne kundens selvregistrering.</p>
       <div className="mt-7 grid gap-4 md:grid-cols-2">
@@ -48,7 +48,7 @@ function WorkspaceChooser() {
           <p className="mt-2 text-sm leading-6 text-slate-600">Åpne organisasjonsoversikten og administrer organisasjoner, medlemmer, innhold og innstillinger.</p>
         </button>
         <button onClick={() => setView('clinics')} className="rounded-3xl border border-fuchsia-200 bg-fuchsia-50 p-6 text-left transition hover:-translate-y-0.5 hover:shadow-md">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-600 text-white"><Stethoscope size={23}/></div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fuchsia-600 text-white"><Sparkles size={23}/></div>
           <h2 className="mt-5 text-xl font-semibold text-slate-950">Klinikker</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">Start klinikk-onboarding og åpne kundens selvregistrering.</p>
         </button>
@@ -115,7 +115,7 @@ export function CustomerAccountPortal({ forceOwner: _forceOwner = false }: { for
         <button disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{submitting?<Loader2 size={17} className="animate-spin"/>:<LogIn size={17}/>} Logg inn</button>
       </form>
       <div className="mt-5 grid gap-3">
-        <a href="/registrer?type=clinic" className="flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white"><Stethoscope size={16}/> Opprett klinikk</a>
+        <a href="/registrer?type=clinic" className="flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white"><Sparkles size={16}/> Opprett klinikk</a>
         <a href="/registrer" className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700"><UserPlus size={16}/> Opprett organisasjon</a>
         <a href="/?forgot=1" className="flex items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700">Glemt passord</a>
       </div>
