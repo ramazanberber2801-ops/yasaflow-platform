@@ -22,7 +22,15 @@ type ClinicRow = {
   logo_url: string | null;
 };
 
-type ClinicForm = Pick<ClinicRow, 'name' | 'status' | 'subscription_status' | 'subscription_plan' | 'address' | 'phone' | 'email'>;
+type ClinicForm = {
+  name: string;
+  status: string;
+  subscription_status: string;
+  subscription_plan: string;
+  address: string;
+  phone: string;
+  email: string;
+};
 
 const statusOptions = ['Prøve', 'Aktiv', 'Deaktivert'];
 const subscriptionOptions = ['trial', 'active', 'expired', 'cancelled', 'past_due'];
@@ -151,9 +159,9 @@ export function ClinicManagementPortal({ onBack }: { onBack: () => void }) {
           <label><span className="text-sm font-medium">Klinikkstatus</span><select value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="mt-1 w-full rounded-xl border p-3">{statusOptions.map(v=><option key={v}>{v}</option>)}</select></label>
           <label><span className="text-sm font-medium">Abonnementsstatus</span><select value={form.subscription_status} onChange={e=>setForm({...form,subscription_status:e.target.value})} className="mt-1 w-full rounded-xl border p-3">{subscriptionOptions.map(v=><option key={v}>{v}</option>)}</select></label>
           <label><span className="text-sm font-medium">Plan</span><select value={form.subscription_plan} onChange={e=>setForm({...form,subscription_plan:e.target.value})} className="mt-1 w-full rounded-xl border p-3">{planOptions.map(v=><option key={v}>{v}</option>)}</select></label>
-          <label><span className="text-sm font-medium">Telefon</span><input value={form.phone || ''} onChange={e=>setForm({...form,phone:e.target.value})} className="mt-1 w-full rounded-xl border p-3"/></label>
-          <label className="sm:col-span-2"><span className="text-sm font-medium">E-post</span><input type="email" value={form.email || ''} onChange={e=>setForm({...form,email:e.target.value})} className="mt-1 w-full rounded-xl border p-3"/></label>
-          <label className="sm:col-span-2"><span className="text-sm font-medium">Adresse</span><textarea value={form.address || ''} onChange={e=>setForm({...form,address:e.target.value})} rows={3} className="mt-1 w-full rounded-xl border p-3"/></label>
+          <label><span className="text-sm font-medium">Telefon</span><input value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} className="mt-1 w-full rounded-xl border p-3"/></label>
+          <label className="sm:col-span-2"><span className="text-sm font-medium">E-post</span><input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} className="mt-1 w-full rounded-xl border p-3"/></label>
+          <label className="sm:col-span-2"><span className="text-sm font-medium">Adresse</span><textarea value={form.address} onChange={e=>setForm({...form,address:e.target.value})} rows={3} className="mt-1 w-full rounded-xl border p-3"/></label>
         </div>
         <button disabled={saving} onClick={()=>void save()} className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{saving ? <Loader2 size={17} className="animate-spin"/> : <Save size={17}/>} Lagre endringer</button>
       </section>
