@@ -60,29 +60,78 @@ function WorkspaceChooser() {
 export function CustomerAccountPortal({ forceOwner: _forceOwner = false }: { forceOwner?: boolean }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return; }
+    const hasRecoveryToken = window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+    if (hasRecoveryToken) setRecoveryMode(true);
+
     supabase.auth.getSession().then(({ data }) => {
-      setAuthenticated(Boolean(data.session));
+      setAuthenticated(Boolean(data.session) && !hasRecoveryToken);
       setLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => setAuthenticated(Boolean(session)));
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryMode(true);
+        setAuthenticated(false);
+        return;
+      }
+      setAuthenticated(Boolean(session) && !recoveryMode);
+    });
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [recoveryMode]);
 
   const login = async (event: FormEvent) => {
     event.preventDefault();
     if (!supabase) return;
     setSubmitting(true);
     setError('');
+    setMessage('');
     const { error: loginError } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
     setSubmitting(false);
     if (loginError) setError('Kunne ikke logge inn. Kontroller e-post og passord.');
+  };
+
+  const requestPasswordReset = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!supabase) return;
+    setSubmitting(true);
+    setError('');
+    setMessage('');
+    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo });
+    setSubmitting(false);
+    if (resetError) setError('Kunne ikke sende e-post for nytt passord. Prøv igjen.');
+    else setMessage('Vi har sendt deg en e-post med lenke for å opprette nytt passord.');
+  };
+
+  const saveNewPassword = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!supabase) return;
+    if (newPassword.length < 8) {
+      setError('Passordet må ha minst 8 tegn.');
+      return;
+    }
+    setSubmitting(true);
+    setError('');
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    setSubmitting(false);
+    if (updateError) {
+      setError('Kunne ikke lagre det nye passordet. Åpne lenken fra e-posten på nytt.');
+      return;
+    }
+    setRecoveryMode(false);
+    setAuthenticated(true);
+    window.history.replaceState({}, document.title, window.location.pathname);
   };
 
   const logout = async () => {
@@ -106,19 +155,40 @@ export function CustomerAccountPortal({ forceOwner: _forceOwner = false }: { for
     <section className="w-full max-w-md rounded-3xl border bg-white p-7 shadow-xl">
       <a href="/" className="text-sm font-semibold text-sky-700">← Til Yasaflow</a>
       <div className="mt-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700"><CreditCard size={25}/></div>
-      <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Logg inn</h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600">Logg inn én gang og velg deretter mellom organisasjoner og klinikker.</p>
-      <form onSubmit={login} className="mt-6 space-y-4">
-        <label className="block"><span className="text-sm font-medium text-slate-700">E-post</span><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
-        <label className="block"><span className="text-sm font-medium text-slate-700">Passord</span><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
-        {error&&<p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-        <button disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{submitting?<Loader2 size={17} className="animate-spin"/>:<LogIn size={17}/>} Logg inn</button>
-      </form>
-      <div className="mt-5 grid gap-3">
-        <a href="/registrer?type=clinic" className="flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white"><Sparkles size={16}/> Opprett klinikk</a>
-        <a href="/registrer" className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700"><UserPlus size={16}/> Opprett organisasjon</a>
-        <a href="/?forgot=1" className="flex items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700">Glemt passord</a>
-      </div>
+
+      {recoveryMode ? <>
+        <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Opprett nytt passord</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Skriv inn et nytt passord for kontoen din.</p>
+        <form onSubmit={saveNewPassword} className="mt-6 space-y-4">
+          <label className="block"><span className="text-sm font-medium text-slate-700">Nytt passord</span><input type="password" value={newPassword} onChange={e=>setNewPassword(e.target.value)} required minLength={8} autoComplete="new-password" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
+          {error&&<p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <button disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{submitting?<Loader2 size={17} className="animate-spin"/>:null} Lagre nytt passord</button>
+        </form>
+      </> : forgotMode ? <>
+        <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Glemt passord</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Skriv inn e-postadressen din, så sender vi en sikker lenke.</p>
+        <form onSubmit={requestPasswordReset} className="mt-6 space-y-4">
+          <label className="block"><span className="text-sm font-medium text-slate-700">E-post</span><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
+          {error&&<p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          {message&&<p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">{message}</p>}
+          <button disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{submitting?<Loader2 size={17} className="animate-spin"/>:null} Send lenke</button>
+          <button type="button" onClick={()=>{setForgotMode(false);setError('');setMessage('');}} className="w-full rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700">Tilbake til innlogging</button>
+        </form>
+      </> : <>
+        <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Logg inn</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">Logg inn én gang og velg deretter mellom organisasjoner og klinikker.</p>
+        <form onSubmit={login} className="mt-6 space-y-4">
+          <label className="block"><span className="text-sm font-medium text-slate-700">E-post</span><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
+          <label className="block"><span className="text-sm font-medium text-slate-700">Passord</span><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
+          {error&&<p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <button disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{submitting?<Loader2 size={17} className="animate-spin"/>:<LogIn size={17}/>} Logg inn</button>
+        </form>
+        <div className="mt-5 grid gap-3">
+          <a href="/registrer?type=clinic" className="flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white"><Sparkles size={16}/> Opprett klinikk</a>
+          <a href="/registrer" className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700"><UserPlus size={16}/> Opprett organisasjon</a>
+          <button type="button" onClick={()=>{setForgotMode(true);setError('');setMessage('');}} className="flex items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700">Glemt passord</button>
+        </div>
+      </>}
     </section>
   </main>;
 }
