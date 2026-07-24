@@ -59,16 +59,17 @@ function OwnerWorkspace() {
 
 const OWNER_ROLES = new Set(['owner', 'platform_owner', 'super_admin', 'platform_admin']);
 
-export function CustomerAccountPortal() {
+export function CustomerAccountPortal({ forceOwner = false }: { forceOwner?: boolean }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
+  const [isOwner, setIsOwner] = useState(forceOwner);
   const [error, setError] = useState('');
 
   const resolveOwnerRole = async (user?: { id?: string; email?: string | null; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> } | null) => {
+    if (forceOwner) { setIsOwner(true); return; }
     if (!supabase || !user?.id) { setIsOwner(false); return; }
 
     const metadataRoles = [
@@ -114,7 +115,7 @@ export function CustomerAccountPortal() {
       void resolveOwnerRole(session?.user);
     });
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [forceOwner]);
 
   const login = async (event: FormEvent) => {
     event.preventDefault();
@@ -130,7 +131,7 @@ export function CustomerAccountPortal() {
   const logout = async () => {
     await supabase?.auth.signOut();
     setAuthenticated(false);
-    setIsOwner(false);
+    setIsOwner(forceOwner);
   };
 
   if (loading) return <div className="flex min-h-screen items-center justify-center bg-slate-50"><Loader2 className="animate-spin" /></div>;
@@ -142,26 +143,26 @@ export function CustomerAccountPortal() {
         <button onClick={()=>void logout()} className="flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium"><LogOut size={16}/> Logg ut</button>
       </div>
     </header>
-    {isOwner ? <OwnerWorkspace /> : <OrganizationAdminPortal />}
+    {(forceOwner || isOwner) ? <OwnerWorkspace /> : <OrganizationAdminPortal />}
   </div>;
 
   return <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-4">
     <section className="w-full max-w-md rounded-3xl border bg-white p-7 shadow-xl">
       <a href="/" className="text-sm font-semibold text-sky-700">← Til Yasaflow</a>
       <div className="mt-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700"><CreditCard size={25}/></div>
-      <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">Kundeinnlogging</h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600">Logg inn for å administrere klinikken eller organisasjonen, abonnementet, tilleggsmoduler og fakturaer.</p>
+      <h1 className="mt-5 font-serif text-3xl font-semibold text-slate-950">{forceOwner ? 'Owner-innlogging' : 'Kundeinnlogging'}</h1>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{forceOwner ? 'Logg inn for å velge mellom organisasjoner og klinikk-onboarding.' : 'Logg inn for å administrere klinikken eller organisasjonen, abonnementet, tilleggsmoduler og fakturaer.'}</p>
       <form onSubmit={login} className="mt-6 space-y-4">
         <label className="block"><span className="text-sm font-medium text-slate-700">E-post</span><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
         <label className="block"><span className="text-sm font-medium text-slate-700">Passord</span><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" className="mt-1 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-sky-300" /></label>
         {error&&<p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         <button disabled={submitting} className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white disabled:opacity-60">{submitting?<Loader2 size={17} className="animate-spin"/>:<LogIn size={17}/>} Logg inn</button>
       </form>
-      <div className="mt-5 grid gap-3">
+      {!forceOwner && <div className="mt-5 grid gap-3">
         <a href="/registrer?type=clinic" className="flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 px-4 py-3 text-sm font-semibold text-white"><Stethoscope size={16}/> Opprett klinikk</a>
         <a href="/registrer" className="flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700"><UserPlus size={16}/> Opprett organisasjon</a>
         <a href="/?forgot=1" className="flex items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700">Glemt passord</a>
-      </div>
+      </div>}
     </section>
   </main>;
 }
