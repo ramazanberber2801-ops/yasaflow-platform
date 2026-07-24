@@ -14,6 +14,9 @@ import { AppI18nProvider } from './lib/appI18n';
 import { resolveOrganizationFromHostname, writeStoredAdminSession } from './lib/organization';
 import { supabase } from './lib/supabase';
 
+const normalizedPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
+const isPortalHostname = () => window.location.hostname.toLowerCase() === 'portal.yasaflow.com';
+
 async function restoreWebsiteOnboardingSession() {
   const client = supabase;
   if (!client) return;
@@ -43,19 +46,20 @@ async function restoreWebsiteOnboardingSession() {
 
 function shouldShowRegistration() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('register') === '1' || params.get('onboarding') === '1' || window.location.pathname === '/registrer';
+  return params.get('register') === '1' || params.get('onboarding') === '1' || normalizedPath() === '/registrer';
 }
 
 function shouldShowCustomerPortal() {
-  return ['/kunde', '/login', '/account', '/portal', '/owner'].includes(window.location.pathname);
+  if (isPortalHostname()) return !shouldShowRegistration();
+  return ['/kunde', '/login', '/account', '/portal', '/owner'].includes(normalizedPath());
 }
 
 function routeCustomerPortalAdminLink() {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('admin') !== '1' || window.location.pathname !== '/') return;
+  if (params.get('admin') !== '1' || normalizedPath() !== '/') return;
   params.delete('admin');
   const query = params.toString();
-  window.history.replaceState({}, document.title, `/admin${query ? `?${query}` : ''}`);
+  window.history.replaceState({}, document.title, `/portal${query ? `?${query}` : ''}`);
 }
 
 async function start() {
@@ -63,7 +67,7 @@ async function start() {
   await restoreWebsiteOnboardingSession();
   if (!shouldShowRegistration() && !shouldShowCustomerPortal()) await resolveOrganizationFromHostname();
 
-  const forceOwner = window.location.pathname === '/owner';
+  const forceOwner = normalizedPath() === '/owner' || isPortalHostname();
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
